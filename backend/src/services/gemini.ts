@@ -30,6 +30,11 @@ export type AnalysisResult = {
     summary: string;
     recommendation: 'strong_match' | 'possible' | 'not_a_fit';
   };
+  aiDetection: {
+    aiGeneratedLikelihood: number; // 0-100
+    verdict: 'unlikely' | 'possible' | 'likely';
+    signals: string[];
+  };
 };
 
 const responseSchema = {
@@ -134,8 +139,28 @@ const responseSchema = {
         'recommendation',
       ],
     },
+    aiDetection: {
+      type: Type.OBJECT,
+      properties: {
+        aiGeneratedLikelihood: {
+          type: Type.INTEGER,
+          description:
+            'Estimated likelihood (0-100) that this CV was written primarily by a generative AI, based on writing style: generic phrasing, uniform tone, buzzword density, lack of specific/verifiable detail, suspiciously polished structure. Be calibrated — genuine professional CVs are often well-written; do not over-flag.',
+        },
+        verdict: {
+          type: Type.STRING,
+          enum: ['unlikely', 'possible', 'likely'],
+        },
+        signals: {
+          type: Type.ARRAY,
+          description: '2-4 short, concrete observations that justify the likelihood (either direction).',
+          items: { type: Type.STRING },
+        },
+      },
+      required: ['aiGeneratedLikelihood', 'verdict', 'signals'],
+    },
   },
-  required: ['extraction', 'evaluation'],
+  required: ['extraction', 'evaluation', 'aiDetection'],
 };
 
 function buildPrompt(job: Job, cvText: string): string {
@@ -162,6 +187,10 @@ function buildPrompt(job: Job, cvText: string): string {
     'First extract the candidate\'s information from the CV, then objectively evaluate their fit.',
     'Base every judgement strictly on evidence in the CV. Do not invent experience.',
     'In skillMatches, include an entry for each required skill and each nice-to-have skill.',
+    'Finally, in aiDetection, estimate whether the CV text itself was written by a generative AI.',
+    'Weigh style signals (generic/templated phrasing, uniform tone, buzzword density, vague and',
+    'non-verifiable claims, unusually polished structure) against signs of authentic authorship',
+    '(specific metrics, unique projects, personal voice, minor imperfections). Stay calibrated.',
     '',
     '=== JOB OPENING ===',
     req,
@@ -200,6 +229,9 @@ function clampScores(result: AnalysisResult): AnalysisResult {
   const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
   result.evaluation.qualificationScore = clamp(result.evaluation.qualificationScore);
   result.evaluation.skillsMatchScore = clamp(result.evaluation.skillsMatchScore);
+  if (result.aiDetection) {
+    result.aiDetection.aiGeneratedLikelihood = clamp(result.aiDetection.aiGeneratedLikelihood);
+  }
   return result;
 }
 
@@ -430,4 +462,74 @@ function normalizeGenerated(q: RawGenQuestion): QuizQuestion | null {
   if (q.type === 'single') correctOptionIds = [correctOptionIds[0]!];
 
   return { id: randomUUID().slice(0, 8), type: q.type, prompt, points, options, correctOptionIds };
+}
+
+// ---------------------------------------------------------------------------
+// Contact-info extraction (for CV autofill on the application form)
+// ---------------------------------------------------------------------------
+
+export type ContactInfo = {
+  fullName: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
+const contactSchema = {
+  type: Type.OBJECT,
+  properties: {
+    fullName: { type: Type.STRING, nullable: true, description: "Candidate's full name." },
+    email: { type: Type.STRING, nullable: true },
+    phone: { type: Type.STRING, nullable: true },
+  },
+  required: ['fullName', 'email', 'phone'],
+};
+
+const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+const PHONE_RE = /(\+?\d[\d\s().-]{7,}\d)/;
+
+/**
+ * Extracts the applicant's contact fields from CV text for form autofill.
+ * Uses Gemini, with a regex fallback for email/phone. Never throws — returns
+ * nulls on failure so the form simply isn't pre-filled.
+ */
+export async function extractContactInfo(cvText: string): Promise<ContactInfo> {
+  const snippet = cvText.slice(0, 6000);
+  let ai: ContactInfo = { fullName: null, email: null, phone: null };
+
+  try {
+    const response = await ai_generateContact(snippet);
+    ai = response;
+  } catch (err) {
+    logger.error({ err }, 'Contact extraction failed (using regex fallback)');
+  }
+
+  // Regex fallbacks for the machine-readable fields.
+  const email = normalizeContact(ai.email) ?? cvText.match(EMAIL_RE)?.[0] ?? null;
+  const phone = normalizeContact(ai.phone) ?? cvText.match(PHONE_RE)?.[0]?.trim() ?? null;
+  const fullName = normalizeContact(ai.fullName);
+
+  return { fullName, email, phone };
+}
+
+async function ai_generateContact(snippet: string): Promise<ContactInfo> {
+  const response = await ai.models.generateContent({
+    model: env.GEMINI_MODEL,
+    contents: [
+      "Extract the candidate's full name, email address, and phone number from this CV.",
+      'Return null for any field that is not clearly present. Do not invent values.',
+      '',
+      snippet,
+    ].join('\n'),
+    config: { responseMimeType: 'application/json', responseSchema: contactSchema, temperature: 0 },
+  });
+  const text = response.text;
+  if (!text) throw new Error('Empty response from Gemini');
+  return JSON.parse(text) as ContactInfo;
+}
+
+function normalizeContact(v: string | null | undefined): string | null {
+  if (!v) return null;
+  const t = v.trim();
+  if (!t || t.toLowerCase() === 'null' || t.toLowerCase() === 'n/a') return null;
+  return t;
 }

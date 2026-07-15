@@ -147,6 +147,8 @@ export interface CandidateSummary {
   skillsMatchScore: number | null;
   quizScore: number | null;
   overallScore: number | null;
+  aiLikelihood: number | null;
+  aiVerdict: 'unlikely' | 'possible' | 'likely' | null;
   recommendation: Recommendation | null;
   summary: string | null;
   totalYearsExperience: number | null;
@@ -166,6 +168,7 @@ export interface Candidate extends CandidateSummary {
   skillMatches: SkillMatch[] | null;
   strengths: string[] | null;
   concerns: string[] | null;
+  aiSignals: string[] | null;
   quizAnswers: QuizAnswer[] | null;
   quizResults: QuizQuestionResult[] | null;
   analysisError: string | null;

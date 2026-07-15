@@ -72,7 +72,7 @@ npm run dev
 ### 7. Smoke test the workflow
 1. Open the web app → **Recruiter login** → sign in.
 2. **Jobs → New job** — add a title, description, and required skills.
-3. Open a second tab at **http://localhost:5173/apply**, pick the job, upload a CV (PDF/DOCX/TXT).
+3. Open a second tab at **http://localhost:5173/apply**, pick the job, upload a CV (PDF or DOCX).
 4. Back in the dashboard, the candidate appears — scored, ranked, with strengths/concerns
    and an AI summary. Open the candidate to see the full analysis and move them through
    the pipeline.
@@ -96,7 +96,7 @@ Confirm `GEMINI_API_KEY_CV_SCREENING` is set in `backend/.env` and the key is ac
 https://aistudio.google.com/app/apikey.
 
 **Uploads rejected**
-Only PDF, DOCX, and TXT are supported, up to `MAX_UPLOAD_MB` (default 10). Image-only /
+Only PDF and DOCX are supported, up to `MAX_UPLOAD_MB` (default 10). Image-only /
 scanned PDFs have no extractable text and are rejected by design.
 
 ---

@@ -17,6 +17,8 @@ import type {
   QuizQuestionResult,
 } from '../api/types';
 import {
+  AiWrittenBadge,
+  aiLevel,
   Alert,
   Card,
   RecommendationBadge,
@@ -148,6 +150,7 @@ export default function CandidateDetailPage() {
               <RecommendationBadge value={c.recommendation} />
               <StageBadge value={c.stage} />
               <SourceBadge source={c.source} />
+              {c.aiLikelihood != null && <AiWrittenBadge likelihood={c.aiLikelihood} />}
               {job && (
                 <Link
                   to={`/hr/jobs/${job.id}`}
@@ -213,6 +216,45 @@ export default function CandidateDetailPage() {
             <Card className="p-5">
               <h2 className="mb-2 text-sm font-semibold text-slate-700">AI summary</h2>
               <p className="text-sm leading-relaxed text-slate-600">{c.summary}</p>
+            </Card>
+          )}
+
+          {c.aiLikelihood != null && (
+            <Card className="p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-700">CV authenticity check</h2>
+                <AiWrittenBadge likelihood={c.aiLikelihood} size="md" />
+              </div>
+              <div className="mb-1 flex justify-between text-xs">
+                <span className="text-slate-500">Estimated AI-generated</span>
+                <span className="font-semibold text-slate-700">{c.aiLikelihood}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={`h-full rounded-full ${
+                    aiLevel(c.aiLikelihood).tone === 'high'
+                      ? 'bg-rose-500'
+                      : aiLevel(c.aiLikelihood).tone === 'medium'
+                        ? 'bg-amber-500'
+                        : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${c.aiLikelihood}%` }}
+                />
+              </div>
+              {c.aiSignals && c.aiSignals.length > 0 && (
+                <ul className="mt-3 space-y-1.5">
+                  {c.aiSignals.map((s, i) => (
+                    <li key={i} className="flex gap-2 text-sm text-slate-600">
+                      <span className="text-slate-400">•</span>
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-3 text-xs text-slate-400">
+                Heuristic estimate from writing style — not a definitive detector. Use as one signal
+                alongside the interview and exam.
+              </p>
             </Card>
           )}
 

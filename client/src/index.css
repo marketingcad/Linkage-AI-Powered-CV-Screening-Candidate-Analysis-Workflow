@@ -1,16 +1,40 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #eef4ff;
-  --color-brand-100: #d9e6ff;
-  --color-brand-200: #bcd3ff;
-  --color-brand-300: #8eb6ff;
-  --color-brand-400: #598eff;
-  --color-brand-500: #3366f0;
-  --color-brand-600: #234ad6;
-  --color-brand-700: #1d3bb0;
-  --color-brand-800: #1d348c;
-  --color-brand-900: #1d3070;
+  /* Brand — refined indigo-blue */
+  --color-brand-50: #eef3ff;
+  --color-brand-100: #dbe5ff;
+  --color-brand-200: #bcd0ff;
+  --color-brand-300: #8eb0ff;
+  --color-brand-400: #5b83ff;
+  --color-brand-500: #3358f0;
+  --color-brand-600: #2442d6;
+  --color-brand-700: #1e35ac;
+  --color-brand-800: #1d3089;
+  --color-brand-900: #1c2d6e;
+
+  /* Warm-neutral ink scale (slightly warmer than pure slate for a friendlier feel) */
+  --color-ink-50: #f7f7f9;
+  --color-ink-100: #eceef2;
+  --color-ink-200: #dcdfe7;
+  --color-ink-300: #b9bfcc;
+  --color-ink-400: #8b93a7;
+  --color-ink-500: #646c82;
+  --color-ink-600: #4a5165;
+  --color-ink-700: #373d4e;
+  --color-ink-800: #232838;
+  --color-ink-900: #14182a;
+
+  --font-sans: "Hanken Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Hanken Grotesque", ui-sans-serif, sans-serif;
+
+  --radius-xl: 0.9rem;
+  --radius-2xl: 1.15rem;
+
+  /* Layered, soft shadows for depth */
+  --shadow-card: 0 1px 2px rgba(20, 24, 42, 0.04), 0 1px 3px rgba(20, 24, 42, 0.06);
+  --shadow-raised: 0 4px 12px -2px rgba(20, 24, 42, 0.08), 0 2px 6px -2px rgba(20, 24, 42, 0.06);
+  --shadow-pop: 0 18px 40px -12px rgba(28, 45, 110, 0.28);
 }
 
 :root {
@@ -25,9 +49,74 @@ body,
 
 body {
   margin: 0;
-  font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f6f7f9;
-  color: #1f2933;
+  color: var(--color-ink-800);
+  /* Subtle atmospheric background instead of a flat fill */
+  background-color: #f4f6fb;
+  background-image:
+    radial-gradient(1100px 460px at 8% -8%, rgba(51, 88, 240, 0.06), transparent 60%),
+    radial-gradient(900px 420px at 108% 0%, rgba(51, 88, 240, 0.05), transparent 55%);
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+/* Staggered page-load reveal used across pages */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-rise {
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise {
+    animation: none;
+  }
+}
+
+/* Refined focus ring + form controls */
+*:focus-visible {
+  outline: 2px solid var(--color-brand-400);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(51, 88, 240, 0.16);
+}
+
+/* Slim, unobtrusive scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-300) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-ink-200);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-300);
+  background-clip: content-box;
 }

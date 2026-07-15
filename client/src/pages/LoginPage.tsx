@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../api/client';
-import { Alert, Card, Spinner } from '../components/ui';
+import { Alert, Button, Spinner } from '../components/ui';
+
+const inputCls =
+  'w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -30,17 +33,66 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center">
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500 text-lg font-bold text-white">
+    <div className="grid min-h-screen lg:grid-cols-2">
+      {/* Brand panel */}
+      <div className="relative hidden overflow-hidden bg-brand-700 lg:flex lg:flex-col lg:justify-between p-12 text-white">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-90"
+          style={{
+            backgroundImage:
+              'radial-gradient(600px 300px at 15% 10%, rgba(255,255,255,0.16), transparent 60%), radial-gradient(700px 380px at 110% 100%, rgba(0,0,0,0.35), transparent 55%)',
+          }}
+        />
+        <div className="relative flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-sm font-bold backdrop-blur">
             CV
           </div>
-          <h1 className="text-xl font-semibold text-slate-900">Recruiter sign in</h1>
-          <p className="mt-1 text-sm text-slate-500">ScreenAI candidate dashboard</p>
+          <span className="font-display text-lg font-semibold">ScreenAI</span>
         </div>
-        <Card className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+
+        <div className="relative max-w-md animate-rise">
+          <h2 className="font-display text-4xl font-semibold leading-tight">
+            Screen hundreds of CVs in minutes, not days.
+          </h2>
+          <p className="mt-4 text-brand-100">
+            AI extracts, scores, and ranks every applicant against the role — so your team spends
+            time on people, not paperwork.
+          </p>
+          <ul className="mt-8 space-y-3 text-sm text-brand-50">
+            {[
+              'AI qualification & skills-match scoring',
+              'Auto-generated screening exams',
+              'CV authenticity (AI-written) detection',
+              'Applicant status tracking & email updates',
+            ].map((f) => (
+              <li key={f} className="flex items-center gap-3">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-xs">
+                  ✓
+                </span>
+                {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="relative text-xs text-brand-200">© {new Date().getFullYear()} ScreenAI Careers</p>
+      </div>
+
+      {/* Form panel */}
+      <div className="flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm animate-rise">
+          {/* Mobile logo */}
+          <div className="mb-8 flex items-center gap-2.5 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-sm font-bold text-white">
+              CV
+            </div>
+            <span className="font-display text-lg font-semibold text-slate-800">ScreenAI</span>
+          </div>
+
+          <h1 className="font-display text-2xl font-semibold text-slate-900">Welcome back</h1>
+          <p className="mt-1.5 text-sm text-slate-500">Sign in to your recruiter dashboard.</p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-slate-700">Email</span>
               <input
@@ -48,7 +100,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className={inputCls}
                 placeholder="hr@example.com"
               />
             </label>
@@ -59,26 +111,23 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className={inputCls}
                 placeholder="••••••••"
               />
             </label>
             {error && <Alert kind="error">{error}</Alert>}
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
-            >
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? <Spinner /> : 'Sign in'}
-            </button>
+            </Button>
           </form>
-        </Card>
-        <p className="mt-4 text-center text-sm text-slate-500">
-          Looking to apply?{' '}
-          <Link to="/apply" className="font-medium text-brand-600 hover:underline">
-            Candidate application
-          </Link>
-        </p>
+
+          <p className="mt-6 text-center text-sm text-slate-500">
+            Looking to apply?{' '}
+            <Link to="/apply" className="font-medium text-brand-600 hover:underline">
+              Browse open roles
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

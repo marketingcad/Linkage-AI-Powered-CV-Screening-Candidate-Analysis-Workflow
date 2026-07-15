@@ -6,9 +6,10 @@ import { candidates, jobs } from '../db/schema.js';
 import { applicationSchema } from '../lib/validation.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { env } from '../config/env.js';
-import { extractCvText } from '../services/cvParser.js';
+import { detectCvKind, extractCvText } from '../services/cvParser.js';
 import { saveCvFile } from '../services/storage.js';
 import { runAnalysis } from '../services/analysis.js';
+import { extractContactInfo } from '../services/gemini.js';
 import { sendApplicationReceived } from '../services/email.js';
 import { logger } from '../lib/logger.js';
 import { APPLICANT_TIMELINE, statusFor } from '../lib/applicantStatus.js';
@@ -17,7 +18,26 @@ export const applicationsRouter = Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: env.MAX_UPLOAD_MB * 1024 * 1024 },
+  limits: { fileSize: env.MAX_UPLOAD_MB * 1024 * 1024, files: 1 },
+  // Reject non-PDF/DOCX before buffering the whole file.
+  fileFilter: (_req, file, cb) => {
+    if (detectCvKind(file.mimetype, file.originalname)) {
+      cb(null, true);
+    } else {
+      cb(badRequest('Only PDF or DOCX files are accepted.'));
+    }
+  },
+});
+
+/**
+ * Public endpoint: parse an uploaded CV and return contact fields so the
+ * application form can auto-fill. Does not store anything.
+ */
+applicationsRouter.post('/prefill', upload.single('cv'), async (req, res) => {
+  if (!req.file) throw badRequest('A CV file (field name "cv") is required.');
+  const cvText = await extractCvText(req.file.buffer, req.file.mimetype, req.file.originalname);
+  const contact = await extractContactInfo(cvText);
+  res.json({ contact });
 });
 
 /**

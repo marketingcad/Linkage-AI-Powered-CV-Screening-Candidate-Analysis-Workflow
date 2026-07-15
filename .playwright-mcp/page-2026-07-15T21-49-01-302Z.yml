@@ -1,0 +1,116 @@
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - link "CV ScreenAI Careers" [ref=f1e6] [cursor=pointer]:
+        - /url: /apply
+        - generic [ref=f1e7]: CV
+        - generic [ref=f1e8]: ScreenAI Careers
+      - link "Recruiter login" [ref=f1e9] [cursor=pointer]:
+        - /url: /login
+  - generic [ref=f1e14]:
+    - generic [ref=f1e15]:
+      - heading "Senior Backend Engineer" [level=1] [ref=f1e16]
+      - generic [ref=f1e17]:
+        - generic [ref=f1e18]: Engineering
+        - generic [ref=f1e19]: · Remote
+        - generic [ref=f1e20]: · Full-time
+        - generic [ref=f1e21]: via linkedin
+    - generic [ref=f1e22]:
+      - paragraph [ref=f1e23]: We are hiring a Senior Backend Engineer to design and build scalable REST APIs and services in Node.js and TypeScript. You will own database schema design on PostgreSQL, integrate third-party APIs, and ensure reliability, security, and performance across the platform.
+      - generic [ref=f1e24]:
+        - generic [ref=f1e25]: Node.js
+        - generic [ref=f1e26]: TypeScript
+        - generic [ref=f1e27]: PostgreSQL
+        - generic [ref=f1e28]: REST APIs
+        - generic [ref=f1e29]: SQL
+    - generic [ref=f1e30]:
+      - generic [ref=f1e31]:
+        - heading "Your details" [level=2] [ref=f1e32]
+        - generic [ref=f1e33]: ✨ Autofilled from your CV — please review
+      - generic [ref=f1e34]:
+        - generic [ref=f1e35]: CV / Resume
+        - generic [ref=f1e36] [cursor=pointer]:
+          - paragraph [ref=f1e37]: sofia_cv.pdf
+          - paragraph [ref=f1e38]: Click to replace
+      - generic [ref=f1e39]:
+        - generic [ref=f1e40]:
+          - generic [ref=f1e41]: Full name
+          - textbox "Full name" [ref=f1e42]:
+            - /placeholder: Jane Doe
+            - text: Sofia Ramirez
+        - generic [ref=f1e43]:
+          - generic [ref=f1e44]: Email
+          - textbox "Email" [ref=f1e45]:
+            - /placeholder: jane@example.com
+            - text: sofia.ramirez@example.com
+      - generic [ref=f1e46]:
+        - generic [ref=f1e47]: Phone (optional)
+        - textbox "Phone (optional)" [ref=f1e48]:
+          - /placeholder: +1 555 123 4567
+          - text: +1 (415) 555-0198
+    - generic [ref=f1e49]:
+      - generic [ref=f1e50]:
+        - heading "Screening exam" [level=2] [ref=f1e51]
+        - generic [ref=f1e52]: 5 questions · 15 points
+      - generic [ref=f1e53]:
+        - paragraph [ref=f1e54]:
+          - text: 1. Which of the following is the most appropriate way to handle an unhandled promise rejection in a Node.js application to prevent immediate process termination and allow for graceful shutdown or logging?
+          - generic [ref=f1e55]: (2 pts)
+        - generic [ref=f1e56]:
+          - generic [ref=f1e57] [cursor=pointer]:
+            - 'radio "Wrapping all asynchronous calls in `try...catch` blocks." [ref=f1e58]'
+            - generic [ref=f1e59]: "Wrapping all asynchronous calls in `try...catch` blocks."
+          - generic [ref=f1e60] [cursor=pointer]:
+            - 'radio "Registering a global `process.on(''uncaughtException'')` handler." [ref=f1e61]'
+            - generic [ref=f1e62]: "Registering a global `process.on('uncaughtException')` handler."
+          - generic [ref=f1e63] [cursor=pointer]:
+            - 'radio "Registering a global `process.on(''unhandledRejection'')` handler." [ref=f1e64]'
+            - generic [ref=f1e65]: "Registering a global `process.on('unhandledRejection')` handler."
+          - generic [ref=f1e66] [cursor=pointer]:
+            - 'radio "Using `async/await` with a single `try...catch` block around the main application entry point." [ref=f1e67]'
+            - generic [ref=f1e68]: "Using `async/await` with a single `try...catch` block around the main application entry point."
+      - generic [ref=f1e69]:
+        - paragraph [ref=f1e70]:
+          - text: "2. For a `users` table with `id` (PK), `email` (unique), and `created_at` columns, which indexing strategy is generally most effective for queries that frequently search by `email` (exact match) AND queries that filter by `created_at` within a date range, assuming `email` already has an implicit index due to its unique constraint?"
+          - generic [ref=f1e71]: (2 pts)
+        - generic [ref=f1e72]:
+          - generic [ref=f1e73] [cursor=pointer]:
+            - 'radio "A single B-tree index on `(email, created_at)`." [ref=f1e74]'
+            - generic [ref=f1e75]: "A single B-tree index on `(email, created_at)`."
+          - generic [ref=f1e76] [cursor=pointer]:
+            - 'radio "A single B-tree index on `(created_at, email)`." [ref=f1e77]'
+            - generic [ref=f1e78]: "A single B-tree index on `(created_at, email)`."
+          - generic [ref=f1e79] [cursor=pointer]:
+            - 'radio "A separate B-tree index on `created_at` in addition to the existing index on `email`." [ref=f1e80]'
+            - generic [ref=f1e81]: "A separate B-tree index on `created_at` in addition to the existing index on `email`."
+          - generic [ref=f1e82] [cursor=pointer]:
+            - 'radio "A hash index on `email` and a B-tree index on `created_at`." [ref=f1e83]'
+            - generic [ref=f1e84]: "A hash index on `email` and a B-tree index on `created_at`."
+      - generic [ref=f1e85]:
+        - paragraph [ref=f1e86]:
+          - text: 3. When designing a REST API, which of the following statements about HTTP methods and their properties are true?
+          - generic [ref=f1e87]: (2 pts)
+        - generic [ref=f1e88]:
+          - generic [ref=f1e89] [cursor=pointer]:
+            - 'checkbox "A `PUT` request is idempotent, meaning sending the same request multiple times will have the same effect on the server''s state as sending it once." [ref=f1e90]'
+            - generic [ref=f1e91]: "A `PUT` request is idempotent, meaning sending the same request multiple times will have the same effect on the server's state as sending it once."
+          - generic [ref=f1e92] [cursor=pointer]:
+            - 'checkbox "A `DELETE` request is idempotent, as attempting to delete a resource that no longer exists has no further effect." [ref=f1e93]'
+            - generic [ref=f1e94]: "A `DELETE` request is idempotent, as attempting to delete a resource that no longer exists has no further effect."
+          - generic [ref=f1e95] [cursor=pointer]:
+            - 'checkbox "A `POST` request is typically used for creating new resources and is inherently idempotent." [ref=f1e96]'
+            - generic [ref=f1e97]: "A `POST` request is typically used for creating new resources and is inherently idempotent."
+          - generic [ref=f1e98] [cursor=pointer]:
+            - 'checkbox "A `PATCH` request is always idempotent, as it only applies partial modifications to a resource." [ref=f1e99]'
+            - generic [ref=f1e100]: "A `PATCH` request is always idempotent, as it only applies partial modifications to a resource."
+      - generic [ref=f1e101]:
+        - paragraph [ref=f1e102]:
+          - text: "4. Design a simplified PostgreSQL schema (tables, columns, relationships, and relevant indexes) for a blogging platform that needs to store `Users`, `Posts`, `Comments`, and `Tags`. A user can create multiple posts, a post can have multiple comments, and a post can have multiple tags. Users can also comment on posts."
+          - generic [ref=f1e103]: (4 pts)
+        - textbox "Your answer…" [ref=f1e104]
+      - generic [ref=f1e105]:
+        - paragraph [ref=f1e106]:
+          - text: 5. A Node.js application using PostgreSQL is experiencing performance bottlenecks. Describe three distinct areas you would investigate to identify the root cause, and for each area, suggest one specific action or tool you would use to diagnose the issue.
+          - generic [ref=f1e107]: (5 pts)
+        - textbox "Your answer…" [ref=f1e108]
+    - button "Submit application" [ref=f1e109]

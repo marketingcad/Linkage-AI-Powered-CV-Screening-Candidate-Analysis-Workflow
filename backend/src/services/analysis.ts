@@ -23,7 +23,7 @@ export async function runAnalysis(
     .where(eq(candidates.id, candidateId));
 
   try {
-    const [{ extraction, evaluation }, quizGrade] = await Promise.all([
+    const [{ extraction, evaluation, aiDetection }, quizGrade] = await Promise.all([
       analyzeCandidate(job, cvText),
       gradeQuiz(job.title, job.quiz ?? [], quizAnswers),
     ]);
@@ -48,6 +48,9 @@ export async function runAnalysis(
         concerns: evaluation.concerns,
         summary: evaluation.summary,
         recommendation: evaluation.recommendation,
+        aiLikelihood: aiDetection?.aiGeneratedLikelihood ?? null,
+        aiVerdict: aiDetection?.verdict ?? null,
+        aiSignals: aiDetection?.signals ?? null,
         quizScore: quizGrade.quizScore,
         quizResults: quizGrade.results,
         overallScore,

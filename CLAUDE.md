@@ -33,7 +33,7 @@ backend/src/config/env.ts        Zod-validated env (reads GEMINI_API_KEY_CV_SCRE
 backend/src/db/schema.ts         Drizzle tables: hr_users, jobs, candidates (+ enums)
 backend/src/db/client.ts         postgres.js + Drizzle (prepare:false for pooler)
 backend/src/services/gemini.ts   Structured extraction + evaluation (single call)
-backend/src/services/cvParser.ts PDF (pdf-parse) / DOCX (mammoth) / TXT text extraction
+backend/src/services/cvParser.ts PDF (pdf-parse) / DOCX (mammoth) text extraction, signature-verified
 backend/src/services/analysis.ts Orchestrates parse→AI→persist; records failures
 backend/src/routes/*.ts          auth, jobs, applications, candidates, stats
 backend/src/scripts/             seed.ts (HR user), checkConfig.ts (env+DB+AI health)
@@ -91,7 +91,7 @@ README.md, SETUP_GUIDE.md  → A15 exclusively
 | applications| Public CV upload → parse → analyze → store | A16-backend | jobs, cvParser, gemini |
 | candidates  | Ranked list, detail, stage changes, re-analyze, CV download | A16-backend | jobs, db |
 | stats       | Dashboard aggregates | A16-backend | db |
-| cv-parser   | PDF/DOCX/TXT text extraction | A16-backend | — |
+| cv-parser   | PDF/DOCX text extraction | A16-backend | — |
 | gemini      | Structured extraction + evaluation | A16-backend | config |
 | ui (client) | Apply portal + HR dashboard | A16-frontend | api client, auth ctx |
 

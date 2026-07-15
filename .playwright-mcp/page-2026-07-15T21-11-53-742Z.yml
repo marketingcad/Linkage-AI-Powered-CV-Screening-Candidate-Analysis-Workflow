@@ -1,0 +1,19 @@
+- generic [ref=f6e3]:
+  - banner [ref=f6e4]:
+    - generic [ref=f6e5]:
+      - generic [ref=f6e6]:
+        - generic [ref=f6e7]:
+          - generic [ref=f6e8]: CV
+          - generic [ref=f6e9]: ScreenAI
+        - navigation [ref=f6e10]:
+          - link "Overview" [ref=f6e11] [cursor=pointer]:
+            - /url: /hr
+          - link "Jobs" [ref=f6e12] [cursor=pointer]:
+            - /url: /hr/jobs
+          - link "Candidates" [ref=f6e13] [cursor=pointer]:
+            - /url: /hr/candidates
+      - generic [ref=f6e14]:
+        - generic [ref=f6e15]: HR Admin
+        - button "Sign out" [ref=f6e16]
+  - main [ref=f6e17]:
+    - generic [ref=f6e18]: Loading candidate…

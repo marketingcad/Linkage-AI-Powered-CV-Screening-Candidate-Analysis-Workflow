@@ -170,6 +170,11 @@ export const candidates = pgTable('candidates', {
   summary: text('summary'),
   recommendation: varchar('recommendation', { length: 50 }), // e.g. strong_match / possible / not_a_fit
 
+  // AI-generated-content detection (heuristic estimate)
+  aiLikelihood: integer('ai_likelihood'), // 0-100 estimated likelihood the CV was AI-written
+  aiVerdict: varchar('ai_verdict', { length: 20 }), // unlikely | possible | likely
+  aiSignals: jsonb('ai_signals').$type<string[]>(),
+
   // Quiz / exam results
   quizAnswers: jsonb('quiz_answers').$type<QuizAnswer[]>(),
   quizResults: jsonb('quiz_results').$type<QuizQuestionResult[]>(),

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { fetchPublicJob, submitApplication } from '../api/endpoints';
+import { fetchPublicJob, prefillFromCv, submitApplication } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import type { PublicJob, QuizAnswer } from '../api/types';
 import { Alert, Card, Spinner } from '../components/ui';
@@ -19,6 +19,8 @@ export default function ApplyJobPage() {
   const [phone, setPhone] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [prefilling, setPrefilling] = useState(false);
+  const [autofilled, setAutofilled] = useState(false);
   const [answers, setAnswers] = useState<Record<string, QuizAnswer>>({});
 
   const [submitting, setSubmitting] = useState(false);
@@ -46,12 +48,35 @@ export default function ApplyJobPage() {
 
   function pickFile(f: File | null) {
     setError(null);
+    setAutofilled(false);
     if (!f) return setFile(null);
-    if (!/\.(pdf|docx?|txt)$/i.test(f.name)) {
-      setError('Please upload a PDF, DOCX, or TXT file.');
+    if (!/\.(pdf|docx)$/i.test(f.name)) {
+      setError('Only PDF or DOCX files are accepted.');
       return;
     }
     setFile(f);
+    void autofillFromCv(f);
+  }
+
+  // Parse the CV and pre-fill contact fields (only where the applicant hasn't typed).
+  async function autofillFromCv(f: File) {
+    setPrefilling(true);
+    try {
+      const { contact } = await prefillFromCv(f);
+      // Functional updaters keep any value the applicant already typed.
+      if (contact.fullName) setFullName((v) => (v.trim() ? v : contact.fullName!));
+      if (contact.email) setEmail((v) => (v.trim() ? v : contact.email!));
+      if (contact.phone) setPhone((v) => (v.trim() ? v : contact.phone!));
+      const filledAny =
+        (!!contact.fullName && !fullName.trim()) ||
+        (!!contact.email && !email.trim()) ||
+        (!!contact.phone && !phone.trim());
+      setAutofilled(filledAny);
+    } catch {
+      /* autofill is best-effort — applicant can fill manually */
+    } finally {
+      setPrefilling(false);
+    }
   }
 
   function setChoice(qid: string, optionId: string, multiple: boolean) {
@@ -177,18 +202,16 @@ export default function ApplyJobPage() {
 
             {/* Applicant details */}
             <Card className="space-y-4 p-6">
-              <h2 className="text-sm font-semibold text-slate-800">Your details</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Full name">
-                  <input required value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls} placeholder="Jane Doe" />
-                </Field>
-                <Field label="Email">
-                  <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="jane@example.com" />
-                </Field>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-slate-800">Your details</h2>
+                {autofilled && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                    ✨ Autofilled from your CV — please review
+                  </span>
+                )}
               </div>
-              <Field label="Phone (optional)">
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} placeholder="+1 555 123 4567" />
-              </Field>
+
+              {/* CV first — attaching it auto-fills the fields below */}
               <Field label="CV / Resume">
                 <div
                   onDragOver={(e) => {
@@ -206,16 +229,40 @@ export default function ApplyJobPage() {
                     dragging ? 'border-brand-500 bg-brand-50' : 'border-slate-300 hover:border-brand-400'
                   }`}
                 >
-                  <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
+                  <input ref={fileRef} type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
                   {file ? (
-                    <p className="text-sm font-medium text-slate-700">{file.name}</p>
+                    <>
+                      <p className="text-sm font-medium text-slate-700">{file.name}</p>
+                      {prefilling ? (
+                        <span className="mt-2 inline-flex items-center gap-2 text-xs text-brand-600">
+                          <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
+                          Reading your CV to autofill…
+                        </span>
+                      ) : (
+                        <p className="mt-1 text-xs text-slate-400">Click to replace</p>
+                      )}
+                    </>
                   ) : (
                     <>
                       <p className="text-sm font-medium text-slate-600">Drop your CV here or click to browse</p>
-                      <p className="mt-1 text-xs text-slate-400">PDF, DOCX or TXT, up to 10&nbsp;MB</p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        PDF or DOCX only, up to 10&nbsp;MB · we'll autofill your details
+                      </p>
                     </>
                   )}
                 </div>
+              </Field>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Full name">
+                  <input required value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls} placeholder="Jane Doe" />
+                </Field>
+                <Field label="Email">
+                  <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="jane@example.com" />
+                </Field>
+              </div>
+              <Field label="Phone (optional)">
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} placeholder="+1 555 123 4567" />
               </Field>
             </Card>
 

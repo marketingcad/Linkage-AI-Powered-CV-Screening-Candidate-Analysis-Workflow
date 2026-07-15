@@ -43,6 +43,8 @@ candidatesRouter.get('/', async (req, res) => {
       skillsMatchScore: candidates.skillsMatchScore,
       quizScore: candidates.quizScore,
       overallScore: candidates.overallScore,
+      aiLikelihood: candidates.aiLikelihood,
+      aiVerdict: candidates.aiVerdict,
       recommendation: candidates.recommendation,
       summary: candidates.summary,
       totalYearsExperience: candidates.totalYearsExperience,

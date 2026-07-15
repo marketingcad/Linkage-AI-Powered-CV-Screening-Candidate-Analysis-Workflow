@@ -1,0 +1,39 @@
+- generic [ref=f1e3]:
+  - generic [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e6]: CV
+      - generic [ref=f1e7]: ScreenAI
+    - generic [ref=f1e8]:
+      - heading "Screen hundreds of CVs in minutes, not days." [level=2] [ref=f1e9]
+      - paragraph [ref=f1e10]: AI extracts, scores, and ranks every applicant against the role — so your team spends time on people, not paperwork.
+      - list [ref=f1e11]:
+        - listitem [ref=f1e12]:
+          - generic [ref=f1e13]: ✓
+          - text: AI qualification & skills-match scoring
+        - listitem [ref=f1e14]:
+          - generic [ref=f1e15]: ✓
+          - text: Auto-generated screening exams
+        - listitem [ref=f1e16]:
+          - generic [ref=f1e17]: ✓
+          - text: CV authenticity (AI-written) detection
+        - listitem [ref=f1e18]:
+          - generic [ref=f1e19]: ✓
+          - text: Applicant status tracking & email updates
+    - paragraph [ref=f1e20]: © 2026 ScreenAI Careers
+  - generic [ref=f1e22]:
+    - heading "Welcome back" [level=1] [ref=f1e23]
+    - paragraph [ref=f1e24]: Sign in to your recruiter dashboard.
+    - generic [ref=f1e25]:
+      - generic [ref=f1e26]:
+        - generic [ref=f1e27]: Email
+        - textbox "Email" [ref=f1e28]:
+          - /placeholder: hr@example.com
+      - generic [ref=f1e29]:
+        - generic [ref=f1e30]: Password
+        - textbox "Password" [ref=f1e31]:
+          - /placeholder: ••••••••
+      - button "Sign in" [ref=f1e32]
+    - paragraph [ref=f1e33]:
+      - text: Looking to apply?
+      - link "Browse open roles" [ref=f1e34] [cursor=pointer]:
+        - /url: /apply

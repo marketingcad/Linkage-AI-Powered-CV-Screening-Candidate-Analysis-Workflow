@@ -4,9 +4,11 @@ Automates the first stage of recruitment. Candidates apply online with their CV;
 system extracts their information, evaluates them against the job requirements using
 Google Gemini, and presents recruiters with ranked, structured insights.
 
+
+
 ## What it does
 
-- **Candidate application page** (public) — pick an open role, upload a CV (PDF/DOCX/TXT).
+- **Candidate application page** (public) — pick an open role, upload a CV (PDF or DOCX).
 - **Automatic CV parsing** — text is extracted from the uploaded file.
 - **AI extraction & scoring** (Gemini) — skills, work experience, education, certifications,
   a qualification score (0–100), skills-match score, strengths, concerns/gaps, a summary,

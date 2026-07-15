@@ -26,9 +26,6 @@ export default function ApplyPage() {
             </div>
             <span className="font-semibold text-slate-800">ScreenAI Careers</span>
           </div>
-          <Link to="/login" className="text-sm font-medium text-brand-600 hover:underline">
-            Recruiter login
-          </Link>
         </div>
       </header>
 

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import type { AnalysisStatus, CandidateStage, Recommendation } from '../api/types';
 
 export function Spinner({ label }: { label?: string }) {
@@ -6,6 +6,78 @@ export function Spinner({ label }: { label?: string }) {
     <div className="flex items-center gap-3 text-slate-500">
       <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-500" />
       {label && <span className="text-sm">{label}</span>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Button — consistent variants across the app
+// ---------------------------------------------------------------------------
+
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonSize = 'sm' | 'md';
+
+const BTN_BASE =
+  'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-150 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98]';
+
+const BTN_VARIANTS: Record<ButtonVariant, string> = {
+  primary:
+    'bg-brand-500 text-white shadow-[0_1px_2px_rgba(28,45,110,0.25)] hover:bg-brand-600 hover:shadow-[0_6px_18px_-6px_rgba(51,88,240,0.65)]',
+  secondary:
+    'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300',
+  ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+  danger: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:border-rose-300',
+};
+
+const BTN_SIZES: Record<ButtonSize, string> = {
+  sm: 'px-3 py-1.5 text-xs',
+  md: 'px-4 py-2.5 text-sm',
+};
+
+export function Button({
+  variant = 'primary',
+  size = 'md',
+  className = '',
+  children,
+  ...props
+}: {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+} & ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      className={`${BTN_BASE} ${BTN_VARIANTS[variant]} ${BTN_SIZES[size]} ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton loaders
+// ---------------------------------------------------------------------------
+
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-md bg-slate-200/70 ${className}`} />;
+}
+
+export function TableSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-(--shadow-card)">
+      <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-3">
+        <Skeleton className="h-4 w-40" />
+      </div>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 border-b border-slate-50 px-4 py-4 last:border-0">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-3.5 w-1/3" />
+            <Skeleton className="h-3 w-1/4" />
+          </div>
+          <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -103,7 +175,9 @@ export function AnalysisStatusBadge({ value }: { value: AnalysisStatus }) {
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white shadow-sm ${className}`}>
+    <div
+      className={`rounded-2xl border border-slate-200/80 bg-white shadow-(--shadow-card) ${className}`}
+    >
       {children}
     </div>
   );
@@ -134,6 +208,53 @@ export function formatSource(source: string): string {
   return (
     SOURCE_META[source]?.label ??
     source.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  );
+}
+
+export function aiLevel(likelihood: number | null | undefined): {
+  label: string;
+  cls: string;
+  tone: 'low' | 'medium' | 'high';
+} {
+  if (likelihood == null) return { label: 'Not assessed', cls: 'bg-slate-100 text-slate-500', tone: 'low' };
+  if (likelihood >= 70)
+    return { label: 'Likely AI-written', cls: 'bg-rose-100 text-rose-700', tone: 'high' };
+  if (likelihood >= 40)
+    return { label: 'Possibly AI-written', cls: 'bg-amber-100 text-amber-700', tone: 'medium' };
+  return { label: 'Likely human-written', cls: 'bg-emerald-100 text-emerald-700', tone: 'low' };
+}
+
+/** Small robot/sparkle glyph for the AI-written signal. */
+function AiGlyph({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" className={className} aria-hidden="true">
+      <rect x="4" y="8" width="16" height="11" rx="3" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 4v4M8.5 12.5h.01M15.5 12.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M9 16c.8.6 4.2.6 6 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function AiWrittenBadge({
+  likelihood,
+  size = 'sm',
+}: {
+  likelihood: number | null | undefined;
+  size?: 'sm' | 'md';
+}) {
+  if (likelihood == null) {
+    return <span className="text-xs text-slate-400">—</span>;
+  }
+  const meta = aiLevel(likelihood);
+  const pad = size === 'md' ? 'px-3 py-1 text-sm' : 'px-2 py-0.5 text-xs';
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full font-medium ${meta.cls} ${pad}`}
+      title={`${meta.label} — estimated ${likelihood}% AI-generated (heuristic, not definitive)`}
+    >
+      <AiGlyph />
+      AI-written ~{likelihood}%
+    </span>
   );
 }
 
