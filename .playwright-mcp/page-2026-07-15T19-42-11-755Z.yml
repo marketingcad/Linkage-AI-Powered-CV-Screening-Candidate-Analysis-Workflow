@@ -1,0 +1,114 @@
+- generic [ref=f4e3]:
+  - banner [ref=f4e4]:
+    - generic [ref=f4e5]:
+      - link "CV ScreenAI Careers" [ref=f4e6] [cursor=pointer]:
+        - /url: /apply
+        - generic [ref=f4e7]: CV
+        - generic [ref=f4e8]: ScreenAI Careers
+      - link "Recruiter login" [ref=f4e9] [cursor=pointer]:
+        - /url: /login
+  - generic [ref=f4e14]:
+    - generic [ref=f4e15]:
+      - heading "Senior Backend Engineer" [level=1] [ref=f4e16]
+      - generic [ref=f4e17]:
+        - generic [ref=f4e18]: Engineering
+        - generic [ref=f4e19]: · Remote
+        - generic [ref=f4e20]: · Full-time
+        - generic [ref=f4e21]: via linkedin
+    - generic [ref=f4e22]:
+      - paragraph [ref=f4e23]: We are hiring a Senior Backend Engineer to design and build scalable REST APIs and services in Node.js and TypeScript. You will own database schema design on PostgreSQL, integrate third-party APIs, and ensure reliability, security, and performance across the platform.
+      - generic [ref=f4e24]:
+        - generic [ref=f4e25]: Node.js
+        - generic [ref=f4e26]: TypeScript
+        - generic [ref=f4e27]: PostgreSQL
+        - generic [ref=f4e28]: REST APIs
+        - generic [ref=f4e29]: SQL
+    - generic [ref=f4e30]:
+      - heading "Your details" [level=2] [ref=f4e31]
+      - generic [ref=f4e32]:
+        - generic [ref=f4e33]:
+          - generic [ref=f4e34]: Full name
+          - textbox "Full name" [ref=f4e35]:
+            - /placeholder: Jane Doe
+            - text: Maria Santos
+        - generic [ref=f4e36]:
+          - generic [ref=f4e37]: Email
+          - textbox "Email" [ref=f4e38]:
+            - /placeholder: jane@example.com
+            - text: maria.santos@example.com
+      - generic [ref=f4e39]:
+        - generic [ref=f4e40]: Phone (optional)
+        - textbox "Phone (optional)" [ref=f4e41]:
+          - /placeholder: +1 555 123 4567
+          - text: +1 555 222 3344
+      - generic [ref=f4e42]:
+        - generic [ref=f4e43]: CV / Resume
+        - generic [ref=f4e44] [cursor=pointer]:
+          - paragraph [ref=f4e45]: Drop your CV here or click to browse
+          - paragraph [ref=f4e46]: PDF, DOCX or TXT, up to 10 MB
+    - generic [ref=f4e47]:
+      - generic [ref=f4e48]:
+        - heading "Screening exam" [level=2] [ref=f4e49]
+        - generic [ref=f4e50]: 5 questions · 15 points
+      - generic [ref=f4e51]:
+        - paragraph [ref=f4e52]:
+          - text: 1. Which of the following is the most appropriate way to handle an unhandled promise rejection in a Node.js application to prevent immediate process termination and allow for graceful shutdown or logging?
+          - generic [ref=f4e53]: (2 pts)
+        - generic [ref=f4e54]:
+          - generic [ref=f4e55] [cursor=pointer]:
+            - 'radio "Wrapping all asynchronous calls in `try...catch` blocks." [ref=f4e56]'
+            - generic [ref=f4e57]: "Wrapping all asynchronous calls in `try...catch` blocks."
+          - generic [ref=f4e58] [cursor=pointer]:
+            - 'radio "Registering a global `process.on(''uncaughtException'')` handler." [ref=f4e59]'
+            - generic [ref=f4e60]: "Registering a global `process.on('uncaughtException')` handler."
+          - generic [ref=f4e61] [cursor=pointer]:
+            - 'radio "Registering a global `process.on(''unhandledRejection'')` handler." [checked] [ref=f4e62]'
+            - generic [ref=f4e63]: "Registering a global `process.on('unhandledRejection')` handler."
+          - generic [ref=f4e64] [cursor=pointer]:
+            - 'radio "Using `async/await` with a single `try...catch` block around the main application entry point." [ref=f4e65]'
+            - generic [ref=f4e66]: "Using `async/await` with a single `try...catch` block around the main application entry point."
+      - generic [ref=f4e67]:
+        - paragraph [ref=f4e68]:
+          - text: "2. For a `users` table with `id` (PK), `email` (unique), and `created_at` columns, which indexing strategy is generally most effective for queries that frequently search by `email` (exact match) AND queries that filter by `created_at` within a date range, assuming `email` already has an implicit index due to its unique constraint?"
+          - generic [ref=f4e69]: (2 pts)
+        - generic [ref=f4e70]:
+          - generic [ref=f4e71] [cursor=pointer]:
+            - 'radio "A single B-tree index on `(email, created_at)`." [ref=f4e72]'
+            - generic [ref=f4e73]: "A single B-tree index on `(email, created_at)`."
+          - generic [ref=f4e74] [cursor=pointer]:
+            - 'radio "A single B-tree index on `(created_at, email)`." [ref=f4e75]'
+            - generic [ref=f4e76]: "A single B-tree index on `(created_at, email)`."
+          - generic [ref=f4e77] [cursor=pointer]:
+            - 'radio "A separate B-tree index on `created_at` in addition to the existing index on `email`." [checked] [ref=f4e78]'
+            - generic [ref=f4e79]: "A separate B-tree index on `created_at` in addition to the existing index on `email`."
+          - generic [ref=f4e80] [cursor=pointer]:
+            - 'radio "A hash index on `email` and a B-tree index on `created_at`." [ref=f4e81]'
+            - generic [ref=f4e82]: "A hash index on `email` and a B-tree index on `created_at`."
+      - generic [ref=f4e83]:
+        - paragraph [ref=f4e84]:
+          - text: 3. When designing a REST API, which of the following statements about HTTP methods and their properties are true?
+          - generic [ref=f4e85]: (2 pts)
+        - generic [ref=f4e86]:
+          - generic [ref=f4e87] [cursor=pointer]:
+            - 'checkbox "A `PUT` request is idempotent, meaning sending the same request multiple times will have the same effect on the server''s state as sending it once." [checked] [active] [ref=f4e88]'
+            - generic [ref=f4e89]: "A `PUT` request is idempotent, meaning sending the same request multiple times will have the same effect on the server's state as sending it once."
+          - generic [ref=f4e90] [cursor=pointer]:
+            - 'checkbox "A `DELETE` request is idempotent, as attempting to delete a resource that no longer exists has no further effect." [ref=f4e91]'
+            - generic [ref=f4e92]: "A `DELETE` request is idempotent, as attempting to delete a resource that no longer exists has no further effect."
+          - generic [ref=f4e93] [cursor=pointer]:
+            - 'checkbox "A `POST` request is typically used for creating new resources and is inherently idempotent." [ref=f4e94]'
+            - generic [ref=f4e95]: "A `POST` request is typically used for creating new resources and is inherently idempotent."
+          - generic [ref=f4e96] [cursor=pointer]:
+            - 'checkbox "A `PATCH` request is always idempotent, as it only applies partial modifications to a resource." [ref=f4e97]'
+            - generic [ref=f4e98]: "A `PATCH` request is always idempotent, as it only applies partial modifications to a resource."
+      - generic [ref=f4e99]:
+        - paragraph [ref=f4e100]:
+          - text: "4. Design a simplified PostgreSQL schema (tables, columns, relationships, and relevant indexes) for a blogging platform that needs to store `Users`, `Posts`, `Comments`, and `Tags`. A user can create multiple posts, a post can have multiple comments, and a post can have multiple tags. Users can also comment on posts."
+          - generic [ref=f4e101]: (4 pts)
+        - textbox "Your answer…" [ref=f4e102]: Users(id PK, username unique, email unique, created_at). Posts(id PK, user_id FK->Users, title, body, published_at). Comments(id PK, post_id FK->Posts, user_id FK->Users, body, created_at). Tags(id PK, name unique). PostTags(post_id FK->Posts, tag_id FK->Tags, PRIMARY KEY(post_id, tag_id)) as the many-to-many join. Indexes on posts.user_id, comments.post_id, comments.user_id, and posts.published_at.
+      - generic [ref=f4e103]:
+        - paragraph [ref=f4e104]:
+          - text: 5. A Node.js application using PostgreSQL is experiencing performance bottlenecks. Describe three distinct areas you would investigate to identify the root cause, and for each area, suggest one specific action or tool you would use to diagnose the issue.
+          - generic [ref=f4e105]: (5 pts)
+        - textbox "Your answer…" [ref=f4e106]: "1) Database queries: use EXPLAIN ANALYZE and pg_stat_statements to find slow queries and missing indexes. 2) Node.js event loop: profile with clinic.js / 0x to find CPU-bound synchronous code blocking the loop. 3) External API latency / N+1: add distributed tracing (OpenTelemetry) and check connection pool saturation."
+    - button "Submit application" [ref=f4e107]

@@ -1,0 +1,67 @@
+import { eq } from 'drizzle-orm';
+import { db } from '../db/client.js';
+import { candidates, type Job, type QuizAnswer } from '../db/schema.js';
+import { analyzeCandidate } from './gemini.js';
+import { computeOverallScore, gradeQuiz } from './quiz.js';
+import { logger } from '../lib/logger.js';
+
+/**
+ * Runs the AI analysis for a candidate against a job and persists the results.
+ * Analyzes the CV, grades the quiz (if any), and computes a combined score.
+ * Sets analysisStatus to completed/failed accordingly. Never throws — errors are
+ * recorded on the candidate row so the workflow keeps moving.
+ */
+export async function runAnalysis(
+  candidateId: string,
+  job: Job,
+  cvText: string,
+  quizAnswers: QuizAnswer[] = [],
+): Promise<void> {
+  await db
+    .update(candidates)
+    .set({ analysisStatus: 'processing', updatedAt: new Date() })
+    .where(eq(candidates.id, candidateId));
+
+  try {
+    const [{ extraction, evaluation }, quizGrade] = await Promise.all([
+      analyzeCandidate(job, cvText),
+      gradeQuiz(job.title, job.quiz ?? [], quizAnswers),
+    ]);
+
+    const overallScore = computeOverallScore(
+      evaluation.qualificationScore,
+      quizGrade.quizScore,
+    );
+
+    await db
+      .update(candidates)
+      .set({
+        extractedSkills: extraction.skills,
+        extractedExperience: extraction.experience,
+        extractedEducation: extraction.education,
+        extractedCertifications: extraction.certifications,
+        totalYearsExperience: extraction.totalYearsExperience,
+        qualificationScore: evaluation.qualificationScore,
+        skillsMatchScore: evaluation.skillsMatchScore,
+        skillMatches: evaluation.skillMatches,
+        strengths: evaluation.strengths,
+        concerns: evaluation.concerns,
+        summary: evaluation.summary,
+        recommendation: evaluation.recommendation,
+        quizScore: quizGrade.quizScore,
+        quizResults: quizGrade.results,
+        overallScore,
+        analysisStatus: 'completed',
+        analysisError: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(candidates.id, candidateId));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error({ err, candidateId }, 'Analysis failed');
+    await db
+      .update(candidates)
+      .set({ analysisStatus: 'failed', analysisError: message, updatedAt: new Date() })
+      .where(eq(candidates.id, candidateId));
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/typecheck-gate.mjs",
+            "timeout": 180,
+            "statusMessage": "Verifying TypeScript types…"
+          }
+        ]
+      }
+    ]
+  }
+}

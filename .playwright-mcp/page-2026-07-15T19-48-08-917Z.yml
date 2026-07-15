@@ -1,0 +1,128 @@
+- generic [ref=f8e33]:
+  - banner [ref=f8e34]:
+    - generic [ref=f8e35]:
+      - generic [ref=f8e36]:
+        - generic [ref=f8e37]:
+          - generic [ref=f8e38]: CV
+          - generic [ref=f8e39]: ScreenAI
+        - navigation [ref=f8e40]:
+          - link "Overview" [ref=f8e41] [cursor=pointer]:
+            - /url: /hr
+          - link "Jobs" [ref=f8e42] [cursor=pointer]:
+            - /url: /hr/jobs
+          - link "Candidates" [ref=f8e43] [cursor=pointer]:
+            - /url: /hr/candidates
+      - generic [ref=f8e44]:
+        - generic [ref=f8e45]: HR Admin
+        - button "Sign out" [ref=f8e46]
+  - main [ref=f8e47]:
+    - generic [ref=f8e48]:
+      - link "← Back to jobs" [ref=f8e49] [cursor=pointer]:
+        - /url: /hr/jobs
+      - generic [ref=f8e50]:
+        - generic [ref=f8e51]:
+          - heading "Senior Backend Engineer" [level=1] [ref=f8e52]
+          - paragraph [ref=f8e53]: Engineering · Remote · Full-time
+        - generic [ref=f8e54]:
+          - button "Edit" [ref=f8e55]
+          - button "Delete" [ref=f8e56]
+      - generic [ref=f8e57]:
+        - generic [ref=f8e58]:
+          - heading "Description" [level=2] [ref=f8e59]
+          - paragraph [ref=f8e60]: We are hiring a Senior Backend Engineer to design and build scalable REST APIs and services in Node.js and TypeScript. You will own database schema design on PostgreSQL, integrate third-party APIs, and ensure reliability, security, and performance across the platform.
+        - generic [ref=f8e61]:
+          - generic [ref=f8e62]:
+            - paragraph [ref=f8e63]: Status
+            - paragraph [ref=f8e64]: open
+          - generic [ref=f8e65]:
+            - paragraph [ref=f8e66]: Min. experience
+            - paragraph [ref=f8e67]: 5 years
+          - generic [ref=f8e68]:
+            - paragraph [ref=f8e69]: Education
+            - paragraph [ref=f8e70]: Bachelor's in Computer Science or equivalent
+          - generic [ref=f8e71]:
+            - paragraph [ref=f8e72]: Required skills
+            - generic [ref=f8e73]:
+              - generic [ref=f8e74]: Node.js
+              - generic [ref=f8e75]: TypeScript
+              - generic [ref=f8e76]: PostgreSQL
+              - generic [ref=f8e77]: REST APIs
+              - generic [ref=f8e78]: SQL
+          - generic [ref=f8e79]:
+            - paragraph [ref=f8e80]: Nice to have
+            - generic [ref=f8e81]:
+              - generic [ref=f8e82]: Docker
+              - generic [ref=f8e83]: AWS
+              - generic [ref=f8e84]: Redis
+          - generic [ref=f8e85]:
+            - paragraph [ref=f8e86]: Screening exam
+            - paragraph [ref=f8e87]: 5 questions
+      - generic [ref=f8e88]:
+        - heading "Distribute this job" [level=2] [ref=f8e89]
+        - paragraph [ref=f8e90]: Paste these tracked links into each platform. Applicants who use them are tagged by source, so you can see which channel each candidate came from.
+        - generic [ref=f8e7]:
+          - generic [ref=f8e8]:
+            - generic [ref=f8e9]: Indeed
+            - textbox [ref=f8e10]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=indeed
+            - button "Copy" [ref=f8e11]
+            - button "QR" [ref=f8e12]
+          - generic [ref=f8e13]:
+            - generic [ref=f8e14]: LinkedIn
+            - textbox [ref=f8e15]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=linkedin
+            - button "Copy" [ref=f8e16]
+            - button "QR" [active] [ref=f8e17]
+          - generic [ref=f8e18]:
+            - generic [ref=f8e19]: JobStreet
+            - textbox [ref=f8e20]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=jobstreet
+            - button "Copy" [ref=f8e21]
+            - button "QR" [ref=f8e22]
+          - generic [ref=f8e23]:
+            - generic [ref=f8e24]: Glassdoor
+            - textbox [ref=f8e25]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=glassdoor
+            - button "Copy" [ref=f8e26]
+            - button "QR" [ref=f8e27]
+          - generic [ref=f8e28]:
+            - textbox "Custom source (e.g. company_newsletter)" [ref=f8e29]
+            - textbox [ref=f8e30]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc
+            - button "Copy" [ref=f8e31]
+            - button "QR" [ref=f8e32]
+        - generic [ref=f8e91]:
+          - generic [ref=f8e92]:
+            - generic [ref=f8e93]: Ready-to-paste posting
+            - button "Copy" [ref=f8e94]
+          - textbox [ref=f8e95]: "Senior Backend Engineer Engineering · Remote · Full-time We are hiring a Senior Backend Engineer to design and build scalable REST APIs and services in Node.js and TypeScript. You will own database schema design on PostgreSQL, integrate third-party APIs, and ensure reliability, security, and performance across the platform. Key skills: Node.js, TypeScript, PostgreSQL, REST APIs, SQL Apply here: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc"
+        - generic [ref=f8e97]:
+          - generic [ref=f8e98]:
+            - heading "QR · LinkedIn" [level=3] [ref=f8e99]
+            - button "Close" [ref=f8e100]: ✕
+          - paragraph [ref=f8e101]: Scan to open the application page.
+          - paragraph [ref=f8e104]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=linkedin
+          - button "Download PNG" [ref=f8e105]
+      - generic [ref=f8e106]:
+        - heading "Ranked candidates (1)" [level=2] [ref=f8e107]
+        - table [ref=f8e109]:
+          - rowgroup [ref=f8e110]:
+            - row [ref=f8e111]:
+              - columnheader "Score" [ref=f8e112]
+              - columnheader "Candidate" [ref=f8e113]
+              - columnheader "Source" [ref=f8e114]
+              - columnheader "Quiz" [ref=f8e115]
+              - columnheader "Recommendation" [ref=f8e116]
+              - columnheader "Exp." [ref=f8e117]
+              - columnheader "Stage" [ref=f8e118]
+              - columnheader "Status" [ref=f8e119]
+          - rowgroup [ref=f8e120]:
+            - row [ref=f8e121] [cursor=pointer]:
+              - cell "1 97" [ref=f8e122]:
+                - generic [ref=f8e123]:
+                  - generic [ref=f8e124]: "1"
+                  - generic [ref=f8e125]: "97"
+              - cell "Maria Santos maria.santos@example.com" [ref=f8e130]:
+                - generic [ref=f8e131]: Maria Santos
+                - generic [ref=f8e132]: maria.santos@example.com
+              - cell "LinkedIn" [ref=f8e133]
+              - cell "100" [ref=f8e135]
+              - cell "Strong match" [ref=f8e136]
+              - cell "6 yr" [ref=f8e138]
+              - cell "New" [ref=f8e139]
+              - cell "Analyzed" [ref=f8e141]

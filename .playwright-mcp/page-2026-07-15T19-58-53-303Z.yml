@@ -1,0 +1,19 @@
+- generic [ref=f15e4]:
+  - generic [ref=f15e5]:
+    - generic [ref=f15e6]: CV
+    - heading "Recruiter sign in" [level=1] [ref=f15e7]
+    - paragraph [ref=f15e8]: ScreenAI candidate dashboard
+  - generic [ref=f15e10]:
+    - generic [ref=f15e11]:
+      - generic [ref=f15e12]: Email
+      - textbox "Email" [ref=f15e13]:
+        - /placeholder: hr@example.com
+    - generic [ref=f15e14]:
+      - generic [ref=f15e15]: Password
+      - textbox "Password" [ref=f15e16]:
+        - /placeholder: ••••••••
+    - button "Sign in" [ref=f15e17]
+  - paragraph [ref=f15e18]:
+    - text: Looking to apply?
+    - link "Candidate application" [ref=f15e19] [cursor=pointer]:
+      - /url: /apply

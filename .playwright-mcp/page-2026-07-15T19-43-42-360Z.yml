@@ -1,0 +1,197 @@
+- generic [ref=f5e3]:
+  - banner [ref=f5e4]:
+    - generic [ref=f5e5]:
+      - generic [ref=f5e6]:
+        - generic [ref=f5e7]:
+          - generic [ref=f5e8]: CV
+          - generic [ref=f5e9]: ScreenAI
+        - navigation [ref=f5e10]:
+          - link "Overview" [ref=f5e11] [cursor=pointer]:
+            - /url: /hr
+          - link "Jobs" [ref=f5e12] [cursor=pointer]:
+            - /url: /hr/jobs
+          - link "Candidates" [ref=f5e13] [cursor=pointer]:
+            - /url: /hr/candidates
+      - generic [ref=f5e14]:
+        - generic [ref=f5e15]: HR Admin
+        - button "Sign out" [ref=f5e16]
+  - main [ref=f5e17]:
+    - generic [ref=f5e55]:
+      - link "← Back to candidates" [ref=f5e56] [cursor=pointer]:
+        - /url: /hr/candidates
+      - generic [ref=f5e57]:
+        - generic [ref=f5e58]:
+          - generic [ref=f5e59]: "97"
+          - generic [ref=f5e64]:
+            - heading "Maria Santos" [level=1] [ref=f5e65]
+            - paragraph [ref=f5e66]: maria.santos@example.com · +1 555 222 3344
+            - generic [ref=f5e67]:
+              - generic [ref=f5e68]: Strong match
+              - generic [ref=f5e69]: New
+              - generic [ref=f5e70]: LinkedIn
+              - link "Senior Backend Engineer" [ref=f5e71] [cursor=pointer]:
+                - /url: /hr/jobs/b55bb211-6124-415c-ab0b-0451578208cc
+        - generic [ref=f5e72]:
+          - button "Download CV" [ref=f5e73]
+          - button "Re-run AI" [ref=f5e74]
+      - generic [ref=f5e75]:
+        - generic [ref=f5e76]: "Move to:"
+        - button "new" [disabled] [ref=f5e77]
+        - button "shortlisted" [ref=f5e78]
+        - button "interviewing" [ref=f5e79]
+        - button "hired" [ref=f5e80]
+        - button "rejected" [ref=f5e81]
+      - generic [ref=f5e82]:
+        - generic [ref=f5e83]:
+          - generic [ref=f5e84]:
+            - heading "AI summary" [level=2] [ref=f5e85]
+            - paragraph [ref=f5e86]: Maria is a highly qualified Senior Backend Engineer with 6 years of experience, exceeding the minimum requirement. She possesses strong expertise in Node.js, TypeScript, PostgreSQL, and REST APIs, with proven experience in scalable service design, database optimization, and third-party API integration. Her proficiency in Docker, AWS, and Redis further enhances her suitability for this role.
+          - generic [ref=f5e87]:
+            - generic [ref=f5e88]:
+              - heading "Strengths" [level=2] [ref=f5e89]
+              - list [ref=f5e90]:
+                - listitem [ref=f5e91]:
+                  - generic [ref=f5e92]: •
+                  - text: Exceeds the minimum experience requirement with 6 years in backend engineering, including 4 years as a Senior Backend Engineer.
+                - listitem [ref=f5e93]:
+                  - generic [ref=f5e94]: •
+                  - text: "Strong expertise in all required skills: Node.js, TypeScript, PostgreSQL, REST APIs, and SQL, with practical application in high-traffic environments."
+                - listitem [ref=f5e95]:
+                  - generic [ref=f5e96]: •
+                  - text: Demonstrated ability in critical backend tasks such as database schema design, indexing, and query optimization, leading to significant performance improvements.
+                - listitem [ref=f5e97]:
+                  - generic [ref=f5e98]: •
+                  - text: Proficiency in all nice-to-have skills including Docker, AWS, and Redis, indicating a well-rounded technical background.
+                - listitem [ref=f5e99]:
+                  - generic [ref=f5e100]: •
+                  - text: Proven experience in designing scalable services, integrating third-party APIs, and implementing caching solutions.
+            - generic [ref=f5e101]:
+              - heading "Concerns / gaps" [level=2] [ref=f5e102]
+              - paragraph [ref=f5e103]: No concerns recorded.
+          - generic [ref=f5e104]:
+            - heading "Skills match" [level=2] [ref=f5e105]
+            - generic [ref=f5e106]:
+              - generic [ref=f5e107]:
+                - generic [ref=f5e108]: ✓
+                - generic [ref=f5e109]:
+                  - text: Node.js
+                  - generic [ref=f5e110]: "— SKILLS section; EXPERIENCE: Cloudway, DataForge"
+              - generic [ref=f5e111]:
+                - generic [ref=f5e112]: ✓
+                - generic [ref=f5e113]:
+                  - text: TypeScript
+                  - generic [ref=f5e114]: "— SKILLS section; EXPERIENCE: Cloudway"
+              - generic [ref=f5e115]:
+                - generic [ref=f5e116]: ✓
+                - generic [ref=f5e117]:
+                  - text: PostgreSQL
+                  - generic [ref=f5e118]: "— SKILLS section; EXPERIENCE: Cloudway"
+              - generic [ref=f5e119]:
+                - generic [ref=f5e120]: ✓
+                - generic [ref=f5e121]:
+                  - text: REST APIs
+                  - generic [ref=f5e122]: "— SKILLS section; EXPERIENCE: Cloudway"
+              - generic [ref=f5e123]:
+                - generic [ref=f5e124]: ✓
+                - generic [ref=f5e125]:
+                  - text: SQL
+                  - generic [ref=f5e126]: "— SKILLS section; EXPERIENCE: Cloudway (implied by PostgreSQL schema design and query optimization)"
+              - generic [ref=f5e127]:
+                - generic [ref=f5e128]: ✓
+                - generic [ref=f5e129]:
+                  - text: Docker
+                  - generic [ref=f5e130]: "— SKILLS section; EXPERIENCE: DataForge"
+              - generic [ref=f5e131]:
+                - generic [ref=f5e132]: ✓
+                - generic [ref=f5e133]:
+                  - text: AWS
+                  - generic [ref=f5e134]: "— SKILLS section; EXPERIENCE: DataForge"
+              - generic [ref=f5e135]:
+                - generic [ref=f5e136]: ✓
+                - generic [ref=f5e137]:
+                  - text: Redis
+                  - generic [ref=f5e138]: "— SKILLS section; EXPERIENCE: Cloudway"
+          - generic [ref=f5e139]:
+            - heading "Experience" [level=2] [ref=f5e140]
+            - generic [ref=f5e141]:
+              - generic [ref=f5e142]:
+                - paragraph [ref=f5e143]: Senior Backend Engineer · Cloudway
+                - paragraph [ref=f5e144]: 2020 – Present
+                - paragraph [ref=f5e145]: Designed and built REST APIs in Node.js/TypeScript serving 2M requests/day. Owned PostgreSQL schema design and added indexes that cut p95 latency by 40%. Integrated third-party payment and email APIs; added Redis caching.
+              - generic [ref=f5e146]:
+                - paragraph [ref=f5e147]: Backend Engineer · DataForge
+                - paragraph [ref=f5e148]: 2018 – 2020
+                - paragraph [ref=f5e149]: Built microservices in Node.js, containerized with Docker, deployed on AWS ECS.
+          - generic [ref=f5e150]:
+            - generic [ref=f5e151]:
+              - heading "Exam results" [level=2] [ref=f5e152]
+              - generic [ref=f5e153]: 100/100
+            - generic [ref=f5e154]:
+              - generic [ref=f5e155]:
+                - generic [ref=f5e156]:
+                  - paragraph [ref=f5e157]: 1. Which of the following is the most appropriate way to handle an unhandled promise rejection in a Node.js application to prevent immediate process termination and allow for graceful shutdown or logging?
+                  - generic [ref=f5e158]: 2/2
+                - paragraph [ref=f5e160]: "Answered: Registering a global `process.on('unhandledRejection')` handler."
+              - generic [ref=f5e161]:
+                - generic [ref=f5e162]:
+                  - paragraph [ref=f5e163]: "2. For a `users` table with `id` (PK), `email` (unique), and `created_at` columns, which indexing strategy is generally most effective for queries that frequently search by `email` (exact match) AND queries that filter by `created_at` within a date range, assuming `email` already has an implicit index due to its unique constraint?"
+                  - generic [ref=f5e164]: 2/2
+                - paragraph [ref=f5e166]: "Answered: A separate B-tree index on `created_at` in addition to the existing index on `email`."
+              - generic [ref=f5e167]:
+                - generic [ref=f5e168]:
+                  - paragraph [ref=f5e169]: 3. When designing a REST API, which of the following statements about HTTP methods and their properties are true?
+                  - generic [ref=f5e170]: 2/2
+                - paragraph [ref=f5e172]: "Answered: A `PUT` request is idempotent, meaning sending the same request multiple times will have the same effect on the server's state as sending it once., A `DELETE` request is idempotent, as attempting to delete a resource that no longer exists has no further effect."
+              - generic [ref=f5e173]:
+                - generic [ref=f5e174]:
+                  - paragraph [ref=f5e175]: "4. Design a simplified PostgreSQL schema (tables, columns, relationships, and relevant indexes) for a blogging platform that needs to store `Users`, `Posts`, `Comments`, and `Tags`. A user can create multiple posts, a post can have multiple comments, and a post can have multiple tags. Users can also comment on posts."
+                  - generic [ref=f5e176]: 4/4
+                - paragraph [ref=f5e177]: Users(id PK, username unique, email unique, created_at). Posts(id PK, user_id FK->Users, title, body, published_at). Comments(id PK, post_id FK->Posts, user_id FK->Users, body, created_at). Tags(id PK, name unique). PostTags(post_id FK->Posts, tag_id FK->Tags, PRIMARY KEY(post_id, tag_id)) as the many-to-many join. Indexes on posts.user_id, comments.post_id, comments.user_id, and posts.published_at.
+                - paragraph [ref=f5e178]: "AI: The schema design is comprehensive, correctly defining all tables, relationships, primary keys, unique constraints, and appropriate indexes as per the rubric."
+              - generic [ref=f5e179]:
+                - generic [ref=f5e180]:
+                  - paragraph [ref=f5e181]: 5. A Node.js application using PostgreSQL is experiencing performance bottlenecks. Describe three distinct areas you would investigate to identify the root cause, and for each area, suggest one specific action or tool you would use to diagnose the issue.
+                  - generic [ref=f5e182]: 5/5
+                - paragraph [ref=f5e183]: "1) Database queries: use EXPLAIN ANALYZE and pg_stat_statements to find slow queries and missing indexes. 2) Node.js event loop: profile with clinic.js / 0x to find CPU-bound synchronous code blocking the loop. 3) External API latency / N+1: add distributed tracing (OpenTelemetry) and check connection pool saturation."
+                - paragraph [ref=f5e184]: "AI: The candidate identified three distinct investigation areas and provided specific, relevant tools and actions for each, fully meeting the rubric requirements."
+        - generic [ref=f5e185]:
+          - generic [ref=f5e186]:
+            - heading "Scores" [level=2] [ref=f5e187]
+            - generic [ref=f5e189]:
+              - generic [ref=f5e190]: Overall
+              - generic [ref=f5e191]: "97"
+            - generic [ref=f5e195]:
+              - generic [ref=f5e196]: CV qualification
+              - generic [ref=f5e197]: "95"
+            - generic [ref=f5e201]:
+              - generic [ref=f5e202]: Skills match
+              - generic [ref=f5e203]: "100"
+            - generic [ref=f5e207]:
+              - generic [ref=f5e208]: Quiz / exam
+              - generic [ref=f5e209]: "100"
+            - generic [ref=f5e212]:
+              - generic [ref=f5e213]: Total experience
+              - generic [ref=f5e214]: 6 yr
+          - generic [ref=f5e215]:
+            - heading "Extracted skills" [level=2] [ref=f5e216]
+            - generic [ref=f5e217]:
+              - generic [ref=f5e218]: Node.js
+              - generic [ref=f5e219]: TypeScript
+              - generic [ref=f5e220]: PostgreSQL
+              - generic [ref=f5e221]: SQL
+              - generic [ref=f5e222]: REST APIs
+              - generic [ref=f5e223]: Docker
+              - generic [ref=f5e224]: AWS
+              - generic [ref=f5e225]: Redis
+              - generic [ref=f5e226]: Git
+              - generic [ref=f5e227]: schema design
+              - generic [ref=f5e228]: indexing
+              - generic [ref=f5e229]: query optimization
+              - generic [ref=f5e230]: third-party API integration
+              - generic [ref=f5e231]: caching
+              - generic [ref=f5e232]: microservices
+          - generic [ref=f5e233]:
+            - heading "Education" [level=2] [ref=f5e234]
+            - generic [ref=f5e236]:
+              - paragraph [ref=f5e237]: State University
+              - paragraph [ref=f5e238]: B.Sc. · Computer Science · 2018

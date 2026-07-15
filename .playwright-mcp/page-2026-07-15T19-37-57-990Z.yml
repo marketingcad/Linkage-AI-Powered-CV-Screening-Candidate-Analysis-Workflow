@@ -1,0 +1,41 @@
+- generic [ref=e20]:
+  - banner [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]: CV
+          - generic [ref=e26]: ScreenAI
+        - navigation [ref=e27]:
+          - link "Overview" [ref=e28] [cursor=pointer]:
+            - /url: /hr
+          - link "Jobs" [ref=e29] [cursor=pointer]:
+            - /url: /hr/jobs
+          - link "Candidates" [ref=e30] [cursor=pointer]:
+            - /url: /hr/candidates
+      - generic [ref=e31]:
+        - generic [ref=e32]: HR Admin
+        - button "Sign out" [ref=e33]
+  - main [ref=e34]:
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - heading "Overview" [level=1] [ref=e37]
+        - paragraph [ref=e38]: AI-screened candidates across all your open roles.
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - paragraph [ref=e41]: Total candidates
+          - paragraph [ref=e42]: "0"
+        - generic [ref=e43]:
+          - paragraph [ref=e44]: Open jobs
+          - paragraph [ref=e45]: "0"
+        - generic [ref=e46]:
+          - paragraph [ref=e47]: Avg. score
+          - paragraph [ref=e48]: 0/100
+        - generic [ref=e49]:
+          - paragraph [ref=e50]: Shortlisted
+          - paragraph [ref=e51]: "0"
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - heading "Top candidates" [level=2] [ref=e54]
+          - link "View all →" [ref=e55] [cursor=pointer]:
+            - /url: /hr/candidates
+        - generic [ref=e56]: No candidates yet.
