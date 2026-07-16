@@ -1,6 +1,18 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LuEye, LuEyeOff, LuLock, LuMail } from 'react-icons/lu';
+import type { IconType } from 'react-icons';
+import {
+  LuCircleCheck,
+  LuEye,
+  LuEyeOff,
+  LuFileText,
+  LuLock,
+  LuMail,
+  LuScanLine,
+  LuSparkles,
+  LuStar,
+  LuUserCheck,
+} from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../api/client';
 import { Alert, Spinner } from '@/components/ui';
@@ -9,6 +21,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import loginHero from '../assets/login-hero.jpg';
 import loginHeroVideo from '../assets/login-hero.mp4';
+
+/** Symbols of the screening workflow, drifting behind the form — each its own colour. */
+const FLOATERS: {
+  Icon: IconType;
+  pos: string;
+  box: string;
+  icon: string;
+  color: string;
+  dur: string;
+  delay: string;
+}[] = [
+  { Icon: LuFileText, pos: 'left-[9%] top-[17%]', box: 'h-14 w-14', icon: 'h-6 w-6', color: 'border-brand-200/60 bg-brand-50/70 text-brand-600', dur: '8s', delay: '0s' },
+  { Icon: LuSparkles, pos: 'right-[11%] top-[13%]', box: 'h-12 w-12', icon: 'h-5 w-5', color: 'border-violet-200/60 bg-violet-50/70 text-violet-500', dur: '7s', delay: '1.2s' },
+  { Icon: LuScanLine, pos: 'left-[13%] top-[57%]', box: 'h-12 w-12', icon: 'h-5 w-5', color: 'border-sky-200/60 bg-sky-50/70 text-sky-500', dur: '9s', delay: '0.6s' },
+  { Icon: LuStar, pos: 'right-[9%] top-[33%]', box: 'h-10 w-10', icon: 'h-4 w-4', color: 'border-amber-200/60 bg-amber-50/70 text-amber-500', dur: '6.5s', delay: '2s' },
+  { Icon: LuCircleCheck, pos: 'right-[13%] bottom-[16%]', box: 'h-12 w-12', icon: 'h-5 w-5', color: 'border-emerald-200/60 bg-emerald-50/70 text-emerald-500', dur: '8.5s', delay: '0.3s' },
+  { Icon: LuUserCheck, pos: 'left-[8%] bottom-[15%]', box: 'h-14 w-14', icon: 'h-6 w-6', color: 'border-rose-200/60 bg-rose-50/70 text-rose-500', dur: '7.5s', delay: '1.6s' },
+];
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -111,7 +141,21 @@ export default function LoginPage() {
         {/* Soft brand accents behind the form */}
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-200/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-brand-100/50 blur-3xl" />
-        <div className="relative w-full max-w-sm animate-rise">
+
+        {/* Floating workflow symbols */}
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          {FLOATERS.map((f, i) => (
+            <span
+              key={i}
+              style={{ animationDuration: f.dur, animationDelay: f.delay }}
+              className={`animate-float-drift absolute ${f.pos} ${f.box} ${f.color} flex items-center justify-center rounded-2xl border shadow-sm backdrop-blur-sm`}
+            >
+              <f.Icon className={f.icon} />
+            </span>
+          ))}
+        </div>
+
+        <div className="relative z-10 w-full max-w-sm animate-rise">
           <div className="rounded-3xl border border-white/60 bg-white/80 p-8 shadow-[0_24px_60px_-24px_rgba(28,45,110,0.35)] backdrop-blur-md">
             {/* Logo + heading */}
             <div className="mb-7">
