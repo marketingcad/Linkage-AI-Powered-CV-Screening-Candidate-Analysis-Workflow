@@ -1,17 +1,13 @@
 import { Link } from 'react-router-dom';
-import { LuLayoutDashboard } from 'react-icons/lu';
-import { useAuth } from '../auth/AuthContext';
 
 /**
  * Shared header for the public (candidate-facing) pages — mirrors the HR header's
  * professional lockup so both sides feel like one product.
  *
- * The action button is auth-aware: candidates/public visitors see nothing, while a
- * signed-in recruiter gets a quick link back to the dashboard.
+ * Public pages stay candidate-only: no dashboard/admin controls are shown here, even
+ * to a signed-in recruiter. Recruiters reach the dashboard via /hr directly.
  */
 export default function PublicHeader({ container = 'max-w-4xl' }: { container?: string }) {
-  const { user } = useAuth();
-
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur-md">
       <div className={`mx-auto flex h-16 items-center justify-between px-6 ${container}`}>
@@ -24,16 +20,6 @@ export default function PublicHeader({ container = 'max-w-4xl' }: { container?: 
             <span className="text-[11px] font-medium tracking-wide text-slate-400">Careers</span>
           </span>
         </Link>
-
-        {user && (
-          <Link
-            to="/hr"
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
-          >
-            <LuLayoutDashboard className="h-4 w-4" />
-            Dashboard
-          </Link>
-        )}
       </div>
     </header>
   );

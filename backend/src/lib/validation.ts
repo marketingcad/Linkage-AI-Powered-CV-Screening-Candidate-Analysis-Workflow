@@ -5,6 +5,30 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+// --- Account / profile ------------------------------------------------------
+
+export const updateProfileSchema = z
+  .object({
+    name: z.string().min(2).max(255).optional(),
+    email: z.string().email().max(255).optional(),
+    // Resized avatar as an image data URL, or null to remove it. ~4MB cap.
+    avatarUrl: z
+      .string()
+      .max(4_000_000)
+      .refine((v) => v.startsWith('data:image/'), 'avatarUrl must be an image data URL')
+      .nullable()
+      .optional(),
+  })
+  .refine(
+    (v) => v.name !== undefined || v.email !== undefined || v.avatarUrl !== undefined,
+    'Provide at least one field to update',
+  );
+
+export const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters').max(200),
+});
+
 // --- Quiz -------------------------------------------------------------------
 
 export const quizOptionSchema = z.object({

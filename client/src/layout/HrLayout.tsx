@@ -10,6 +10,14 @@ import {
   LuX,
 } from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../components/ui/tooltip';
+import avatarPlaceholder from '../assets/avatar-placeholder.png';
 
 const navItems = [
   { to: '/hr', label: 'Overview', end: true, Icon: LuLayoutDashboard },
@@ -94,15 +102,32 @@ export default function HrLayout() {
 
       {/* User */}
       <div className="border-t border-slate-200/70 p-3">
-        <div className="flex items-center gap-3 rounded-lg px-2 py-2">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand-400 to-brand-600 text-xs font-bold text-white">
-            {initials(user?.name)}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-slate-800">{user?.name}</p>
-            <p className="truncate text-xs text-slate-400">{user?.email}</p>
-          </div>
-        </div>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <NavLink
+                to="/hr/settings"
+                onClick={() => setOpen(false)}
+                aria-label="Account settings"
+                className={({ isActive }) =>
+                  `flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition ${
+                    isActive ? 'bg-brand-50' : 'hover:bg-slate-100'
+                  }`
+                }
+              >
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={user?.avatarUrl ?? avatarPlaceholder} alt={user?.name ?? 'Account'} />
+                  <AvatarFallback>{initials(user?.name)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-800">{user?.name}</p>
+                  <p className="truncate text-xs text-slate-400">{user?.email}</p>
+                </div>
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side="top">Account settings</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <button
           type="button"
           onClick={signOut}

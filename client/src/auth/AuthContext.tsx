@@ -16,6 +16,8 @@ interface AuthState {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  /** Persist a refreshed token + user (e.g. after a profile update). */
+  applyAuth: (token: string, user: HrUser) => void;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -47,9 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const applyAuth = useCallback((token: string, nextUser: HrUser) => {
+    setToken(token);
+    setUser(nextUser);
+  }, []);
+
   const value = useMemo(
-    () => ({ user, loading, login, logout }),
-    [user, loading, login, logout],
+    () => ({ user, loading, login, logout, applyAuth }),
+    [user, loading, login, logout, applyAuth],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

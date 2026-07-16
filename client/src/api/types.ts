@@ -15,6 +15,8 @@ export interface HrUser {
   email: string;
   name: string;
   role: string;
+  /** Optional profile picture URL; falls back to a placeholder avatar when absent. */
+  avatarUrl?: string;
 }
 
 export interface QuizOption {

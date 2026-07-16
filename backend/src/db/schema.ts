@@ -41,6 +41,8 @@ export const hrUsers = pgTable('hr_users', {
   name: varchar('name', { length: 255 }).notNull(),
   passwordHash: text('password_hash').notNull(),
   role: varchar('role', { length: 50 }).notNull().default('recruiter'),
+  // Profile picture stored as a small resized data URL (base64); null = use placeholder.
+  avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

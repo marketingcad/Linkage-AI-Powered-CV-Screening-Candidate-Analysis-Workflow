@@ -26,6 +26,23 @@ export function login(email: string, password: string) {
 export function fetchMe() {
   return apiRequest<{ user: HrUser }>('/auth/me');
 }
+export interface ProfileUpdate {
+  name?: string;
+  email?: string;
+  avatarUrl?: string | null;
+}
+export function updateProfile(input: ProfileUpdate) {
+  return apiRequest<{ token: string; user: HrUser }>('/auth/me', {
+    method: 'PATCH',
+    body: input,
+  });
+}
+export function changePassword(oldPassword: string, newPassword: string) {
+  return apiRequest<{ ok: true }>('/auth/change-password', {
+    method: 'POST',
+    body: { oldPassword, newPassword },
+  });
+}
 
 // --- Public jobs / applications --------------------------------------------
 export function fetchPublicJobs() {

@@ -14,6 +14,7 @@ import JobsPage from './pages/JobsPage';
 import JobDetailPage from './pages/JobDetailPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
+import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 const router = createBrowserRouter([
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
       { path: 'jobs/:id', element: <JobDetailPage /> },
       { path: 'candidates', element: <CandidatesPage /> },
       { path: 'candidates/:id', element: <CandidateDetailPage /> },
+      { path: 'settings', element: <AccountSettingsPage /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },

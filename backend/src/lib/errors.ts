@@ -20,5 +20,7 @@ export const forbidden = (message = 'Forbidden') =>
   new AppError(403, 'FORBIDDEN', message);
 export const notFound = (message = 'Not found') =>
   new AppError(404, 'NOT_FOUND', message);
+export const conflict = (message = 'Conflict') =>
+  new AppError(409, 'CONFLICT', message);
 export const serverError = (message = 'Internal server error', details?: unknown) =>
   new AppError(500, 'INTERNAL_ERROR', message, details);

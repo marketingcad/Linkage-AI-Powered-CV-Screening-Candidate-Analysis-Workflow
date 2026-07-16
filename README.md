@@ -126,9 +126,15 @@ Render → **New → Web Service** → connect the GitHub repo, then:
 | Start Command    | `npm start`                            |
 | Instance type    | Free works (note cold starts below)    |
 
-> **Why `--include=dev`:** Render sets `NODE_ENV=production`, which makes `npm install`
-> skip `devDependencies` — but the build needs `typescript` (`tsc`). `--include=dev`
-> forces them to install so the build (and `tsx` for `seed`/`db:push`) works.
+> **⚠️ Do not use Render's default build command (`npm install; npm run build`) as-is.**
+> Render sets `NODE_ENV=production`, which makes `npm install` **skip `devDependencies`**
+> — but the build needs `typescript` and the `@types/*` packages, so `tsc` fails with
+> `TS7016: Could not find a declaration file for module 'express'` (and similar).
+> Fix it either way:
+> - **Build Command:** `npm install --include=dev && npm run build`, **or**
+> - **Env var:** add `NPM_CONFIG_INCLUDE=dev` and keep the default build command.
+>
+> `--include=dev` also ensures `tsx` is present for `seed` / `db:push` in the Render shell.
 
 **Environment variables** (Render → your service → *Environment*):
 
