@@ -143,6 +143,16 @@ export const candidates = pgTable('candidates', {
   email: varchar('email', { length: 255 }).notNull(),
   phone: varchar('phone', { length: 50 }),
 
+  // Applicant-provided details (from the application form)
+  location: varchar('location', { length: 255 }),
+  currentTitle: varchar('current_title', { length: 255 }),
+  declaredYearsExperience: integer('declared_years_experience'),
+  linkedinUrl: varchar('linkedin_url', { length: 512 }),
+  portfolioUrl: varchar('portfolio_url', { length: 512 }),
+  noticePeriod: varchar('notice_period', { length: 100 }),
+  expectedSalary: varchar('expected_salary', { length: 100 }),
+  coverNote: text('cover_note'),
+
   // Which platform / channel the applicant came from (indeed, linkedin, jobstreet, direct, …)
   source: varchar('source', { length: 100 }).notNull().default('direct'),
 

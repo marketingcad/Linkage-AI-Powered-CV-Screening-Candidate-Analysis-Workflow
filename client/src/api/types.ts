@@ -158,6 +158,14 @@ export interface CandidateSummary {
 }
 
 export interface Candidate extends CandidateSummary {
+  location: string | null;
+  currentTitle: string | null;
+  declaredYearsExperience: number | null;
+  linkedinUrl: string | null;
+  portfolioUrl: string | null;
+  noticePeriod: string | null;
+  expectedSalary: string | null;
+  coverNote: string | null;
   cvFilename: string | null;
   cvStoragePath: string | null;
   cvText: string | null;

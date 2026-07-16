@@ -465,69 +465,104 @@ function normalizeGenerated(q: RawGenQuestion): QuizQuestion | null {
 }
 
 // ---------------------------------------------------------------------------
-// Contact-info extraction (for CV autofill on the application form)
+// CV detail extraction (for autofill on the application form)
 // ---------------------------------------------------------------------------
 
-export type ContactInfo = {
+export type CvDetails = {
   fullName: string | null;
   email: string | null;
   phone: string | null;
+  location: string | null;
+  currentTitle: string | null;
+  linkedinUrl: string | null;
+  portfolioUrl: string | null;
+  yearsExperience: number | null;
 };
 
-const contactSchema = {
+const cvDetailsSchema = {
   type: Type.OBJECT,
   properties: {
     fullName: { type: Type.STRING, nullable: true, description: "Candidate's full name." },
     email: { type: Type.STRING, nullable: true },
     phone: { type: Type.STRING, nullable: true },
+    location: { type: Type.STRING, nullable: true, description: 'City / country, if stated.' },
+    currentTitle: {
+      type: Type.STRING,
+      nullable: true,
+      description: 'Current or most recent job title.',
+    },
+    linkedinUrl: { type: Type.STRING, nullable: true },
+    portfolioUrl: {
+      type: Type.STRING,
+      nullable: true,
+      description: 'Personal site, portfolio, or GitHub URL.',
+    },
+    yearsExperience: {
+      type: Type.INTEGER,
+      nullable: true,
+      description: 'Approximate total years of professional experience.',
+    },
   },
-  required: ['fullName', 'email', 'phone'],
+  required: ['fullName', 'email', 'phone', 'location', 'currentTitle', 'linkedinUrl', 'portfolioUrl', 'yearsExperience'],
 };
 
 const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 const PHONE_RE = /(\+?\d[\d\s().-]{7,}\d)/;
+const LINKEDIN_RE = /(https?:\/\/)?(www\.)?linkedin\.com\/[^\s)]+/i;
 
 /**
- * Extracts the applicant's contact fields from CV text for form autofill.
- * Uses Gemini, with a regex fallback for email/phone. Never throws — returns
- * nulls on failure so the form simply isn't pre-filled.
+ * Extracts applicant fields from CV text for form autofill. Uses Gemini with
+ * regex fallbacks for machine-readable fields. Never throws — returns nulls on
+ * failure so the form simply isn't pre-filled.
  */
-export async function extractContactInfo(cvText: string): Promise<ContactInfo> {
-  const snippet = cvText.slice(0, 6000);
-  let ai: ContactInfo = { fullName: null, email: null, phone: null };
+export async function extractCvDetails(cvText: string): Promise<CvDetails> {
+  const snippet = cvText.slice(0, 8000);
+  let extracted: Partial<CvDetails> = {};
 
   try {
-    const response = await ai_generateContact(snippet);
-    ai = response;
+    const response = await ai.models.generateContent({
+      model: env.GEMINI_MODEL,
+      contents: [
+        'Extract the following applicant details from this CV. Use null for anything not clearly',
+        'present — do not invent values.',
+        'Fields: fullName, email, phone, location (city/country), currentTitle (current or most',
+        'recent role), linkedinUrl, portfolioUrl (site/portfolio/GitHub), yearsExperience (integer).',
+        '',
+        snippet,
+      ].join('\n'),
+      config: { responseMimeType: 'application/json', responseSchema: cvDetailsSchema, temperature: 0 },
+    });
+    const text = response.text;
+    if (text) extracted = JSON.parse(text) as CvDetails;
   } catch (err) {
-    logger.error({ err }, 'Contact extraction failed (using regex fallback)');
+    logger.error({ err }, 'CV detail extraction failed (using regex fallback)');
   }
 
-  // Regex fallbacks for the machine-readable fields.
-  const email = normalizeContact(ai.email) ?? cvText.match(EMAIL_RE)?.[0] ?? null;
-  const phone = normalizeContact(ai.phone) ?? cvText.match(PHONE_RE)?.[0]?.trim() ?? null;
-  const fullName = normalizeContact(ai.fullName);
+  const email = clean(extracted.email) ?? cvText.match(EMAIL_RE)?.[0] ?? null;
+  const phone = clean(extracted.phone) ?? cvText.match(PHONE_RE)?.[0]?.trim() ?? null;
+  let linkedinUrl = clean(extracted.linkedinUrl) ?? cvText.match(LINKEDIN_RE)?.[0] ?? null;
+  if (linkedinUrl && !/^https?:\/\//i.test(linkedinUrl)) linkedinUrl = `https://${linkedinUrl}`;
 
-  return { fullName, email, phone };
+  const years =
+    typeof extracted.yearsExperience === 'number' &&
+    extracted.yearsExperience >= 0 &&
+    extracted.yearsExperience <= 60
+      ? Math.round(extracted.yearsExperience)
+      : null;
+
+  return {
+    fullName: clean(extracted.fullName),
+    email,
+    phone,
+    location: clean(extracted.location),
+    currentTitle: clean(extracted.currentTitle),
+    linkedinUrl,
+    portfolioUrl: clean(extracted.portfolioUrl),
+    yearsExperience: years,
+  };
 }
 
-async function ai_generateContact(snippet: string): Promise<ContactInfo> {
-  const response = await ai.models.generateContent({
-    model: env.GEMINI_MODEL,
-    contents: [
-      "Extract the candidate's full name, email address, and phone number from this CV.",
-      'Return null for any field that is not clearly present. Do not invent values.',
-      '',
-      snippet,
-    ].join('\n'),
-    config: { responseMimeType: 'application/json', responseSchema: contactSchema, temperature: 0 },
-  });
-  const text = response.text;
-  if (!text) throw new Error('Empty response from Gemini');
-  return JSON.parse(text) as ContactInfo;
-}
-
-function normalizeContact(v: string | null | undefined): string | null {
+function clean(v: string | null | undefined): string | null {
   if (!v) return null;
   const t = v.trim();
   if (!t || t.toLowerCase() === 'null' || t.toLowerCase() === 'n/a') return null;

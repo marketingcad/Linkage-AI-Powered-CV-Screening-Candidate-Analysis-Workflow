@@ -34,13 +34,25 @@ export function fetchPublicJobs() {
 export function fetchPublicJob(id: string) {
   return apiRequest<{ job: PublicJob }>(`/jobs/public/${id}`, { auth: false });
 }
+export interface CvDetails {
+  fullName: string | null;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  currentTitle: string | null;
+  linkedinUrl: string | null;
+  portfolioUrl: string | null;
+  yearsExperience: number | null;
+}
 export function prefillFromCv(file: File) {
   const form = new FormData();
   form.append('cv', file);
-  return apiRequest<{ contact: { fullName: string | null; email: string | null; phone: string | null } }>(
-    '/applications/prefill',
-    { method: 'POST', body: form, isForm: true, auth: false },
-  );
+  return apiRequest<{ details: CvDetails }>('/applications/prefill', {
+    method: 'POST',
+    body: form,
+    isForm: true,
+    auth: false,
+  });
 }
 export function submitApplication(form: FormData) {
   return apiRequest<{

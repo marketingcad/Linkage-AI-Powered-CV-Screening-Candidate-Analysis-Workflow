@@ -17,6 +17,14 @@ export default function ApplyJobPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState('');
+  const [currentTitle, setCurrentTitle] = useState('');
+  const [yearsExperience, setYearsExperience] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [noticePeriod, setNoticePeriod] = useState('');
+  const [expectedSalary, setExpectedSalary] = useState('');
+  const [coverNote, setCoverNote] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [prefilling, setPrefilling] = useState(false);
@@ -58,20 +66,35 @@ export default function ApplyJobPage() {
     void autofillFromCv(f);
   }
 
-  // Parse the CV and pre-fill contact fields (only where the applicant hasn't typed).
+  // Parse the CV and pre-fill fields (only where the applicant hasn't typed).
   async function autofillFromCv(f: File) {
     setPrefilling(true);
     try {
-      const { contact } = await prefillFromCv(f);
+      const { details } = await prefillFromCv(f);
       // Functional updaters keep any value the applicant already typed.
-      if (contact.fullName) setFullName((v) => (v.trim() ? v : contact.fullName!));
-      if (contact.email) setEmail((v) => (v.trim() ? v : contact.email!));
-      if (contact.phone) setPhone((v) => (v.trim() ? v : contact.phone!));
-      const filledAny =
-        (!!contact.fullName && !fullName.trim()) ||
-        (!!contact.email && !email.trim()) ||
-        (!!contact.phone && !phone.trim());
-      setAutofilled(filledAny);
+      const fill = (setter: (fn: (v: string) => string) => void, val: string | null) => {
+        if (val) setter((v) => (v.trim() ? v : val));
+      };
+      fill(setFullName, details.fullName);
+      fill(setEmail, details.email);
+      fill(setPhone, details.phone);
+      fill(setLocation, details.location);
+      fill(setCurrentTitle, details.currentTitle);
+      fill(setLinkedinUrl, details.linkedinUrl);
+      fill(setPortfolioUrl, details.portfolioUrl);
+      if (details.yearsExperience != null) {
+        setYearsExperience((v) => (v.trim() ? v : String(details.yearsExperience)));
+      }
+      const filledAny = [
+        [details.fullName, fullName],
+        [details.email, email],
+        [details.phone, phone],
+        [details.location, location],
+        [details.currentTitle, currentTitle],
+        [details.linkedinUrl, linkedinUrl],
+        [details.portfolioUrl, portfolioUrl],
+      ].some(([val, cur]) => !!val && !String(cur).trim());
+      setAutofilled(filledAny || (details.yearsExperience != null && !yearsExperience.trim()));
     } catch {
       /* autofill is best-effort — applicant can fill manually */
     } finally {
@@ -113,6 +136,14 @@ export default function ApplyJobPage() {
     form.append('fullName', fullName);
     form.append('email', email);
     if (phone) form.append('phone', phone);
+    if (location) form.append('location', location);
+    if (currentTitle) form.append('currentTitle', currentTitle);
+    if (yearsExperience) form.append('declaredYearsExperience', yearsExperience);
+    if (linkedinUrl) form.append('linkedinUrl', linkedinUrl);
+    if (portfolioUrl) form.append('portfolioUrl', portfolioUrl);
+    if (noticePeriod) form.append('noticePeriod', noticePeriod);
+    if (expectedSalary) form.append('expectedSalary', expectedSalary);
+    if (coverNote) form.append('coverNote', coverNote);
     form.append('source', source);
     form.append('quizAnswers', JSON.stringify(quizAnswers));
     form.append('cv', file);
@@ -138,9 +169,6 @@ export default function ApplyJobPage() {
               CV
             </div>
             <span className="font-semibold text-slate-800">ScreenAI Careers</span>
-          </Link>
-          <Link to="/login" className="text-sm font-medium text-brand-600 hover:underline">
-            Recruiter login
           </Link>
         </div>
       </header>
@@ -260,10 +288,43 @@ export default function ApplyJobPage() {
                 <Field label="Email">
                   <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="jane@example.com" />
                 </Field>
+                <Field label="Phone">
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} placeholder="+1 555 123 4567" />
+                </Field>
+                <Field label="Location">
+                  <input value={location} onChange={(e) => setLocation(e.target.value)} className={inputCls} placeholder="City, Country" />
+                </Field>
+                <Field label="Current / most recent title">
+                  <input value={currentTitle} onChange={(e) => setCurrentTitle(e.target.value)} className={inputCls} placeholder="Senior Frontend Engineer" />
+                </Field>
+                <Field label="Years of experience">
+                  <input type="number" min={0} max={60} value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)} className={inputCls} placeholder="5" />
+                </Field>
+                <Field label="LinkedIn URL">
+                  <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} className={inputCls} placeholder="https://linkedin.com/in/…" />
+                </Field>
+                <Field label="Portfolio / GitHub URL">
+                  <input value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} className={inputCls} placeholder="https://…" />
+                </Field>
+                <Field label="Notice period / availability">
+                  <input value={noticePeriod} onChange={(e) => setNoticePeriod(e.target.value)} className={inputCls} placeholder="e.g. Immediate, 2 weeks, 1 month" />
+                </Field>
+                <Field label="Expected salary">
+                  <input value={expectedSalary} onChange={(e) => setExpectedSalary(e.target.value)} className={inputCls} placeholder="e.g. $90k, negotiable" />
+                </Field>
               </div>
-              <Field label="Phone (optional)">
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} placeholder="+1 555 123 4567" />
+              <Field label="Anything else you'd like us to know? (optional)">
+                <textarea
+                  value={coverNote}
+                  onChange={(e) => setCoverNote(e.target.value)}
+                  rows={3}
+                  className={inputCls}
+                  placeholder="A short note or cover message…"
+                />
               </Field>
+              <p className="text-xs text-slate-400">
+                Only name, email, and CV are required — the rest help us evaluate you faster.
+              </p>
             </Card>
 
             {/* Quiz / exam */}

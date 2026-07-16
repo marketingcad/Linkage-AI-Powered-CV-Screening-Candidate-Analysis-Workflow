@@ -343,6 +343,37 @@ export default function CandidateDetailPage() {
 
         {/* Right: extracted facts */}
         <div className="space-y-6">
+          {(c.location ||
+            c.currentTitle ||
+            c.declaredYearsExperience != null ||
+            c.linkedinUrl ||
+            c.portfolioUrl ||
+            c.noticePeriod ||
+            c.expectedSalary ||
+            c.coverNote) && (
+            <Card className="p-5">
+              <h2 className="mb-3 text-sm font-semibold text-slate-700">Applicant details</h2>
+              <dl className="space-y-2.5 text-sm">
+                <DetailRow label="Location" value={c.location} />
+                <DetailRow label="Current title" value={c.currentTitle} />
+                <DetailRow
+                  label="Declared experience"
+                  value={c.declaredYearsExperience != null ? `${c.declaredYearsExperience} yr` : null}
+                />
+                <DetailRow label="Notice period" value={c.noticePeriod} />
+                <DetailRow label="Expected salary" value={c.expectedSalary} />
+                <LinkRow label="LinkedIn" href={c.linkedinUrl} />
+                <LinkRow label="Portfolio" href={c.portfolioUrl} />
+              </dl>
+              {c.coverNote && (
+                <div className="mt-3 border-t border-slate-100 pt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Note</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{c.coverNote}</p>
+                </div>
+              )}
+            </Card>
+          )}
+
           <Card className="p-5">
             <h2 className="mb-3 text-sm font-semibold text-slate-700">Scores</h2>
             <ScoreLine label="Overall" value={c.overallScore} />
@@ -495,6 +526,35 @@ function AnswerDisplay({
           Correct: {correct.map((id) => optionText(id)).join(', ')}
         </p>
       )}
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between gap-3">
+      <dt className="shrink-0 text-slate-500">{label}</dt>
+      <dd className="text-right font-medium text-slate-700">{value}</dd>
+    </div>
+  );
+}
+
+function LinkRow({ label, href }: { label: string; href: string | null }) {
+  if (!href) return null;
+  return (
+    <div className="flex justify-between gap-3">
+      <dt className="shrink-0 text-slate-500">{label}</dt>
+      <dd className="truncate text-right">
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-brand-600 hover:underline"
+        >
+          Open ↗
+        </a>
+      </dd>
     </div>
   );
 }

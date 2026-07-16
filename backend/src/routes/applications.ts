@@ -9,7 +9,7 @@ import { env } from '../config/env.js';
 import { detectCvKind, extractCvText } from '../services/cvParser.js';
 import { saveCvFile } from '../services/storage.js';
 import { runAnalysis } from '../services/analysis.js';
-import { extractContactInfo } from '../services/gemini.js';
+import { extractCvDetails } from '../services/gemini.js';
 import { sendApplicationReceived } from '../services/email.js';
 import { logger } from '../lib/logger.js';
 import { APPLICANT_TIMELINE, statusFor } from '../lib/applicantStatus.js';
@@ -36,8 +36,8 @@ const upload = multer({
 applicationsRouter.post('/prefill', upload.single('cv'), async (req, res) => {
   if (!req.file) throw badRequest('A CV file (field name "cv") is required.');
   const cvText = await extractCvText(req.file.buffer, req.file.mimetype, req.file.originalname);
-  const contact = await extractContactInfo(cvText);
-  res.json({ contact });
+  const details = await extractCvDetails(cvText);
+  res.json({ details });
 });
 
 /**
@@ -55,6 +55,10 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res) => {
     } catch {
       throw badRequest('quizAnswers must be valid JSON.');
     }
+  }
+  // Drop empty optional fields so they validate as "omitted" rather than "".
+  for (const k of Object.keys(body)) {
+    if (typeof body[k] === 'string' && (body[k] as string).trim() === '') delete body[k];
   }
 
   const input = applicationSchema.parse(body);
@@ -80,6 +84,14 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res) => {
       fullName: input.fullName,
       email: input.email.toLowerCase(),
       phone: input.phone ?? null,
+      location: input.location ?? null,
+      currentTitle: input.currentTitle ?? null,
+      declaredYearsExperience: input.declaredYearsExperience ?? null,
+      linkedinUrl: input.linkedinUrl ?? null,
+      portfolioUrl: input.portfolioUrl ?? null,
+      noticePeriod: input.noticePeriod ?? null,
+      expectedSalary: input.expectedSalary ?? null,
+      coverNote: input.coverNote ?? null,
       source: normalizeSource(input.source),
       cvFilename: filename,
       cvStoragePath: storagePath,
