@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { LuEye, LuEyeOff, LuLock, LuMail } from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../api/client';
 import { Alert, Spinner } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import loginHero from '../assets/login-hero.jpg';
+import loginHeroVideo from '../assets/login-hero.mp4';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -17,6 +20,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,19 +39,32 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       {/* Brand panel */}
-      <div className="relative hidden overflow-hidden bg-brand-700 lg:flex lg:flex-col lg:justify-between p-12 text-white">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-90"
-          style={{
-            backgroundImage:
-              'radial-gradient(600px 300px at 15% 10%, rgba(255,255,255,0.16), transparent 60%), radial-gradient(700px 380px at 110% 100%, rgba(0,0,0,0.35), transparent 55%)',
-          }}
-        />
+      <div className="relative hidden overflow-hidden bg-brand-950 lg:flex lg:flex-col lg:justify-between p-12 text-white">
+        {/* Video backdrop — a real résumé-review / interview scene. The still image is
+            the poster: it paints instantly and is the fallback if video can't play. */}
+        <video
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          poster={loginHero}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+        >
+          <source src={loginHeroVideo} type="video/mp4" />
+        </video>
+        {/* Brand gradient for legibility + colour cohesion */}
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-brand-950/85 via-brand-900/78 to-brand-950/94" />
+        <div className="pointer-events-none absolute inset-0 bg-brand-700/25 mix-blend-multiply" />
+
         <div className="relative flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-sm font-bold backdrop-blur">
-            CV
-          </div>
-          <span className="font-display text-lg font-semibold">ScreenAI</span>
+          <img
+            src="/Favicon_Linkage.png"
+            alt="Linkage ScreenAI"
+            className="h-9 w-9 rounded-xl bg-white object-contain p-0.5"
+          />
+          <span className="font-display text-lg font-semibold">Linkage ScreenAI</span>
         </div>
 
         <div className="relative max-w-md animate-rise">
@@ -73,59 +90,94 @@ export default function LoginPage() {
               </li>
             ))}
           </ul>
+
+          {/* Floating glass stat — reinforces the AI-ranking value */}
+          <div className="animate-float mt-9 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 shadow-lg backdrop-blur-md">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400 text-sm font-bold text-emerald-950">
+              97
+            </span>
+            <div className="leading-tight">
+              <p className="text-sm font-semibold">Top match found</p>
+              <p className="text-xs text-brand-100">AI-ranked against the role in seconds</p>
+            </div>
+          </div>
         </div>
 
         <p className="relative text-xs text-brand-200">© {new Date().getFullYear()} ScreenAI Careers</p>
       </div>
 
       {/* Form panel */}
-      <div className="flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm animate-rise">
-          {/* Mobile logo */}
-          <div className="mb-8 flex items-center gap-2.5 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-sm font-bold text-white">
-              CV
+      <div className="relative flex items-center justify-center overflow-hidden px-6 py-12">
+        {/* Soft brand accents behind the form */}
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-200/40 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-brand-100/50 blur-3xl" />
+        <div className="relative w-full max-w-sm animate-rise">
+          <div className="rounded-3xl border border-white/60 bg-white/80 p-8 shadow-[0_24px_60px_-24px_rgba(28,45,110,0.35)] backdrop-blur-md">
+            {/* Logo + heading */}
+            <div className="mb-7">
+              <div className="mb-5 flex items-center gap-2.5">
+                <img
+                  src="/Favicon_Linkage.png"
+                  alt="Linkage ScreenAI"
+                  className="h-10 w-10 rounded-xl object-contain"
+                />
+                <span className="font-display text-base font-semibold text-slate-800">
+                  Linkage ScreenAI
+                </span>
+              </div>
+              <h1 className="font-display text-2xl font-semibold text-slate-900">Welcome back</h1>
+              <p className="mt-1.5 text-sm text-slate-500">Sign in to your recruiter dashboard.</p>
             </div>
-            <span className="font-display text-lg font-semibold text-slate-800">ScreenAI</span>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <LuMail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="email"
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="hr@example.com"
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <LuLock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="password"
+                    required
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pl-9 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:text-slate-600"
+                  >
+                    {showPassword ? <LuEyeOff className="h-4 w-4" /> : <LuEye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              {error && <Alert kind="error">{error}</Alert>}
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? <Spinner /> : 'Sign in'}
+              </Button>
+            </form>
           </div>
 
-          <h1 className="font-display text-2xl font-semibold text-slate-900">Welcome back</h1>
-          <p className="mt-1.5 text-sm text-slate-500">Sign in to your recruiter dashboard.</p>
-
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                required
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="hr@example.com"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                required
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-            </div>
-            {error && <Alert kind="error">{error}</Alert>}
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? <Spinner /> : 'Sign in'}
-            </Button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-slate-500">
-            Looking to apply?{' '}
-            <Link to="/apply" className="font-medium text-brand-600 hover:underline">
-              Browse open roles
-            </Link>
+          <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-slate-400">
+            <LuLock className="h-3.5 w-3.5" />
+            Secure recruiter access · Linkage ScreenAI
           </p>
         </div>
       </div>

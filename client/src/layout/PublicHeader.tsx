@@ -12,11 +12,13 @@ export default function PublicHeader({ container = 'max-w-4xl' }: { container?: 
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur-md">
       <div className={`mx-auto flex h-16 items-center justify-between px-6 ${container}`}>
         <Link to="/apply" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-[0_4px_12px_-3px_rgba(51,88,240,0.6)]">
-            CV
-          </span>
+          <img
+            src="/Favicon_Linkage.png"
+            alt="Linkage ScreenAI"
+            className="h-9 w-9 rounded-xl object-contain"
+          />
           <span className="flex flex-col leading-none">
-            <span className="font-display text-lg font-semibold text-slate-900">ScreenAI</span>
+            <span className="font-display text-lg font-semibold text-slate-900">Linkage ScreenAI</span>
             <span className="text-[11px] font-medium tracking-wide text-slate-400">Careers</span>
           </span>
         </Link>

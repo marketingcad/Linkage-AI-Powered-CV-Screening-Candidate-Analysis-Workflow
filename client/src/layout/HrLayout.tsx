@@ -56,11 +56,13 @@ export default function HrLayout() {
       {/* Brand */}
       <div className="flex h-16 items-center justify-between px-5">
         <NavLink to="/hr" end className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-[0_4px_12px_-3px_rgba(51,88,240,0.6)]">
-            CV
-          </span>
+          <img
+            src="/Favicon_Linkage.png"
+            alt="Linkage ScreenAI"
+            className="h-9 w-9 rounded-xl object-contain"
+          />
           <span className="flex flex-col leading-none">
-            <span className="font-display text-lg font-semibold text-slate-900">ScreenAI</span>
+            <span className="font-display text-lg font-semibold text-slate-900">Linkage ScreenAI</span>
             <span className="text-[11px] font-medium tracking-wide text-slate-400">Recruiting</span>
           </span>
         </NavLink>
@@ -176,10 +178,12 @@ export default function HrLayout() {
             <LuMenu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500 text-xs font-bold text-white">
-              CV
-            </span>
-            <span className="font-display text-base font-semibold text-slate-800">ScreenAI</span>
+            <img
+              src="/Favicon_Linkage.png"
+              alt="Linkage ScreenAI"
+              className="h-7 w-7 rounded-lg object-contain"
+            />
+            <span className="font-display text-base font-semibold text-slate-800">Linkage ScreenAI</span>
           </div>
         </div>
 
