@@ -96,6 +96,121 @@ Open the web app, click **Recruiter login**, sign in, create a job (set required
 then open the candidate application page (`/apply`) in another tab and submit a CV. The
 candidate appears — scored and ranked — in the dashboard within seconds.
 
+## Deployment (Vercel + Render)
+
+Recommended topology:
+
+| Piece                | Host      | Type                    |
+| -------------------- | --------- | ----------------------- |
+| Backend (Express API)| Render    | Web Service (Node)      |
+| Frontend (Vite SPA)  | Vercel    | Static site             |
+| Database             | Supabase  | Already hosted (Postgres) |
+
+Deploy in this order — the frontend needs the backend URL, and the backend's CORS
+needs the frontend URL:
+
+1. Push the repo to GitHub (Render and Vercel both deploy from it).
+2. Deploy the **backend to Render** → note its URL.
+3. Deploy the **frontend to Vercel** with that URL → note its URL.
+4. Set the backend's `CORS_ORIGIN` / `APP_PUBLIC_URL` to the Vercel URL and redeploy.
+
+### 1. Backend → Render
+
+Render → **New → Web Service** → connect the GitHub repo, then:
+
+| Setting          | Value                                  |
+| ---------------- | -------------------------------------- |
+| Root Directory   | `backend`                              |
+| Runtime          | Node                                    |
+| Build Command    | `npm install --include=dev && npm run build` |
+| Start Command    | `npm start`                            |
+| Instance type    | Free works (note cold starts below)    |
+
+> **Why `--include=dev`:** Render sets `NODE_ENV=production`, which makes `npm install`
+> skip `devDependencies` — but the build needs `typescript` (`tsc`). `--include=dev`
+> forces them to install so the build (and `tsx` for `seed`/`db:push`) works.
+
+**Environment variables** (Render → your service → *Environment*):
+
+```env
+DATABASE_URL=postgresql://postgres.xxxx:PASSWORD@aws-0-xx.pooler.supabase.com:6543/postgres
+JWT_SECRET=your-long-random-secret
+GEMINI_API_KEY_CV_SCREENING=your-gemini-key
+GEMINI_MODEL=gemini-2.5-flash            # optional
+NODE_ENV=production
+CORS_ORIGIN=https://your-app.vercel.app  # set after step 2 (comma-separate for previews)
+APP_PUBLIC_URL=https://your-app.vercel.app   # used for tracking links in emails
+# SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / EMAIL_FROM  — optional; if unset, emails are logged not sent
+```
+
+- **Do not set `PORT`** — Render injects it and the server reads `process.env.PORT`.
+- Use the **same Supabase pooler `DATABASE_URL`** as local (see Setup step 2).
+
+**Database & seed:** the schema lives in the same Supabase project, so if you already
+ran `npm run db:push` / `npm run seed` locally you're done. Otherwise run them once
+against the production DB — either locally with the production `DATABASE_URL`, or from
+the Render **Shell** tab:
+
+```bash
+npm run db:push   # create tables
+npm run seed      # create the first HR user
+```
+
+After it goes live, sanity-check the API:
+`https://<your-service>.onrender.com/api/jobs/public` should return JSON.
+
+> **⚠️ CV storage is ephemeral on Render.** Uploaded CVs are written to
+> `backend/uploads/` (local disk), which Render **wipes on every redeploy/restart** —
+> CV downloads for older candidates will break. For production, attach a **Render Disk**
+> mounted at `backend/uploads` (and set `UPLOAD_DIR` to match) or migrate storage to
+> Supabase Storage / S3.
+
+### 2. Frontend → Vercel
+
+Vercel → **Add New → Project** → import the repo, then:
+
+| Setting          | Value                          |
+| ---------------- | ------------------------------ |
+| Root Directory   | `client`                       |
+| Framework Preset | Vite                           |
+| Build Command    | `npm run build` (default)      |
+| Output Directory | `dist` (default)               |
+
+**Environment variable** (Vercel → Project → *Settings → Environment Variables*):
+
+```env
+VITE_API_URL=https://<your-service>.onrender.com/api
+```
+
+- The value **must end in `/api`** — the client appends paths like `/auth/login` to it.
+- Vite only exposes vars prefixed `VITE_`, and they're baked in at build time, so
+  **redeploy** after changing it.
+
+**SPA routing:** deep links such as `/apply/:jobId` must fall back to `index.html` or
+they 404 on refresh. This repo includes [`client/vercel.json`](client/vercel.json) with
+the required rewrite:
+
+```json
+{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+```
+
+### 3. Connect them (CORS)
+
+Back in Render, set `CORS_ORIGIN` (and `APP_PUBLIC_URL`) to the Vercel URL from step 2
+and **redeploy the backend**. To also allow Vercel preview deployments, comma-separate:
+`CORS_ORIGIN=https://your-app.vercel.app,https://your-app-git-*.vercel.app`.
+
+### 4. Post-deploy checklist
+
+- Open the Vercel URL, **Recruiter login** with the seeded credentials, then change the password.
+- Create a job, open `/apply`, submit a CV, and confirm the candidate appears scored.
+- (Optional) Add custom domains on both platforms and update `CORS_ORIGIN` / `APP_PUBLIC_URL` / `VITE_API_URL` accordingly.
+
+> **Cold starts:** Render's free tier spins the service down after ~15 min idle; the
+> first request then takes 30–60s to wake. Combined with Gemini latency, the first
+> application after idle is slow. Use a paid instance (or an uptime pinger) for a
+> production feel.
+
 ## API overview
 
 | Method | Route                          | Auth | Purpose                                  |
