@@ -73,7 +73,11 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res) => {
 
   // Extract text first so we fail fast on unreadable files.
   const cvText = await extractCvText(req.file.buffer, req.file.mimetype, req.file.originalname);
-  const { storagePath, filename } = await saveCvFile(req.file.buffer, req.file.originalname);
+  const { storagePath, filename } = await saveCvFile(
+    req.file.buffer,
+    req.file.originalname,
+    req.file.mimetype,
+  );
 
   const quizAnswers = input.quizAnswers ?? [];
 

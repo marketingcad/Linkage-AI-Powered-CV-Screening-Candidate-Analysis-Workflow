@@ -37,9 +37,15 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().default('ScreenAI Careers <no-reply@screenai.local>'),
 
-  // Local file storage for uploaded CVs
+  // Local file storage for uploaded CVs (fallback when Supabase Storage isn't configured)
   UPLOAD_DIR: z.string().default('uploads'),
   MAX_UPLOAD_MB: z.coerce.number().default(10),
+
+  // Supabase Storage for CVs (survives redeploys). SUPABASE_URL is auto-derived from
+  // DATABASE_URL when unset; the service-role key is required to enable it.
+  SUPABASE_URL: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_CV_BUCKET: z.string().default('cvs'),
 
   // Used only by the seed script
   SEED_HR_EMAIL: z.string().email().optional(),
@@ -70,6 +76,17 @@ if (!geminiApiKey) {
   );
   process.exit(1);
 }
+
+// Supabase project URL: explicit SUPABASE_URL, else derived from the pooler DATABASE_URL
+// (username is `postgres.<project-ref>`).
+export const supabaseUrl = (() => {
+  if (env.SUPABASE_URL) return env.SUPABASE_URL.replace(/\/$/, '');
+  const ref = env.DATABASE_URL.match(/postgres\.([a-z0-9]+)/i)?.[1];
+  return ref ? `https://${ref}.supabase.co` : undefined;
+})();
+
+// CV uploads go to Supabase Storage only when both the URL and service-role key exist.
+export const supabaseStorageEnabled = Boolean(env.SUPABASE_SERVICE_ROLE_KEY && supabaseUrl);
 
 export const corsOrigins = env.CORS_ORIGIN.split(',')
   .map((o) => o.trim())

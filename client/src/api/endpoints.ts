@@ -109,6 +109,18 @@ export function submitApplication(form: FormData) {
     trackingToken: string;
   }>('/applications', { method: 'POST', body: form, isForm: true, auth: false });
 }
+
+/** HR bulk import: upload one CV against a job (client loops over a batch). */
+export function importCv(jobId: string, file: File) {
+  const form = new FormData();
+  form.append('jobId', jobId);
+  form.append('cv', file);
+  return apiRequest<{ candidate: Candidate }>('/candidates/import', {
+    method: 'POST',
+    body: form,
+    isForm: true,
+  });
+}
 export function fetchApplicationStatus(token: string) {
   return apiRequest<{ application: ApplicationStatus }>(`/applications/status/${token}`, {
     auth: false,

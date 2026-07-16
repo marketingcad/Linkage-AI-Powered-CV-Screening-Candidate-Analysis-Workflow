@@ -17,6 +17,18 @@ Google Gemini, and presents recruiters with ranked, structured insights.
   score, full per-candidate analysis, pipeline stages (new → shortlisted → interviewing →
   hired / rejected), CV download, and one-click re-analysis.
 
+## ✨ Recent updates
+
+- **Login page redesign** — professional split-screen layout with a video background, subtle animations, and a cleaner sign-in card (with show/hide password).
+- **Two-factor sign-in** — optional authenticator-app (Google Authenticator, Authy) security for recruiters.
+- **Account settings** — upload a profile photo, update name/email, and change password.
+- **Bulk CV upload** — drop a batch of CVs onto a job and screen them all at once.
+- **Cloud CV storage** — uploaded CVs are stored safely and stay available after updates.
+- **New branding** — Linkage ScreenAI logo and a refreshed look across the app.
+- **UI/UX polish** — improved job details page, candidate board/table toggle, icons, and overall layout.
+- **Public page cleanup** — recruiter-only controls are hidden from the public careers page.
+- **Deployment ready** — step-by-step guide to publish the app online.
+
 ## Tech stack
 
 | Layer     | Choice                                             |
@@ -27,7 +39,7 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 | Database  | Supabase Postgres via Drizzle ORM                  |
 | Parsing   | `pdf-parse` (PDF) + `mammoth` (DOCX)               |
 | Auth      | JWT + bcrypt                                        |
-| Storage   | Local disk (`backend/uploads/`) — swappable        |
+| Storage   | Supabase Storage for CVs (local-disk fallback)     |
 
 ## Project layout
 
@@ -146,11 +158,19 @@ GEMINI_MODEL=gemini-2.5-flash            # optional
 NODE_ENV=production
 CORS_ORIGIN=https://your-app.vercel.app  # set after step 2 (comma-separate for previews)
 APP_PUBLIC_URL=https://your-app.vercel.app   # used for tracking links in emails
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # enables Supabase Storage for CVs (see below)
+# SUPABASE_URL=https://<ref>.supabase.co         # optional — auto-derived from DATABASE_URL
+# SUPABASE_CV_BUCKET=cvs                          # optional — bucket name (auto-created, private)
 # SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / EMAIL_FROM  — optional; if unset, emails are logged not sent
 ```
 
 - **Do not set `PORT`** — Render injects it and the server reads `process.env.PORT`.
 - Use the **same Supabase pooler `DATABASE_URL`** as local (see Setup step 2).
+- **CV storage:** set `SUPABASE_SERVICE_ROLE_KEY` (Supabase Dashboard → *Project Settings →
+  API → `service_role`*, secret) so uploaded CVs go to **Supabase Storage** instead of the
+  container's local disk. Without it, CVs are written to `backend/uploads/`, which Render
+  **wipes on every redeploy** — so CV downloads break in production. The private `cvs`
+  bucket is created automatically on first upload.
 
 **Database & seed:** the schema lives in the same Supabase project, so if you already
 ran `npm run db:push` / `npm run seed` locally you're done. Otherwise run them once
@@ -165,11 +185,10 @@ npm run seed      # create the first HR user
 After it goes live, sanity-check the API:
 `https://<your-service>.onrender.com/api/jobs/public` should return JSON.
 
-> **⚠️ CV storage is ephemeral on Render.** Uploaded CVs are written to
-> `backend/uploads/` (local disk), which Render **wipes on every redeploy/restart** —
-> CV downloads for older candidates will break. For production, attach a **Render Disk**
-> mounted at `backend/uploads` (and set `UPLOAD_DIR` to match) or migrate storage to
-> Supabase Storage / S3.
+> **CV storage.** With `SUPABASE_SERVICE_ROLE_KEY` set (above), CVs are stored in
+> **Supabase Storage** and survive redeploys. If it's **not** set, CVs fall back to
+> `backend/uploads/` (local disk), which Render **wipes on every redeploy/restart** — so
+> set the key for any real deployment.
 
 ### 2. Frontend → Vercel
 

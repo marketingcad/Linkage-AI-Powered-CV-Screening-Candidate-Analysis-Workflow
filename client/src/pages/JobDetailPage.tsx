@@ -9,6 +9,7 @@ import {
   LuCircleCheck,
   LuClipboardList,
   LuClock,
+  LuCloudUpload,
   LuEllipsisVertical,
   LuFileText,
   LuGraduationCap,
@@ -20,9 +21,10 @@ import {
 } from 'react-icons/lu';
 import { deleteJob, fetchCandidates, fetchJob } from '../api/endpoints';
 import type { Candidate, CandidateSummary, Job } from '../api/types';
-import { Alert, Card, Skeleton, TableSkeleton } from '../components/ui';
+import { Alert, Button, Card, Skeleton, TableSkeleton } from '../components/ui';
 import CandidateTable from '../components/CandidateTable';
 import JobForm from '../components/JobForm';
+import ImportCvsDialog from '../components/ImportCvsDialog';
 import DistributePanel from '../components/DistributePanel';
 import {
   DropdownMenu,
@@ -57,6 +59,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   function load() {
     if (!id) return;
@@ -219,17 +222,30 @@ export default function JobDetailPage() {
       <DistributePanel job={job} />
 
       <div>
-        <div className="mb-3 flex items-center gap-2">
-          <LuUsers className="h-5 w-5 text-slate-400" />
-          <h2 className="text-lg font-semibold text-slate-900">Ranked candidates</h2>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-            {candidates.length}
-          </span>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <LuUsers className="h-5 w-5 text-slate-400" />
+            <h2 className="text-lg font-semibold text-slate-900">Ranked candidates</h2>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+              {candidates.length}
+            </span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
+            <LuCloudUpload className="h-4 w-4" />
+            Import CVs
+          </Button>
         </div>
         <CandidateTable candidates={candidates as Candidate[]} />
       </div>
 
       {editing && <JobForm existing={job} onClose={() => setEditing(false)} onSaved={handleSaved} />}
+      {importing && (
+        <ImportCvsDialog
+          jobId={job.id}
+          onClose={() => setImporting(false)}
+          onImported={load}
+        />
+      )}
     </div>
   );
 }

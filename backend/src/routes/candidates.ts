@@ -1,12 +1,16 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
+import multer from 'multer';
 import { and, desc, eq, sql } from 'drizzle-orm';
-import { existsSync } from 'node:fs';
 import { db } from '../db/client.js';
-import { candidates, emailLogs, jobs } from '../db/schema.js';
+import { candidates, jobs, emailLogs } from '../db/schema.js';
 import { updateStageSchema } from '../lib/validation.js';
 import { badRequest, notFound } from '../lib/errors.js';
+import { env } from '../config/env.js';
 import { requireAuth } from '../middleware/auth.js';
-import { resolveStoragePath } from '../services/storage.js';
+import { getCvSource, saveCvFile } from '../services/storage.js';
+import { detectCvKind, extractCvText } from '../services/cvParser.js';
+import { extractCvDetails } from '../services/gemini.js';
 import { runAnalysis } from '../services/analysis.js';
 import { sendApplicationReceived, sendStatusUpdate } from '../services/email.js';
 import type { StageKey } from '../lib/applicantStatus.js';
@@ -15,6 +19,74 @@ import { logger } from '../lib/logger.js';
 export const candidatesRouter = Router();
 
 candidatesRouter.use(requireAuth);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: env.MAX_UPLOAD_MB * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (detectCvKind(file.mimetype, file.originalname)) cb(null, true);
+    else cb(badRequest('Only PDF or DOCX files are accepted.'));
+  },
+});
+
+/**
+ * Bulk import: an HR user uploads a CV directly (one per request; the client loops
+ * over a batch). Contact details are extracted from the CV itself, then the candidate
+ * is created and AI-analyzed against the job — same pipeline as a public application.
+ * POST /api/candidates/import  (multipart: cv file + jobId)
+ */
+candidatesRouter.post('/import', upload.single('cv'), async (req, res) => {
+  if (!req.file) throw badRequest('A CV file (field name "cv") is required.');
+  const jobId = typeof req.body.jobId === 'string' ? req.body.jobId : '';
+  if (!jobId) throw badRequest('jobId is required.');
+
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
+  if (!job) throw notFound('Job not found');
+
+  // Extract text first so we fail fast on unreadable files.
+  const cvText = await extractCvText(req.file.buffer, req.file.mimetype, req.file.originalname);
+  const details = await extractCvDetails(cvText);
+  const { storagePath, filename } = await saveCvFile(
+    req.file.buffer,
+    req.file.originalname,
+    req.file.mimetype,
+  );
+
+  const baseName = req.file.originalname.replace(/\.[^.]+$/, '').trim();
+  const fullName = details.fullName?.trim() || baseName || 'Unknown candidate';
+  const email =
+    details.email?.trim().toLowerCase() || `no-email-${randomUUID().slice(0, 8)}@import.local`;
+
+  const [candidate] = await db
+    .insert(candidates)
+    .values({
+      jobId: job.id,
+      fullName,
+      email,
+      phone: details.phone ?? null,
+      location: details.location ?? null,
+      currentTitle: details.currentTitle ?? null,
+      declaredYearsExperience: details.yearsExperience ?? null,
+      linkedinUrl: details.linkedinUrl ?? null,
+      portfolioUrl: details.portfolioUrl ?? null,
+      source: 'manual',
+      cvFilename: filename,
+      cvStoragePath: storagePath,
+      cvText,
+      analysisStatus: 'processing',
+    })
+    .returning();
+  if (!candidate) throw new Error('Failed to create candidate');
+
+  await runAnalysis(candidate.id, job, cvText, []);
+
+  const [updated] = await db
+    .select()
+    .from(candidates)
+    .where(eq(candidates.id, candidate.id))
+    .limit(1);
+  res.status(201).json({ candidate: updated });
+});
 
 /**
  * List candidates, optionally filtered by job/stage/source, ranked by overall score.
@@ -200,8 +272,12 @@ candidatesRouter.get('/:id/cv', async (req, res) => {
     .limit(1);
   if (!candidate || !candidate.path) throw notFound('CV file not found');
 
-  const absPath = resolveStoragePath(candidate.path);
-  if (!existsSync(absPath)) throw notFound('CV file is missing on disk');
+  const source = await getCvSource(candidate.path, candidate.filename ?? 'cv');
+  if (!source) throw notFound('CV file is no longer available');
 
-  res.download(absPath, candidate.filename ?? 'cv');
+  if (source.kind === 'redirect') {
+    res.redirect(source.url);
+    return;
+  }
+  res.download(source.absPath, candidate.filename ?? 'cv');
 });
