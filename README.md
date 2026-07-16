@@ -17,17 +17,20 @@ Google Gemini, and presents recruiters with ranked, structured insights.
   score, full per-candidate analysis, pipeline stages (new → shortlisted → interviewing →
   hired / rejected), CV download, and one-click re-analysis.
 
-## ✨ Recent updates
+## Recent updates
 
-- **Login page redesign** — professional split-screen layout with a video background, subtle animations, and a cleaner sign-in card (with show/hide password).
-- **Two-factor sign-in** — optional authenticator-app (Google Authenticator, Authy) security for recruiters.
-- **Account settings** — upload a profile photo, update name/email, and change password.
-- **Bulk CV upload** — drop a batch of CVs onto a job and screen them all at once.
-- **Cloud CV storage** — uploaded CVs are stored safely and stay available after updates.
-- **New branding** — Linkage ScreenAI logo and a refreshed look across the app.
-- **UI/UX polish** — improved job details page, candidate board/table toggle, icons, and overall layout.
-- **Public page cleanup** — recruiter-only controls are hidden from the public careers page.
-- **Deployment ready** — step-by-step guide to publish the app online.
+- Login page redesign — professional split-screen layout with a video background, subtle animations, and a cleaner sign-in card (with show/hide password).
+- Two-factor sign-in — optional authenticator-app (Google Authenticator, Authy) security for recruiters.
+- Account settings — upload a profile photo, update name/email, and change password.
+- Bulk CV upload — drop a batch of CVs onto a job and screen them all at once.
+- Cloud CV storage — uploaded CVs are stored safely and stay available after updates.
+- New branding — Linkage ScreenAI logo and a refreshed look across the app.
+- UI/UX polish — improved job details page, candidate board/table toggle, icons, and overall layout.
+- Public page cleanup — recruiter-only controls are hidden from the public careers page.
+- Deployment ready — step-by-step guide to publish the app online.
+
+### Work in progress
+- Candidate comparison + PDF report 
 
 ## Tech stack
 
