@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { IconType } from 'react-icons';
 import {
+  LuBriefcase,
   LuCircleCheck,
   LuEye,
   LuEyeOff,
@@ -9,8 +10,11 @@ import {
   LuLock,
   LuMail,
   LuScanLine,
+  LuShieldCheck,
   LuSparkles,
   LuStar,
+  LuTarget,
+  LuTrophy,
   LuUserCheck,
 } from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
@@ -38,10 +42,13 @@ const FLOATERS: {
   { Icon: LuStar, pos: 'right-[9%] top-[33%]', box: 'h-10 w-10', icon: 'h-4 w-4', color: 'border-amber-200/60 bg-amber-50/70 text-amber-500', dur: '6.5s', delay: '2s' },
   { Icon: LuCircleCheck, pos: 'right-[13%] bottom-[16%]', box: 'h-12 w-12', icon: 'h-5 w-5', color: 'border-emerald-200/60 bg-emerald-50/70 text-emerald-500', dur: '8.5s', delay: '0.3s' },
   { Icon: LuUserCheck, pos: 'left-[8%] bottom-[15%]', box: 'h-14 w-14', icon: 'h-6 w-6', color: 'border-rose-200/60 bg-rose-50/70 text-rose-500', dur: '7.5s', delay: '1.6s' },
+  { Icon: LuBriefcase, pos: 'left-[17%] top-[38%]', box: 'h-11 w-11', icon: 'h-5 w-5', color: 'border-indigo-200/60 bg-indigo-50/70 text-indigo-500', dur: '7.8s', delay: '0.9s' },
+  { Icon: LuTarget, pos: 'right-[16%] top-[52%]', box: 'h-11 w-11', icon: 'h-5 w-5', color: 'border-teal-200/60 bg-teal-50/70 text-teal-500', dur: '8.2s', delay: '2.4s' },
+  { Icon: LuTrophy, pos: 'left-[42%] top-[86%]', box: 'h-10 w-10', icon: 'h-4 w-4', color: 'border-orange-200/60 bg-orange-50/70 text-orange-500', dur: '6.8s', delay: '1.9s' },
 ];
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, completeMfa } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? '/hr';
@@ -52,18 +59,48 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // 2FA step
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
-      navigate(from, { replace: true });
+      const res = await login(email, password);
+      if (res.mfaRequired && res.mfaToken) {
+        setMfaToken(res.mfaToken);
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleMfaSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaToken) return;
+    setError(null);
+    setLoading(true);
+    try {
+      await completeMfa(mfaToken, code.trim());
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function backToSignIn() {
+    setMfaToken(null);
+    setCode('');
+    setError(null);
+    setPassword('');
   }
 
   return (
@@ -107,7 +144,7 @@ export default function LoginPage() {
           </p>
           <ul className="mt-8 space-y-3 text-sm text-brand-50">
             {[
-              'AI qualification & skills-match scoring',
+              'AI qualification & skills-match scoring2468',
               'Auto-generated screening exams',
               'CV authenticity (AI-written) detection',
               'Applicant status tracking & email updates',
@@ -169,54 +206,103 @@ export default function LoginPage() {
                   Linkage ScreenAI
                 </span>
               </div>
-              <h1 className="font-display text-2xl font-semibold text-slate-900">Welcome back</h1>
-              <p className="mt-1.5 text-sm text-slate-500">Sign in to your recruiter dashboard.</p>
+              {mfaToken ? (
+                <>
+                  <h1 className="font-display text-2xl font-semibold text-slate-900">
+                    Two-factor authentication
+                  </h1>
+                  <p className="mt-1.5 text-sm text-slate-500">
+                    Enter the 6-digit code from your authenticator app.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="font-display text-2xl font-semibold text-slate-900">Welcome back</h1>
+                  <p className="mt-1.5 text-sm text-slate-500">
+                    Sign in to your recruiter dashboard.
+                  </p>
+                </>
+              )}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <LuMail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    id="email"
-                    required
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="hr@example.com"
-                    className="pl-9"
-                  />
+            {mfaToken ? (
+              <form onSubmit={handleMfaSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="code">Authentication code</Label>
+                  <div className="relative">
+                    <LuShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="code"
+                      autoFocus
+                      required
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="123456"
+                      className="pl-9 text-center text-lg tracking-[0.4em]"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <LuLock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    id="password"
-                    required
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="pl-9 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:text-slate-600"
-                  >
-                    {showPassword ? <LuEyeOff className="h-4 w-4" /> : <LuEye className="h-4 w-4" />}
-                  </button>
+                {error && <Alert kind="error">{error}</Alert>}
+                <Button type="submit" disabled={loading || code.length !== 6} className="w-full">
+                  {loading ? <Spinner /> : 'Verify & sign in'}
+                </Button>
+                <button
+                  type="button"
+                  onClick={backToSignIn}
+                  className="w-full text-center text-sm font-medium text-slate-500 transition hover:text-slate-700"
+                >
+                  Back to sign in
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <LuMail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="email"
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="hr@example.com"
+                      className="pl-9"
+                    />
+                  </div>
                 </div>
-              </div>
-              {error && <Alert kind="error">{error}</Alert>}
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? <Spinner /> : 'Sign in'}
-              </Button>
-            </form>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <LuLock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="password"
+                      required
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="pl-9 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:text-slate-600"
+                    >
+                      {showPassword ? <LuEyeOff className="h-4 w-4" /> : <LuEye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                {error && <Alert kind="error">{error}</Alert>}
+                <Button type="submit" disabled={loading} className="w-full">
+                  {loading ? <Spinner /> : 'Sign in'}
+                </Button>
+              </form>
+            )}
           </div>
 
           <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-slate-400">

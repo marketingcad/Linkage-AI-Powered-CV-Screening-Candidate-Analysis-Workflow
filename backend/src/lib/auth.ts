@@ -28,3 +28,15 @@ export function signToken(payload: JwtPayload): string {
 export function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 }
+
+// --- Short-lived token issued between the password step and the 2FA step ---
+
+export function signMfaToken(userId: string): string {
+  return jwt.sign({ sub: userId, typ: 'mfa' }, env.JWT_SECRET, { expiresIn: '5m' });
+}
+
+export function verifyMfaToken(token: string): string {
+  const payload = jwt.verify(token, env.JWT_SECRET) as { sub: string; typ?: string };
+  if (payload.typ !== 'mfa') throw new Error('Not an MFA token');
+  return payload.sub;
+}

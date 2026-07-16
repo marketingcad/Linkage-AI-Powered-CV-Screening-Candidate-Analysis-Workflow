@@ -1,9 +1,16 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LuLogOut, LuShieldCheck, LuTrash2, LuUpload } from 'react-icons/lu';
+import { QRCodeSVG } from 'qrcode.react';
+import { LuLogOut, LuShieldCheck, LuSmartphone, LuTrash2, LuUpload } from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../api/client';
-import { changePassword, updateProfile } from '../api/endpoints';
+import {
+  changePassword,
+  disable2fa,
+  enable2fa,
+  setup2fa,
+  updateProfile,
+} from '../api/endpoints';
 import { Alert, Button, Card, Spinner } from '../components/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -46,8 +53,16 @@ function resizeImage(file: File, size = 256): Promise<string> {
 }
 
 export default function AccountSettingsPage() {
-  const { user, applyAuth, logout } = useAuth();
+  const { user, applyAuth, updateUser, logout } = useAuth();
   const navigate = useNavigate();
+
+  // --- Two-factor (TOTP) ---
+  const [setupData, setSetupData] = useState<{ secret: string; otpauthUrl: string } | null>(null);
+  const [twoFACode, setTwoFACode] = useState('');
+  const [disarming, setDisarming] = useState(false);
+  const [twoFABusy, setTwoFABusy] = useState(false);
+  const [twoFAErr, setTwoFAErr] = useState<string | null>(null);
+  const [twoFAMsg, setTwoFAMsg] = useState<string | null>(null);
 
   // --- Profile form ---
   const [name, setName] = useState(user?.name ?? '');
@@ -134,6 +149,54 @@ export default function AccountSettingsPage() {
       setPwErr(err instanceof ApiError ? err.message : 'Could not change password.');
     } finally {
       setSavingPw(false);
+    }
+  }
+
+  async function startSetup() {
+    setTwoFAErr(null);
+    setTwoFAMsg(null);
+    setTwoFACode('');
+    setTwoFABusy(true);
+    try {
+      setSetupData(await setup2fa());
+    } catch (err) {
+      setTwoFAErr(err instanceof ApiError ? err.message : 'Could not start setup.');
+    } finally {
+      setTwoFABusy(false);
+    }
+  }
+
+  async function confirmEnable(e: React.FormEvent) {
+    e.preventDefault();
+    setTwoFAErr(null);
+    setTwoFABusy(true);
+    try {
+      const res = await enable2fa(twoFACode.trim());
+      updateUser(res.user);
+      setSetupData(null);
+      setTwoFACode('');
+      setTwoFAMsg('Two-factor authentication is now on.');
+    } catch (err) {
+      setTwoFAErr(err instanceof ApiError ? err.message : 'Could not enable two-factor.');
+    } finally {
+      setTwoFABusy(false);
+    }
+  }
+
+  async function confirmDisable(e: React.FormEvent) {
+    e.preventDefault();
+    setTwoFAErr(null);
+    setTwoFABusy(true);
+    try {
+      const res = await disable2fa(twoFACode.trim());
+      updateUser(res.user);
+      setDisarming(false);
+      setTwoFACode('');
+      setTwoFAMsg('Two-factor authentication has been turned off.');
+    } catch (err) {
+      setTwoFAErr(err instanceof ApiError ? err.message : 'Could not disable two-factor.');
+    } finally {
+      setTwoFABusy(false);
     }
   }
 
@@ -269,6 +332,151 @@ export default function AccountSettingsPage() {
             </Button>
           </div>
         </form>
+      </Card>
+
+      {/* Two-factor authentication */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2">
+          <LuShieldCheck className="h-4 w-4 text-slate-500" />
+          <h2 className="text-sm font-semibold text-slate-700">Two-factor authentication</h2>
+          {user?.totpEnabled && (
+            <span className="ml-1 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+              On
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-slate-500">
+          Require a one-time code from an authenticator app (Google Authenticator, Authy,
+          1Password…) each time you sign in.
+        </p>
+
+        {user?.totpEnabled ? (
+          disarming ? (
+            <form onSubmit={confirmDisable} className="mt-4 max-w-xs space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="disableCode">Enter a current code to turn it off</Label>
+                <Input
+                  id="disableCode"
+                  autoFocus
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={twoFACode}
+                  onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="123456"
+                  className="text-center text-lg tracking-[0.3em]"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" variant="destructive" disabled={twoFABusy || twoFACode.length !== 6}>
+                  {twoFABusy ? <Spinner /> : 'Disable'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setDisarming(false);
+                    setTwoFACode('');
+                    setTwoFAErr(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <p className="text-sm font-medium text-emerald-700">
+                Enabled — a code is required at sign-in.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDisarming(true);
+                  setTwoFAErr(null);
+                  setTwoFAMsg(null);
+                  setTwoFACode('');
+                }}
+              >
+                Disable
+              </Button>
+            </div>
+          )
+        ) : setupData ? (
+          <div className="mt-5 flex flex-col gap-5 sm:flex-row">
+            <div className="shrink-0 self-start rounded-xl border border-slate-200 bg-white p-3">
+              <QRCodeSVG value={setupData.otpauthUrl} size={168} level="M" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-slate-600">
+                <b>1.</b> Scan this QR code with your authenticator app.
+              </p>
+              <p className="mt-2 text-sm text-slate-600">
+                Or enter this key manually:
+              </p>
+              <code className="mt-1 block break-all rounded-md bg-slate-50 px-2.5 py-1.5 font-mono text-xs text-slate-700">
+                {setupData.secret}
+              </code>
+              <form onSubmit={confirmEnable} className="mt-4 space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="enableCode">
+                    <b>2.</b> Enter the 6-digit code it shows
+                  </Label>
+                  <Input
+                    id="enableCode"
+                    autoFocus
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={twoFACode}
+                    onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="123456"
+                    className="max-w-48 text-center text-lg tracking-[0.3em]"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={twoFABusy || twoFACode.length !== 6}>
+                    {twoFABusy ? <Spinner /> : 'Verify & enable'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setSetupData(null);
+                      setTwoFACode('');
+                      setTwoFAErr(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : (
+          <Button className="mt-4" onClick={startSetup} disabled={twoFABusy}>
+            {twoFABusy ? (
+              <Spinner />
+            ) : (
+              <>
+                <LuSmartphone className="h-4 w-4" />
+                Enable two-factor
+              </>
+            )}
+          </Button>
+        )}
+
+        {twoFAErr && (
+          <div className="mt-4">
+            <Alert kind="error">{twoFAErr}</Alert>
+          </div>
+        )}
+        {twoFAMsg && (
+          <div className="mt-4">
+            <Alert kind="success">{twoFAMsg}</Alert>
+          </div>
+        )}
       </Card>
 
       {/* Session */}

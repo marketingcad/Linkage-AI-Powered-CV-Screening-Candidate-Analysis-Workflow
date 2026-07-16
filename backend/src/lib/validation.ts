@@ -29,6 +29,20 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(8, 'New password must be at least 8 characters').max(200),
 });
 
+// --- Two-factor (TOTP) auth ---
+
+const codeField = z
+  .string()
+  .trim()
+  .regex(/^\d{6}$/, 'Enter the 6-digit code from your authenticator app');
+
+export const totpCodeSchema = z.object({ code: codeField });
+
+export const mfaLoginSchema = z.object({
+  mfaToken: z.string().min(10),
+  code: codeField,
+});
+
 // --- Quiz -------------------------------------------------------------------
 
 export const quizOptionSchema = z.object({

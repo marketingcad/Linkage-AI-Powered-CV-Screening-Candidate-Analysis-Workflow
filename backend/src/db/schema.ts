@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   integer,
   jsonb,
   pgEnum,
@@ -43,6 +44,9 @@ export const hrUsers = pgTable('hr_users', {
   role: varchar('role', { length: 50 }).notNull().default('recruiter'),
   // Profile picture stored as a small resized data URL (base64); null = use placeholder.
   avatarUrl: text('avatar_url'),
+  // TOTP two-factor auth. Secret is the base32 shared secret; enabled gates login.
+  totpSecret: text('totp_secret'),
+  totpEnabled: boolean('totp_enabled').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

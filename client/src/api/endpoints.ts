@@ -16,15 +16,45 @@ import type {
 } from './types';
 
 // --- Auth -------------------------------------------------------------------
+export type LoginResult =
+  | { token: string; user: HrUser; mfaRequired?: false }
+  | { mfaRequired: true; mfaToken: string };
+
 export function login(email: string, password: string) {
-  return apiRequest<{ token: string; user: HrUser }>('/auth/login', {
+  return apiRequest<LoginResult>('/auth/login', {
     method: 'POST',
     body: { email, password },
     auth: false,
   });
 }
+export function loginMfa(mfaToken: string, code: string) {
+  return apiRequest<{ token: string; user: HrUser }>('/auth/login/mfa', {
+    method: 'POST',
+    body: { mfaToken, code },
+    auth: false,
+  });
+}
 export function fetchMe() {
   return apiRequest<{ user: HrUser }>('/auth/me');
+}
+
+// --- Two-factor (TOTP) ------------------------------------------------------
+export function setup2fa() {
+  return apiRequest<{ secret: string; otpauthUrl: string }>('/auth/2fa/setup', {
+    method: 'POST',
+  });
+}
+export function enable2fa(code: string) {
+  return apiRequest<{ ok: true; user: HrUser }>('/auth/2fa/enable', {
+    method: 'POST',
+    body: { code },
+  });
+}
+export function disable2fa(code: string) {
+  return apiRequest<{ ok: true; user: HrUser }>('/auth/2fa/disable', {
+    method: 'POST',
+    body: { code },
+  });
 }
 export interface ProfileUpdate {
   name?: string;

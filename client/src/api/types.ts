@@ -17,6 +17,8 @@ export interface HrUser {
   role: string;
   /** Optional profile picture URL; falls back to a placeholder avatar when absent. */
   avatarUrl?: string;
+  /** Whether TOTP two-factor authentication is active on the account. */
+  totpEnabled?: boolean;
 }
 
 export interface QuizOption {
