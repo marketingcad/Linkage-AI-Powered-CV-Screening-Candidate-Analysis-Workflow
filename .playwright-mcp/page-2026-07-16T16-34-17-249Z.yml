@@ -1,0 +1,134 @@
+- generic:
+  - generic:
+    - generic:
+      - complementary:
+        - generic:
+          - generic:
+            - link:
+              - /url: /hr
+              - generic: CV
+              - generic:
+                - generic: ScreenAI
+                - generic: Recruiting
+          - navigation:
+            - paragraph: Menu
+            - link:
+              - /url: /hr
+              - text: Overview
+            - link:
+              - /url: /hr/jobs
+              - text: Jobs
+            - link:
+              - /url: /hr/candidates
+              - text: Candidates
+            - paragraph: Public
+            - link:
+              - /url: /apply
+              - text: Careers page
+          - generic:
+            - generic:
+              - generic: HA
+              - generic:
+                - paragraph: HR Admin
+                - paragraph: hr@example.com
+            - button: Sign out
+      - generic:
+        - main:
+          - generic:
+            - generic:
+              - generic:
+                - heading [level=1]: Jobs
+                - paragraph: Positions candidates are screened against.
+              - button: New job
+            - generic:
+              - button:
+                - generic:
+                  - heading [level=3]: Senior Backend Engineer
+                  - generic: Open
+                - generic:
+                  - generic: Engineering
+                  - generic: Remote
+                  - generic: 5+ yrs
+                - generic:
+                  - generic: Node.js
+                  - generic: TypeScript
+                  - generic: PostgreSQL
+                  - generic: REST APIs
+                  - generic: "+1"
+                - generic:
+                  - generic: 1 candidate
+                  - generic: View
+  - dialog [ref=e95]:
+    - generic [ref=e102]:
+      - heading "New job" [level=2] [ref=e103]
+      - paragraph [ref=e104]: Define the role and its screening exam.
+    - generic [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]: Job title
+          - textbox "Job title" [active] [ref=e109]:
+            - /placeholder: Senior Frontend Engineer
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - generic [ref=e112]: Department
+            - textbox "Department" [ref=e113]
+          - generic [ref=e114]:
+            - generic [ref=e115]: Location
+            - textbox "Location" [ref=e116]
+          - generic [ref=e117]:
+            - generic [ref=e118]: Employment type
+            - textbox "Employment type" [ref=e119]:
+              - /placeholder: Full-time
+        - generic [ref=e120]:
+          - generic [ref=e121]: Description
+          - textbox "Description" [ref=e122]:
+            - /placeholder: Role responsibilities, team, and what you're looking for…
+        - generic [ref=e123]:
+          - generic [ref=e124]: Required skills (comma separated)
+          - textbox "Required skills (comma separated)" [ref=e125]:
+            - /placeholder: React, TypeScript, REST APIs
+        - generic [ref=e126]:
+          - generic [ref=e127]: Nice-to-have skills (comma separated)
+          - textbox "Nice-to-have skills (comma separated)" [ref=e128]:
+            - /placeholder: GraphQL, AWS
+        - generic [ref=e129]:
+          - generic [ref=e130]:
+            - generic [ref=e131]: Min. years experience
+            - spinbutton "Min. years experience" [ref=e132]
+          - generic [ref=e133]:
+            - generic [ref=e134]: Status
+            - combobox "Status" [ref=e135]:
+              - option "Open" [selected]
+              - option "Draft"
+              - option "Closed"
+          - generic [ref=e136]:
+            - generic [ref=e137]: Education requirement
+            - textbox "Education requirement" [ref=e138]
+        - generic [ref=e139]:
+          - generic [ref=e140]:
+            - generic [ref=e141]: Screening exam / quiz
+            - generic [ref=e142]: 0 questions · optional
+          - paragraph [ref=e143]: Applicants answer these when they apply. Choice questions are auto-graded; short answers are graded by AI. The quiz score is combined with the CV match.
+          - generic [ref=e144]:
+            - generic [ref=e145]: ✨ Generate with AI
+            - combobox [ref=e146]:
+              - option "3 questions"
+              - option "5 questions" [selected]
+              - option "8 questions"
+              - option "10 questions"
+            - combobox [ref=e147]:
+              - option "Easy"
+              - option "Medium" [selected]
+              - option "Hard"
+            - button "Generate exam" [ref=e148]
+            - generic [ref=e149]: from the job details above
+          - generic [ref=e150]:
+            - paragraph [ref=e151]: No quiz yet. Add questions to screen applicants with a position-specific exam.
+            - generic [ref=e152]:
+              - button "+ Single choice" [ref=e153]
+              - button "+ Multiple choice" [ref=e154]
+              - button "+ Short answer" [ref=e155]
+      - generic [ref=e156]:
+        - button "Cancel" [ref=e157]
+        - button "Create job" [ref=e158]
+    - button "Close" [ref=e159]

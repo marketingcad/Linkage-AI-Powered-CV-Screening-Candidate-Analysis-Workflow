@@ -1,13 +1,24 @@
 import { useMemo, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
+import type { IconType } from 'react-icons';
+import { LuBriefcase, LuCheck, LuCopy, LuQrCode } from 'react-icons/lu';
+import { SiGlassdoor, SiIndeed } from 'react-icons/si';
+import { FaLinkedin } from 'react-icons/fa6';
 import type { Job } from '../api/types';
-import { Card } from './ui';
+import { Button, Card } from './ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 
-const PLATFORMS = [
-  { key: 'indeed', label: 'Indeed' },
-  { key: 'linkedin', label: 'LinkedIn' },
-  { key: 'jobstreet', label: 'JobStreet' },
-  { key: 'glassdoor', label: 'Glassdoor' },
+const PLATFORMS: { key: string; label: string; Icon: IconType }[] = [
+  { key: 'indeed', label: 'Indeed', Icon: SiIndeed },
+  { key: 'linkedin', label: 'LinkedIn', Icon: FaLinkedin },
+  { key: 'jobstreet', label: 'JobStreet', Icon: LuBriefcase },
+  { key: 'glassdoor', label: 'Glassdoor', Icon: SiGlassdoor },
 ];
 
 function QrButton({ onClick }: { onClick: () => void }) {
@@ -16,8 +27,9 @@ function QrButton({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       title="Show QR code"
-      className="shrink-0 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
     >
+      <LuQrCode className="h-3.5 w-3.5" />
       QR
     </button>
   );
@@ -44,34 +56,23 @@ function QrModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-xs rounded-xl bg-white p-6 text-center shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-1 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-800">QR · {label}</h3>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <p className="mb-4 text-xs text-slate-500">Scan to open the application page.</p>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="text-center sm:max-w-xs">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-slate-800">QR · {label}</DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            Scan to open the application page.
+          </DialogDescription>
+        </DialogHeader>
         <div className="flex justify-center rounded-lg bg-white p-3">
           <QRCodeCanvas id="distribute-qr-canvas" value={url} size={220} level="M" marginSize={2} />
         </div>
-        <p className="mt-3 break-all text-[11px] text-slate-400">{url}</p>
-        <button
-          type="button"
-          onClick={download}
-          className="mt-4 w-full rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-        >
+        <p className="break-all text-center text-[11px] text-slate-400">{url}</p>
+        <Button type="button" onClick={download} className="w-full">
           Download PNG
-        </button>
-      </div>
-    </div>
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -89,9 +90,10 @@ function CopyButton({ text }: { text: string }) {
           /* clipboard unavailable */
         }
       }}
-      className="shrink-0 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
     >
-      {copied ? 'Copied ✓' : 'Copy'}
+      {copied ? <LuCheck className="h-3.5 w-3.5 text-emerald-600" /> : <LuCopy className="h-3.5 w-3.5" />}
+      {copied ? 'Copied' : 'Copy'}
     </button>
   );
 }
@@ -142,7 +144,10 @@ export default function DistributePanel({ job }: { job: Job }) {
       <div className="mt-4 space-y-2">
         {PLATFORMS.map((p) => (
           <div key={p.key} className="flex items-center gap-2">
-            <span className="w-20 shrink-0 text-xs font-medium text-slate-500">{p.label}</span>
+            <span className="flex w-24 shrink-0 items-center gap-1.5 text-xs font-medium text-slate-600">
+              <p.Icon className="h-3.5 w-3.5" />
+              {p.label}
+            </span>
             <input
               readOnly
               value={linkFor(p.key)}

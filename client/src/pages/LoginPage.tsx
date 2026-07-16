@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../api/client';
-import { Alert, Button, Spinner } from '../components/ui';
-
-const inputCls =
-  'w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
+import { Alert, Spinner } from '@/components/ui';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -93,28 +93,28 @@ export default function LoginPage() {
           <p className="mt-1.5 text-sm text-slate-500">Sign in to your recruiter dashboard.</p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700">Email</span>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
                 required
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={inputCls}
                 placeholder="hr@example.com"
               />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700">Password</span>
-              <input
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
                 required
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={inputCls}
                 placeholder="••••••••"
               />
-            </label>
+            </div>
             {error && <Alert kind="error">{error}</Alert>}
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? <Spinner /> : 'Sign in'}

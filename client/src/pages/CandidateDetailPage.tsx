@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { LuArrowLeft, LuDownload, LuRefreshCw } from 'react-icons/lu';
 import {
   fetchCandidate,
   fetchCandidateEmails,
@@ -20,6 +21,7 @@ import {
   AiWrittenBadge,
   aiLevel,
   Alert,
+  Button,
   Card,
   RecommendationBadge,
   ScoreRing,
@@ -27,6 +29,7 @@ import {
   SourceBadge,
   Spinner,
   StageBadge,
+  STAGE_ICONS,
   STAGES,
 } from '../components/ui';
 
@@ -131,9 +134,13 @@ export default function CandidateDetailPage() {
   const c = candidate;
 
   return (
-    <div className="space-y-6">
-      <Link to="/hr/candidates" className="text-sm text-slate-500 hover:text-slate-700">
-        ← Back to candidates
+    <div className="animate-rise space-y-6">
+      <Link
+        to="/hr/candidates"
+        className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-700"
+      >
+        <LuArrowLeft className="h-4 w-4" />
+        Back to candidates
       </Link>
 
       {/* Header */}
@@ -141,7 +148,7 @@ export default function CandidateDetailPage() {
         <div className="flex items-center gap-4">
           <ScoreRing score={c.overallScore ?? c.qualificationScore} size={72} />
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{c.fullName}</h1>
+            <h1 className="text-2xl font-semibold text-slate-900">{c.fullName}</h1>
             <p className="text-sm text-slate-500">
               {c.email}
               {c.phone ? ` · ${c.phone}` : ''}
@@ -163,22 +170,14 @@ export default function CandidateDetailPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={downloadCv}
-            disabled={!c.cvStoragePath}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-          >
+          <Button variant="outline" size="sm" onClick={downloadCv} disabled={!c.cvStoragePath}>
+            <LuDownload className="h-4 w-4" />
             Download CV
-          </button>
-          <button
-            type="button"
-            onClick={reanalyze}
-            disabled={busy}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-          >
+          </Button>
+          <Button variant="outline" size="sm" onClick={reanalyze} disabled={busy}>
+            <LuRefreshCw className={`h-4 w-4 ${busy ? 'animate-spin' : ''}`} />
             Re-run AI
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -190,23 +189,28 @@ export default function CandidateDetailPage() {
       {c.analysisStatus === 'processing' && <Alert kind="info">Analysis in progress…</Alert>}
 
       {/* Stage controls */}
-      <Card className="flex flex-wrap items-center gap-3 p-4">
-        <span className="text-sm font-medium text-slate-600">Move to:</span>
-        {STAGES.map((s) => (
-          <button
-            key={s}
-            type="button"
-            disabled={busy || c.stage === s}
-            onClick={() => changeStage(s)}
-            className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${
-              c.stage === s
-                ? 'bg-brand-500 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
+      <Card className="flex flex-wrap items-center gap-2 p-4">
+        <span className="mr-1 text-sm font-medium text-slate-600">Move to:</span>
+        {STAGES.map((s) => {
+          const Icon = STAGE_ICONS[s];
+          const active = c.stage === s;
+          return (
+            <button
+              key={s}
+              type="button"
+              disabled={busy || active}
+              onClick={() => changeStage(s)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
+                active
+                  ? 'bg-brand-500 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {s}
+            </button>
+          );
+        })}
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">

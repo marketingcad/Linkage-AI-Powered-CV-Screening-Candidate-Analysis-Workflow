@@ -1,0 +1,74 @@
+- generic [ref=f5e3]:
+  - complementary [ref=f5e4]:
+    - generic [ref=f5e5]:
+      - link "CV ScreenAI Recruiting" [ref=f5e7] [cursor=pointer]:
+        - /url: /hr
+        - generic [ref=f5e8]: CV
+        - generic [ref=f5e9]:
+          - generic [ref=f5e10]: ScreenAI
+          - generic [ref=f5e11]: Recruiting
+      - navigation [ref=f5e12]:
+        - paragraph [ref=f5e13]: Menu
+        - link "Overview" [ref=f5e14] [cursor=pointer]:
+          - /url: /hr
+        - link "Jobs" [ref=f5e20] [cursor=pointer]:
+          - /url: /hr/jobs
+        - link "Candidates" [ref=f5e24] [cursor=pointer]:
+          - /url: /hr/candidates
+        - paragraph [ref=f5e30]: Public
+        - link "Careers page" [ref=f5e31] [cursor=pointer]:
+          - /url: /apply
+      - generic [ref=f5e36]:
+        - generic [ref=f5e37]:
+          - generic [ref=f5e38]: HA
+          - generic [ref=f5e39]:
+            - paragraph [ref=f5e40]: HR Admin
+            - paragraph [ref=f5e41]: hr@example.com
+        - button "Sign out" [ref=f5e42]
+  - main [ref=f5e47]:
+    - generic [ref=f5e48]:
+      - generic [ref=f5e49]:
+        - generic [ref=f5e50]:
+          - heading "Candidates" [level=1] [ref=f5e51]
+          - paragraph [ref=f5e52]: Ranked by AI qualification score across all roles.
+        - generic [ref=f5e53]:
+          - button "board" [ref=f5e54]
+          - button "table" [active] [ref=f5e55]
+      - generic [ref=f5e116]:
+        - generic [ref=f5e117]:
+          - button "All" [ref=f5e118]
+          - button "New" [ref=f5e119]
+          - button "Shortlisted" [ref=f5e120]
+          - button "Interviewing" [ref=f5e121]
+          - button "Hired" [ref=f5e122]
+          - button "Rejected" [ref=f5e123]
+        - table [ref=f5e126]:
+          - rowgroup [ref=f5e127]:
+            - row [ref=f5e128]:
+              - columnheader "Score" [ref=f5e129]
+              - columnheader "Candidate" [ref=f5e130]
+              - columnheader "Role" [ref=f5e131]
+              - columnheader "Source" [ref=f5e132]
+              - columnheader "Quiz" [ref=f5e133]
+              - columnheader "CV origin" [ref=f5e134]
+              - columnheader "Recommendation" [ref=f5e135]
+              - columnheader "Exp." [ref=f5e136]
+              - columnheader "Stage" [ref=f5e137]
+              - columnheader "Status" [ref=f5e138]
+          - rowgroup [ref=f5e139]:
+            - row [ref=f5e140] [cursor=pointer]:
+              - cell "1 97" [ref=f5e141]:
+                - generic [ref=f5e142]:
+                  - generic [ref=f5e143]: "1"
+                  - generic [ref=f5e144]: "97"
+              - cell "Maria Santos maria.santos@example.com" [ref=f5e149]:
+                - generic [ref=f5e150]: Maria Santos
+                - generic [ref=f5e151]: maria.santos@example.com
+              - cell "Senior Backend Engineer" [ref=f5e152]
+              - cell [ref=f5e153]
+              - cell "100" [ref=f5e157]
+              - cell "—" [ref=f5e158]
+              - cell [ref=f5e159]
+              - cell "6 yr" [ref=f5e163]
+              - cell [ref=f5e164]
+              - cell [ref=f5e168]

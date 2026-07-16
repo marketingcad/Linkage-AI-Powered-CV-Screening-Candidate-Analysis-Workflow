@@ -1,0 +1,216 @@
+- generic [ref=e7]:
+  - complementary [ref=e8]:
+    - generic [ref=e9]:
+      - link "CV ScreenAI Recruiting" [ref=e11] [cursor=pointer]:
+        - /url: /hr
+        - generic [ref=e12]: CV
+        - generic [ref=e13]:
+          - generic [ref=e14]: ScreenAI
+          - generic [ref=e15]: Recruiting
+      - navigation [ref=e16]:
+        - paragraph [ref=e17]: Menu
+        - link "Overview" [ref=e18] [cursor=pointer]:
+          - /url: /hr
+        - link "Jobs" [ref=e24] [cursor=pointer]:
+          - /url: /hr/jobs
+        - link "Candidates" [ref=e28] [cursor=pointer]:
+          - /url: /hr/candidates
+        - paragraph [ref=e34]: Public
+        - link "Careers page" [ref=e35] [cursor=pointer]:
+          - /url: /apply
+      - generic [ref=e40]:
+        - generic [ref=e41]:
+          - generic [ref=e42]: HA
+          - generic [ref=e43]:
+            - paragraph [ref=e44]: HR Admin
+            - paragraph [ref=e45]: hr@example.com
+        - button "Sign out" [ref=e46]
+  - main [ref=e51]:
+    - generic [ref=e52]:
+      - link "Back to jobs" [ref=e53] [cursor=pointer]:
+        - /url: /hr/jobs
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - heading "Senior Backend Engineer" [level=1] [ref=e59]
+            - generic [ref=e60]: Open
+          - generic [ref=e62]:
+            - generic [ref=e63]: Engineering
+            - generic [ref=e68]: Remote
+            - generic [ref=e72]: Full-time
+        - generic [ref=e76]:
+          - button "Edit" [active] [ref=e77]
+          - button "Delete" [ref=e81]
+      - generic [ref=e85]:
+        - generic [ref=e86]:
+          - heading "Description" [level=2] [ref=e87]
+          - paragraph [ref=e88]: We are hiring a Senior Backend Engineer to design and build scalable REST APIs and services in Node.js and TypeScript. You will own database schema design on PostgreSQL, integrate third-party APIs, and ensure reliability, security, and performance across the platform.
+          - generic [ref=e89]:
+            - generic [ref=e90]:
+              - paragraph [ref=e91]: Required skills
+              - generic [ref=e92]:
+                - generic [ref=e93]: Node.js
+                - generic [ref=e94]: TypeScript
+                - generic [ref=e95]: PostgreSQL
+                - generic [ref=e96]: REST APIs
+                - generic [ref=e97]: SQL
+            - generic [ref=e98]:
+              - paragraph [ref=e99]: Nice to have
+              - generic [ref=e100]:
+                - generic [ref=e101]: Docker
+                - generic [ref=e102]: AWS
+                - generic [ref=e103]: Redis
+        - generic [ref=e104]:
+          - generic [ref=e110]:
+            - paragraph [ref=e111]: Min. experience
+            - paragraph [ref=e112]: 5 years
+          - generic [ref=e118]:
+            - paragraph [ref=e119]: Education
+            - paragraph [ref=e120]: Bachelor's in Computer Science or equivalent
+          - generic [ref=e126]:
+            - paragraph [ref=e127]: Screening exam
+            - paragraph [ref=e128]: None
+      - generic [ref=e129]:
+        - heading "Distribute this job" [level=2] [ref=e130]
+        - paragraph [ref=e131]: Paste these tracked links into each platform. Applicants who use them are tagged by source, so you can see which channel each candidate came from.
+        - generic [ref=e132]:
+          - generic [ref=e133]:
+            - generic [ref=e134]: Indeed
+            - textbox [ref=e137]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=indeed
+            - button "Copy" [ref=e138]
+            - button "QR" [ref=e142]
+          - generic [ref=e149]:
+            - generic [ref=e150]: LinkedIn
+            - textbox [ref=e153]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=linkedin
+            - button "Copy" [ref=e154]
+            - button "QR" [ref=e158]
+          - generic [ref=e165]:
+            - generic [ref=e166]: JobStreet
+            - textbox [ref=e170]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=jobstreet
+            - button "Copy" [ref=e171]
+            - button "QR" [ref=e175]
+          - generic [ref=e182]:
+            - generic [ref=e183]: Glassdoor
+            - textbox [ref=e186]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=glassdoor
+            - button "Copy" [ref=e187]
+            - button "QR" [ref=e191]
+          - generic [ref=e198]:
+            - textbox "Custom source (e.g. company_newsletter)" [ref=e199]
+            - textbox [ref=e200]: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc
+            - button "Copy" [ref=e201]
+            - button "QR" [ref=e205]
+        - generic [ref=e212]:
+          - generic [ref=e213]:
+            - generic [ref=e214]: Ready-to-paste posting
+            - button "Copy" [ref=e215]
+          - textbox [ref=e219]: "Senior Backend Engineer Engineering · Remote · Full-time We are hiring a Senior Backend Engineer to design and build scalable REST APIs and services in Node.js and TypeScript. You will own database schema design on PostgreSQL, integrate third-party APIs, and ensure reliability, security, and performance across the platform. Key skills: Node.js, TypeScript, PostgreSQL, REST APIs, SQL Apply here: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc"
+      - generic [ref=e220]:
+        - generic [ref=e221]:
+          - heading "Ranked candidates" [level=2] [ref=e222]
+          - generic [ref=e223]: "1"
+        - table [ref=e225]:
+          - rowgroup [ref=e226]:
+            - row [ref=e227]:
+              - columnheader "Score" [ref=e228]
+              - columnheader "Candidate" [ref=e229]
+              - columnheader "Source" [ref=e230]
+              - columnheader "Quiz" [ref=e231]
+              - columnheader "CV origin" [ref=e232]
+              - columnheader "Recommendation" [ref=e233]
+              - columnheader "Exp." [ref=e234]
+              - columnheader "Stage" [ref=e235]
+              - columnheader "Status" [ref=e236]
+          - rowgroup [ref=e237]:
+            - row [ref=e238] [cursor=pointer]:
+              - cell "1 97" [ref=e239]:
+                - generic [ref=e240]:
+                  - generic [ref=e241]: "1"
+                  - generic [ref=e242]: "97"
+              - cell "Maria Santos maria.santos@example.com" [ref=e247]:
+                - generic [ref=e248]: Maria Santos
+                - generic [ref=e249]: maria.santos@example.com
+              - cell [ref=e250]
+              - cell "100" [ref=e254]
+              - cell "—" [ref=e255]
+              - cell [ref=e256]
+              - cell "6 yr" [ref=e260]
+              - cell [ref=e261]
+              - cell [ref=e265]
+      - generic [ref=e271]:
+        - generic [ref=e272]:
+          - heading "Edit job" [level=2] [ref=e278]
+          - button "Close" [ref=e279]
+        - generic [ref=e283]:
+          - generic [ref=e284]:
+            - generic [ref=e285]:
+              - generic [ref=e286]: Job title
+              - textbox "Job title" [ref=e287]:
+                - /placeholder: Senior Frontend Engineer
+                - text: Senior Backend Engineer
+            - generic [ref=e288]:
+              - generic [ref=e289]:
+                - generic [ref=e290]: Department
+                - textbox "Department" [ref=e291]: Engineering
+              - generic [ref=e292]:
+                - generic [ref=e293]: Location
+                - textbox "Location" [ref=e294]: Remote
+              - generic [ref=e295]:
+                - generic [ref=e296]: Employment type
+                - textbox "Employment type" [ref=e297]:
+                  - /placeholder: Full-time
+                  - text: Full-time
+            - generic [ref=e298]:
+              - generic [ref=e299]: Description
+              - textbox "Description" [ref=e300]:
+                - /placeholder: Role responsibilities, team, and what you're looking for…
+                - text: We are hiring a Senior Backend Engineer to design and build scalable REST APIs and services in Node.js and TypeScript. You will own database schema design on PostgreSQL, integrate third-party APIs, and ensure reliability, security, and performance across the platform.
+            - generic [ref=e301]:
+              - generic [ref=e302]: Required skills (comma separated)
+              - textbox "Required skills (comma separated)" [ref=e303]:
+                - /placeholder: React, TypeScript, REST APIs
+                - text: Node.js, TypeScript, PostgreSQL, REST APIs, SQL
+            - generic [ref=e304]:
+              - generic [ref=e305]: Nice-to-have skills (comma separated)
+              - textbox "Nice-to-have skills (comma separated)" [ref=e306]:
+                - /placeholder: GraphQL, AWS
+                - text: Docker, AWS, Redis
+            - generic [ref=e307]:
+              - generic [ref=e308]:
+                - generic [ref=e309]: Min. years experience
+                - spinbutton "Min. years experience" [ref=e310]: "5"
+              - generic [ref=e311]:
+                - generic [ref=e312]: Status
+                - combobox "Status" [ref=e313]:
+                  - option "Open" [selected]
+                  - option "Draft"
+                  - option "Closed"
+              - generic [ref=e314]:
+                - generic [ref=e315]: Education requirement
+                - textbox "Education requirement" [ref=e316]: Bachelor's in Computer Science or equivalent
+            - generic [ref=e317]:
+              - generic [ref=e318]:
+                - generic [ref=e319]: Screening exam / quiz
+                - generic [ref=e320]: 0 questions · optional
+              - paragraph [ref=e321]: Applicants answer these when they apply. Choice questions are auto-graded; short answers are graded by AI. The quiz score is combined with the CV match.
+              - generic [ref=e322]:
+                - generic [ref=e323]: ✨ Generate with AI
+                - combobox [ref=e324]:
+                  - option "3 questions"
+                  - option "5 questions" [selected]
+                  - option "8 questions"
+                  - option "10 questions"
+                - combobox [ref=e325]:
+                  - option "Easy"
+                  - option "Medium" [selected]
+                  - option "Hard"
+                - button "Generate exam" [ref=e326]
+                - generic [ref=e327]: from the job details above
+              - generic [ref=e328]:
+                - paragraph [ref=e329]: No quiz yet. Add questions to screen applicants with a position-specific exam.
+                - generic [ref=e330]:
+                  - button "+ Single choice" [ref=e331]
+                  - button "+ Multiple choice" [ref=e332]
+                  - button "+ Short answer" [ref=e333]
+          - generic [ref=e334]:
+            - button "Cancel" [ref=e335]
+            - button "Save changes" [ref=e336]

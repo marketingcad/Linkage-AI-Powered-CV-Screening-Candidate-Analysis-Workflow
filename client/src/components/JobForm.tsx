@@ -1,8 +1,16 @@
 import { useState } from 'react';
+import { LuBriefcase } from 'react-icons/lu';
 import { createJob, generateQuiz, updateJob, type JobInput } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import type { Job, JobStatus, QuizQuestion } from '../api/types';
-import { Alert, Spinner } from './ui';
+import { Alert, Button, Spinner } from './ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import QuizBuilder from './QuizBuilder';
 
 function parseSkills(v: string): string[] {
@@ -106,22 +114,25 @@ export default function JobForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4">
-      <div className="my-8 w-full max-w-2xl rounded-xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">
-            {existing ? 'Edit job' : 'New job'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 space-y-0 border-b border-slate-200 px-6 py-4 text-left">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+              <LuBriefcase className="h-4 w-4" />
+            </span>
+            <div>
+              <DialogTitle className="font-display text-lg font-semibold text-slate-900">
+                {existing ? 'Edit job' : 'New job'}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Define the role and its screening exam.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
           <Field label="Job title">
             <input
               required
@@ -258,32 +269,25 @@ export default function JobForm({
             <QuizBuilder value={quiz} onChange={setQuiz} />
           </div>
 
-          {error && <Alert kind="error">{error}</Alert>}
+            {error && <Alert kind="error">{error}</Alert>}
+          </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-            >
+          <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
-            >
+            </Button>
+            <Button type="submit" disabled={saving}>
               {saving ? <Spinner /> : existing ? 'Save changes' : 'Create job'}
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 const inputCls =
-  'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

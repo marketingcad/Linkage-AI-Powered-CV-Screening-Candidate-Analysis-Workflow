@@ -1,5 +1,41 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import type { IconType } from 'react-icons';
+import {
+  LuBot,
+  LuBriefcase,
+  LuCalendarCheck,
+  LuCircleAlert,
+  LuCircleCheck,
+  LuCircleHelp,
+  LuClock,
+  LuGlobe,
+  LuInbox,
+  LuLink,
+  LuLoaderCircle,
+  LuStar,
+  LuThumbsDown,
+  LuThumbsUp,
+  LuTrophy,
+  LuUserPlus,
+  LuCircleX,
+} from 'react-icons/lu';
+import { SiGlassdoor, SiIndeed } from 'react-icons/si';
+import { FaLinkedin } from 'react-icons/fa6';
+import { Skeleton } from './ui/skeleton';
 import type { AnalysisStatus, CandidateStage, Recommendation } from '../api/types';
+
+// Re-export shadcn primitives so existing `@/components/ui` imports resolve to them.
+export { Button, buttonVariants } from './ui/button';
+export { Skeleton };
+
+/** Icon per pipeline stage — shared by badges and the applicant status timeline. */
+export const STAGE_ICONS: Record<CandidateStage, IconType> = {
+  new: LuInbox,
+  shortlisted: LuStar,
+  interviewing: LuCalendarCheck,
+  hired: LuTrophy,
+  rejected: LuCircleX,
+};
 
 export function Spinner({ label }: { label?: string }) {
   return (
@@ -11,56 +47,8 @@ export function Spinner({ label }: { label?: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Button — consistent variants across the app
-// ---------------------------------------------------------------------------
-
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type ButtonSize = 'sm' | 'md';
-
-const BTN_BASE =
-  'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-150 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98]';
-
-const BTN_VARIANTS: Record<ButtonVariant, string> = {
-  primary:
-    'bg-brand-500 text-white shadow-[0_1px_2px_rgba(28,45,110,0.25)] hover:bg-brand-600 hover:shadow-[0_6px_18px_-6px_rgba(51,88,240,0.65)]',
-  secondary:
-    'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300',
-  ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-  danger: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:border-rose-300',
-};
-
-const BTN_SIZES: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2.5 text-sm',
-};
-
-export function Button({
-  variant = 'primary',
-  size = 'md',
-  className = '',
-  children,
-  ...props
-}: {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-} & ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      className={`${BTN_BASE} ${BTN_VARIANTS[variant]} ${BTN_SIZES[size]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Skeleton loaders
 // ---------------------------------------------------------------------------
-
-export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-slate-200/70 ${className}`} />;
-}
 
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
@@ -125,17 +113,18 @@ export function ScoreRing({ score, size = 56 }: { score: number | null; size?: n
   );
 }
 
-const RECOMMENDATION_META: Record<Recommendation, { label: string; cls: string }> = {
-  strong_match: { label: 'Strong match', cls: 'bg-emerald-100 text-emerald-700' },
-  possible: { label: 'Possible', cls: 'bg-amber-100 text-amber-700' },
-  not_a_fit: { label: 'Not a fit', cls: 'bg-rose-100 text-rose-700' },
+const RECOMMENDATION_META: Record<Recommendation, { label: string; cls: string; Icon: IconType }> = {
+  strong_match: { label: 'Strong match', cls: 'bg-emerald-100 text-emerald-700', Icon: LuThumbsUp },
+  possible: { label: 'Possible', cls: 'bg-amber-100 text-amber-700', Icon: LuCircleHelp },
+  not_a_fit: { label: 'Not a fit', cls: 'bg-rose-100 text-rose-700', Icon: LuThumbsDown },
 };
 
 export function RecommendationBadge({ value }: { value: Recommendation | null }) {
   if (!value) return <span className="text-xs text-slate-400">—</span>;
   const meta = RECOMMENDATION_META[value];
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
+      <meta.Icon className="h-3 w-3" />
       {meta.label}
     </span>
   );
@@ -151,23 +140,26 @@ const STAGE_META: Record<CandidateStage, { label: string; cls: string }> = {
 
 export function StageBadge({ value }: { value: CandidateStage }) {
   const meta = STAGE_META[value];
+  const Icon = STAGE_ICONS[value];
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
+      <Icon className="h-3 w-3" />
       {meta.label}
     </span>
   );
 }
 
 export function AnalysisStatusBadge({ value }: { value: AnalysisStatus }) {
-  const map: Record<AnalysisStatus, { label: string; cls: string }> = {
-    pending: { label: 'Pending', cls: 'bg-slate-100 text-slate-600' },
-    processing: { label: 'Analyzing…', cls: 'bg-amber-100 text-amber-700' },
-    completed: { label: 'Analyzed', cls: 'bg-emerald-100 text-emerald-700' },
-    failed: { label: 'Failed', cls: 'bg-rose-100 text-rose-700' },
+  const map: Record<AnalysisStatus, { label: string; cls: string; Icon: IconType; spin?: boolean }> = {
+    pending: { label: 'Pending', cls: 'bg-slate-100 text-slate-600', Icon: LuClock },
+    processing: { label: 'Analyzing…', cls: 'bg-amber-100 text-amber-700', Icon: LuLoaderCircle, spin: true },
+    completed: { label: 'Analyzed', cls: 'bg-emerald-100 text-emerald-700', Icon: LuCircleCheck },
+    failed: { label: 'Failed', cls: 'bg-rose-100 text-rose-700', Icon: LuCircleAlert },
   };
   const meta = map[value];
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
+      <meta.Icon className={`h-3 w-3 ${meta.spin ? 'animate-spin' : ''}`} />
       {meta.label}
     </span>
   );
@@ -195,13 +187,13 @@ export function Alert({ kind = 'error', children }: { kind?: 'error' | 'success'
 
 export const STAGES: CandidateStage[] = ['new', 'shortlisted', 'interviewing', 'hired', 'rejected'];
 
-const SOURCE_META: Record<string, { label: string; cls: string }> = {
-  indeed: { label: 'Indeed', cls: 'bg-blue-100 text-blue-700' },
-  linkedin: { label: 'LinkedIn', cls: 'bg-sky-100 text-sky-700' },
-  jobstreet: { label: 'JobStreet', cls: 'bg-orange-100 text-orange-700' },
-  glassdoor: { label: 'Glassdoor', cls: 'bg-emerald-100 text-emerald-700' },
-  referral: { label: 'Referral', cls: 'bg-violet-100 text-violet-700' },
-  direct: { label: 'Direct', cls: 'bg-slate-100 text-slate-600' },
+const SOURCE_META: Record<string, { label: string; cls: string; Icon: IconType }> = {
+  indeed: { label: 'Indeed', cls: 'bg-blue-100 text-blue-700', Icon: SiIndeed },
+  linkedin: { label: 'LinkedIn', cls: 'bg-sky-100 text-sky-700', Icon: FaLinkedin },
+  jobstreet: { label: 'JobStreet', cls: 'bg-orange-100 text-orange-700', Icon: LuBriefcase },
+  glassdoor: { label: 'Glassdoor', cls: 'bg-emerald-100 text-emerald-700', Icon: SiGlassdoor },
+  referral: { label: 'Referral', cls: 'bg-violet-100 text-violet-700', Icon: LuUserPlus },
+  direct: { label: 'Direct', cls: 'bg-slate-100 text-slate-600', Icon: LuGlobe },
 };
 
 export function formatSource(source: string): string {
@@ -224,17 +216,6 @@ export function aiLevel(likelihood: number | null | undefined): {
   return { label: 'Likely human-written', cls: 'bg-emerald-100 text-emerald-700', tone: 'low' };
 }
 
-/** Small robot/sparkle glyph for the AI-written signal. */
-function AiGlyph({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" className={className} aria-hidden="true">
-      <rect x="4" y="8" width="16" height="11" rx="3" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M12 4v4M8.5 12.5h.01M15.5 12.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M9 16c.8.6 4.2.6 6 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export function AiWrittenBadge({
   likelihood,
   size = 'sm',
@@ -252,7 +233,7 @@ export function AiWrittenBadge({
       className={`inline-flex items-center gap-1 rounded-full font-medium ${meta.cls} ${pad}`}
       title={`${meta.label} — estimated ${likelihood}% AI-generated (heuristic, not definitive)`}
     >
-      <AiGlyph />
+      <LuBot className="h-3.5 w-3.5" />
       AI-written ~{likelihood}%
     </span>
   );
@@ -261,8 +242,10 @@ export function AiWrittenBadge({
 export function SourceBadge({ source }: { source: string }) {
   const meta = SOURCE_META[source];
   const cls = meta?.cls ?? 'bg-slate-100 text-slate-600';
+  const Icon = meta?.Icon ?? LuLink;
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
+      <Icon className="h-3 w-3" />
       {meta?.label ?? formatSource(source)}
     </span>
   );

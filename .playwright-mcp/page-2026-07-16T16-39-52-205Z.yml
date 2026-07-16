@@ -1,0 +1,158 @@
+- generic:
+  - generic:
+    - generic:
+      - complementary:
+        - generic:
+          - generic:
+            - link:
+              - /url: /hr
+              - generic: CV
+              - generic:
+                - generic: ScreenAI
+                - generic: Recruiting
+          - navigation:
+            - paragraph: Menu
+            - link:
+              - /url: /hr
+              - text: Overview
+            - link:
+              - /url: /hr/jobs
+              - text: Jobs
+            - link:
+              - /url: /hr/candidates
+              - text: Candidates
+            - paragraph: Public
+            - link:
+              - /url: /apply
+              - text: Careers page
+          - generic:
+            - generic:
+              - generic: HA
+              - generic:
+                - paragraph: HR Admin
+                - paragraph: hr@example.com
+            - button: Sign out
+      - generic:
+        - main:
+          - generic:
+            - link:
+              - /url: /hr/jobs
+              - text: Back to jobs
+            - generic:
+              - generic:
+                - generic:
+                  - heading [level=1]: Senior Backend Engineer
+                  - generic: Open
+                - generic:
+                  - generic: Engineering
+                  - generic: Remote
+                  - generic: Full-time
+              - button [expanded]
+            - generic:
+              - generic:
+                - heading [level=2]: Description
+                - paragraph: We are hiring a Senior Backend Engineer to design and build scalable REST APIs and services in Node.js and TypeScript. You will own database schema design on PostgreSQL, integrate third-party APIs, and ensure reliability, security, and performance across the platform.
+                - generic:
+                  - generic:
+                    - paragraph: Required skills
+                    - generic:
+                      - generic: Node.js
+                      - generic: TypeScript
+                      - generic: PostgreSQL
+                      - generic: REST APIs
+                      - generic: SQL
+                  - generic:
+                    - paragraph: Nice to have
+                    - generic:
+                      - generic: Docker
+                      - generic: AWS
+                      - generic: Redis
+              - generic:
+                - generic:
+                  - generic:
+                    - paragraph: Min. experience
+                    - paragraph: 5 years
+                - generic:
+                  - generic:
+                    - paragraph: Education
+                    - paragraph: Bachelor's in Computer Science or equivalent
+                - generic:
+                  - generic:
+                    - paragraph: Screening exam
+                    - paragraph: None
+            - generic:
+              - heading [level=2]: Distribute this job
+              - paragraph: Paste these tracked links into each platform. Applicants who use them are tagged by source, so you can see which channel each candidate came from.
+              - generic:
+                - generic:
+                  - generic: Indeed
+                  - textbox: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=indeed
+                  - button: Copy
+                  - button: QR
+                - generic:
+                  - generic: LinkedIn
+                  - textbox: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=linkedin
+                  - button: Copy
+                  - button: QR
+                - generic:
+                  - generic: JobStreet
+                  - textbox: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=jobstreet
+                  - button: Copy
+                  - button: QR
+                - generic:
+                  - generic: Glassdoor
+                  - textbox: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc?src=glassdoor
+                  - button: Copy
+                  - button: QR
+                - generic:
+                  - textbox:
+                    - /placeholder: Custom source (e.g. company_newsletter)
+                  - textbox: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc
+                  - button: Copy
+                  - button: QR
+              - generic:
+                - generic:
+                  - generic: Ready-to-paste posting
+                  - button: Copy
+                - textbox: "Senior Backend Engineer Engineering · Remote · Full-time We are hiring a Senior Backend Engineer to design and build scalable REST APIs and services in Node.js and TypeScript. You will own database schema design on PostgreSQL, integrate third-party APIs, and ensure reliability, security, and performance across the platform. Key skills: Node.js, TypeScript, PostgreSQL, REST APIs, SQL Apply here: http://localhost:5173/apply/b55bb211-6124-415c-ab0b-0451578208cc"
+            - generic:
+              - generic:
+                - heading [level=2]: Ranked candidates
+                - generic: "1"
+              - generic:
+                - generic:
+                  - table:
+                    - rowgroup:
+                      - row:
+                        - columnheader: Score
+                        - columnheader: Candidate
+                        - columnheader: Source
+                        - columnheader: Quiz
+                        - columnheader: CV origin
+                        - columnheader: Recommendation
+                        - columnheader: Exp.
+                        - columnheader: Stage
+                        - columnheader: Status
+                    - rowgroup:
+                      - row:
+                        - cell:
+                          - generic:
+                            - generic: "1"
+                            - generic: "97"
+                        - cell:
+                          - generic: Maria Santos
+                          - generic: maria.santos@example.com
+                        - cell:
+                          - generic: LinkedIn
+                        - cell: "100"
+                        - cell: —
+                        - cell:
+                          - generic: Strong match
+                        - cell: 6 yr
+                        - cell:
+                          - generic: Shortlisted
+                        - cell:
+                          - generic: Analyzed
+  - menu "Job actions" [active] [ref=f4e294]:
+    - menuitem "Edit job" [ref=f4e295]
+    - menuitem "Delete job" [ref=f4e296]

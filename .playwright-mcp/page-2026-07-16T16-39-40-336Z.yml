@@ -1,0 +1,28 @@
+- generic [ref=f4e3]:
+  - complementary [ref=f4e4]:
+    - generic [ref=f4e5]:
+      - link "CV ScreenAI Recruiting" [ref=f4e7] [cursor=pointer]:
+        - /url: /hr
+        - generic [ref=f4e8]: CV
+        - generic [ref=f4e9]:
+          - generic [ref=f4e10]: ScreenAI
+          - generic [ref=f4e11]: Recruiting
+      - navigation [ref=f4e12]:
+        - paragraph [ref=f4e13]: Menu
+        - link "Overview" [ref=f4e14] [cursor=pointer]:
+          - /url: /hr
+        - link "Jobs" [ref=f4e20] [cursor=pointer]:
+          - /url: /hr/jobs
+        - link "Candidates" [ref=f4e24] [cursor=pointer]:
+          - /url: /hr/candidates
+        - paragraph [ref=f4e30]: Public
+        - link "Careers page" [ref=f4e31] [cursor=pointer]:
+          - /url: /apply
+      - generic [ref=f4e36]:
+        - generic [ref=f4e37]:
+          - generic [ref=f4e38]: HA
+          - generic [ref=f4e39]:
+            - paragraph [ref=f4e40]: HR Admin
+            - paragraph [ref=f4e41]: hr@example.com
+        - button "Sign out" [ref=f4e42]
+  - main [ref=f4e47]

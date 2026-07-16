@@ -1,10 +1,20 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import {
+  LuBriefcase,
+  LuExternalLink,
+  LuLayoutDashboard,
+  LuLogOut,
+  LuMenu,
+  LuUsers,
+  LuX,
+} from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
 
 const navItems = [
-  { to: '/hr', label: 'Overview', end: true },
-  { to: '/hr/jobs', label: 'Jobs' },
-  { to: '/hr/candidates', label: 'Candidates' },
+  { to: '/hr', label: 'Overview', end: true, Icon: LuLayoutDashboard },
+  { to: '/hr/jobs', label: 'Jobs', end: false, Icon: LuBriefcase },
+  { to: '/hr/candidates', label: 'Candidates', end: false, Icon: LuUsers },
 ];
 
 function initials(name?: string): string {
@@ -19,77 +29,139 @@ function initials(name?: string): string {
 export default function HrLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
-  return (
-    <div className="min-h-full">
-      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold text-white shadow-[0_2px_8px_-2px_rgba(51,88,240,0.6)]">
-                CV
-              </div>
-              <span className="font-display text-lg font-semibold text-slate-800">ScreenAI</span>
-            </div>
-            <nav className="hidden items-center gap-1 sm:flex">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    `rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                      isActive
-                        ? 'bg-brand-50 text-brand-700'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                    }`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-2.5 sm:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-brand-400 to-brand-600 text-xs font-bold text-white">
-                {initials(user?.name)}
-              </div>
-              <span className="text-sm font-medium text-slate-700">{user?.name}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                logout();
-                navigate('/login');
-              }}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              Sign out
-            </button>
+  function signOut() {
+    logout();
+    navigate('/login');
+  }
+
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+      isActive
+        ? 'bg-brand-50 text-brand-700'
+        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+    }`;
+
+  const sidebar = (
+    <div className="flex h-full flex-col">
+      {/* Brand */}
+      <div className="flex h-16 items-center justify-between px-5">
+        <NavLink to="/hr" end className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-[0_4px_12px_-3px_rgba(51,88,240,0.6)]">
+            CV
+          </span>
+          <span className="flex flex-col leading-none">
+            <span className="font-display text-lg font-semibold text-slate-900">ScreenAI</span>
+            <span className="text-[11px] font-medium tracking-wide text-slate-400">Recruiting</span>
+          </span>
+        </NavLink>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
+          aria-label="Close menu"
+        >
+          <LuX className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-1 px-3 py-3">
+        <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          Menu
+        </p>
+        {navItems.map(({ to, label, end, Icon }) => (
+          <NavLink key={to} to={to} end={end} className={navLinkClass} onClick={() => setOpen(false)}>
+            <Icon className="h-4.5 w-4.5" />
+            {label}
+          </NavLink>
+        ))}
+
+        <p className="px-3 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          Public
+        </p>
+        <a
+          href="/apply"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+        >
+          <LuExternalLink className="h-4.5 w-4.5" />
+          Careers page
+        </a>
+      </nav>
+
+      {/* User */}
+      <div className="border-t border-slate-200/70 p-3">
+        <div className="flex items-center gap-3 rounded-lg px-2 py-2">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand-400 to-brand-600 text-xs font-bold text-white">
+            {initials(user?.name)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-800">{user?.name}</p>
+            <p className="truncate text-xs text-slate-400">{user?.email}</p>
           </div>
         </div>
-        {/* Mobile nav */}
-        <nav className="flex items-center gap-1 border-t border-slate-100 px-4 py-2 sm:hidden">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                  isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-100'
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-      </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <Outlet />
-      </main>
+        <button
+          type="button"
+          onClick={signOut}
+          className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
+        >
+          <LuLogOut className="h-4 w-4" />
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen">
+      {/* Desktop sidebar (fixed) */}
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-200/70 bg-white lg:block">
+        {sidebar}
+      </aside>
+
+      {/* Mobile drawer */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 lg:hidden ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {sidebar}
+      </aside>
+
+      {/* Content */}
+      <div className="lg:pl-64">
+        {/* Mobile top bar */}
+        <div className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200/70 bg-white/85 px-4 backdrop-blur-md lg:hidden">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100"
+            aria-label="Open menu"
+          >
+            <LuMenu className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500 text-xs font-bold text-white">
+              CV
+            </span>
+            <span className="font-display text-base font-semibold text-slate-800">ScreenAI</span>
+          </div>
+        </div>
+
+        <main className="mx-auto max-w-7xl px-6 py-8">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

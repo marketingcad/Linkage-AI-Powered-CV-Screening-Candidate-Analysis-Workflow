@@ -1,0 +1,13 @@
+- generic [ref=f14e3]:
+  - banner [ref=f14e4]:
+    - link "CV ScreenAI Careers" [ref=f14e6] [cursor=pointer]:
+      - /url: /apply
+      - generic [ref=f14e7]: CV
+      - generic [ref=f14e8]:
+        - generic [ref=f14e9]: ScreenAI
+        - generic [ref=f14e10]: Careers
+  - generic [ref=f14e11]:
+    - generic [ref=f14e12]:
+      - heading "Open positions" [level=1] [ref=f14e13]
+      - paragraph [ref=f14e14]: Pick a role to apply. Your CV is analyzed by AI and matched against the position in minutes.
+    - generic [ref=f14e15]: Loading open positions…

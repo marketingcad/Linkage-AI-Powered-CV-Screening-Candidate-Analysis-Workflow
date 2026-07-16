@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { LuCheck } from 'react-icons/lu';
+import PublicHeader from '../layout/PublicHeader';
 import { fetchApplicationStatus } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import type { ApplicationStatus, CandidateStage } from '../api/types';
-import { Alert, Card, Spinner } from '../components/ui';
+import { Alert, Card, Spinner, STAGE_ICONS } from '../components/ui';
 
 const STEP_LABELS: Record<string, string> = {
   new: 'Under review',
@@ -49,16 +51,7 @@ export default function StatusPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-4">
-          <Link to="/apply" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold text-white">
-              CV
-            </div>
-            <span className="font-semibold text-slate-800">ScreenAI Careers</span>
-          </Link>
-        </div>
-      </header>
+      <PublicHeader container="max-w-2xl" />
 
       <div className="mx-auto max-w-2xl px-6 py-10">
         {loading ? (
@@ -119,7 +112,7 @@ export default function StatusPage() {
                       <li key={stage} className="flex gap-3">
                         <div className="flex flex-col items-center">
                           <span
-                            className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                            className={`flex h-7 w-7 items-center justify-center rounded-full ${
                               done
                                 ? 'bg-emerald-500 text-white'
                                 : current
@@ -127,7 +120,14 @@ export default function StatusPage() {
                                   : 'bg-slate-200 text-slate-500'
                             }`}
                           >
-                            {done ? '✓' : i + 1}
+                            {done ? (
+                              <LuCheck className="h-3.5 w-3.5" />
+                            ) : (
+                              (() => {
+                                const Icon = STAGE_ICONS[stage];
+                                return <Icon className="h-3.5 w-3.5" />;
+                              })()
+                            )}
                           </span>
                           {!last && (
                             <span

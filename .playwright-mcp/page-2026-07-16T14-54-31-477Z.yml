@@ -1,0 +1,99 @@
+- generic [ref=e7]:
+  - banner [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - link "CV ScreenAI Recruiting" [ref=e11] [cursor=pointer]:
+          - /url: /hr
+          - generic [ref=e12]: CV
+          - generic [ref=e13]:
+            - generic [ref=e14]: ScreenAI
+            - generic [ref=e15]: Recruiting
+        - navigation [ref=e16]:
+          - link "Overview" [ref=e17] [cursor=pointer]:
+            - /url: /hr
+          - link "Jobs" [ref=e20] [cursor=pointer]:
+            - /url: /hr/jobs
+          - link "Candidates" [ref=e23] [cursor=pointer]:
+            - /url: /hr/candidates
+      - generic [ref=e26]:
+        - button "HA HR Admin" [expanded] [active] [ref=e27]:
+          - generic [ref=e28]: HA
+          - generic [ref=e29]: HR Admin
+        - menu [ref=e32]:
+          - generic [ref=e33]:
+            - paragraph [ref=e34]: HR Admin
+            - paragraph [ref=e35]: hr@example.com
+            - generic [ref=e36]: admin
+          - menuitem "Sign out" [ref=e37]
+  - main [ref=e40]:
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - heading "Overview" [level=1] [ref=e43]
+        - paragraph [ref=e44]: AI-screened candidates across all your open roles.
+      - generic [ref=e45]:
+        - generic [ref=e47]:
+          - generic [ref=e48]:
+            - paragraph [ref=e49]: Total candidates
+            - paragraph [ref=e50]: "1"
+          - generic [ref=e51]: 👥
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - paragraph [ref=e55]: Open jobs
+            - paragraph [ref=e56]: "1"
+          - generic [ref=e57]: 💼
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - paragraph [ref=e61]: Avg. score
+            - paragraph [ref=e62]: 95/100
+          - generic [ref=e63]: 📊
+        - generic [ref=e65]:
+          - generic [ref=e66]:
+            - paragraph [ref=e67]: Shortlisted
+            - paragraph [ref=e68]: "1"
+          - generic [ref=e69]: ⭐
+      - generic [ref=e70]:
+        - generic [ref=e71]:
+          - heading "Pipeline by stage" [level=2] [ref=e72]
+          - generic [ref=e74]:
+            - paragraph [ref=e75]: "1"
+            - paragraph [ref=e76]: Shortlisted
+        - generic [ref=e77]:
+          - heading "Candidates by channel" [level=2] [ref=e78]
+          - generic [ref=e80]:
+            - paragraph [ref=e81]: "1"
+            - paragraph [ref=e82]: LinkedIn
+      - generic [ref=e83]:
+        - generic [ref=e84]:
+          - heading "Top candidates" [level=2] [ref=e85]
+          - link "View all →" [ref=e86] [cursor=pointer]:
+            - /url: /hr/candidates
+        - table [ref=e88]:
+          - rowgroup [ref=e89]:
+            - row [ref=e90]:
+              - columnheader "Score" [ref=e91]
+              - columnheader "Candidate" [ref=e92]
+              - columnheader "Role" [ref=e93]
+              - columnheader "Source" [ref=e94]
+              - columnheader "Quiz" [ref=e95]
+              - columnheader "CV origin" [ref=e96]
+              - columnheader "Recommendation" [ref=e97]
+              - columnheader "Exp." [ref=e98]
+              - columnheader "Stage" [ref=e99]
+              - columnheader "Status" [ref=e100]
+          - rowgroup [ref=e101]:
+            - row [ref=e102] [cursor=pointer]:
+              - cell "1 97" [ref=e103]:
+                - generic [ref=e104]:
+                  - generic [ref=e105]: "1"
+                  - generic [ref=e106]: "97"
+              - cell "Maria Santos maria.santos@example.com" [ref=e111]:
+                - generic [ref=e112]: Maria Santos
+                - generic [ref=e113]: maria.santos@example.com
+              - cell "Senior Backend Engineer" [ref=e114]
+              - cell "LinkedIn" [ref=e115]
+              - cell "100" [ref=e117]
+              - cell "—" [ref=e118]
+              - cell "Strong match" [ref=e119]
+              - cell "6 yr" [ref=e121]
+              - cell "Shortlisted" [ref=e122]
+              - cell "Analyzed" [ref=e124]

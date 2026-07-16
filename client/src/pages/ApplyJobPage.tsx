@@ -4,6 +4,7 @@ import { fetchPublicJob, prefillFromCv, submitApplication } from '../api/endpoin
 import { ApiError } from '../api/client';
 import type { PublicJob, QuizAnswer } from '../api/types';
 import { Alert, Card, Spinner } from '../components/ui';
+import PublicHeader from '../layout/PublicHeader';
 
 export default function ApplyJobPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -162,16 +163,7 @@ export default function ApplyJobPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <Link to="/apply" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold text-white">
-              CV
-            </div>
-            <span className="font-semibold text-slate-800">ScreenAI Careers</span>
-          </Link>
-        </div>
-      </header>
+      <PublicHeader container="max-w-4xl" />
 
       <div className="mx-auto max-w-4xl px-6 py-10">
         {loading ? (

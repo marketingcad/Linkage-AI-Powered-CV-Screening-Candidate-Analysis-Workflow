@@ -1,0 +1,51 @@
+- generic [ref=e7]:
+  - complementary [ref=e8]:
+    - generic [ref=e9]:
+      - link "CV ScreenAI Recruiting" [ref=e11] [cursor=pointer]:
+        - /url: /hr
+        - generic [ref=e12]: CV
+        - generic [ref=e13]:
+          - generic [ref=e14]: ScreenAI
+          - generic [ref=e15]: Recruiting
+      - navigation [ref=e16]:
+        - paragraph [ref=e17]: Menu
+        - link "Overview" [ref=e18] [cursor=pointer]:
+          - /url: /hr
+        - link "Jobs" [ref=e24] [cursor=pointer]:
+          - /url: /hr/jobs
+        - link "Candidates" [ref=e28] [cursor=pointer]:
+          - /url: /hr/candidates
+        - paragraph [ref=e34]: Public
+        - link "Careers page" [ref=e35] [cursor=pointer]:
+          - /url: /apply
+      - generic [ref=e40]:
+        - generic [ref=e41]:
+          - generic [ref=e42]: HA
+          - generic [ref=e43]:
+            - paragraph [ref=e44]: HR Admin
+            - paragraph [ref=e45]: hr@example.com
+        - button "Sign out" [ref=e46]
+  - main [ref=e51]:
+    - generic [ref=e443]:
+      - generic [ref=e444]:
+        - generic [ref=e445]:
+          - heading "Jobs" [level=1] [ref=e446]
+          - paragraph [ref=e447]: Positions candidates are screened against.
+        - button "New job" [ref=e448]
+      - button "Senior Backend Engineer Open Engineering Remote 5+ yrs Node.js TypeScript PostgreSQL REST APIs +1 1 candidate View" [ref=e450]:
+        - generic [ref=e451]:
+          - heading "Senior Backend Engineer" [level=3] [ref=e452]
+          - generic [ref=e453]: Open
+        - generic [ref=e455]:
+          - generic [ref=e456]: Engineering
+          - generic [ref=e461]: Remote
+          - generic [ref=e465]: 5+ yrs
+        - generic [ref=e469]:
+          - generic [ref=e470]: Node.js
+          - generic [ref=e471]: TypeScript
+          - generic [ref=e472]: PostgreSQL
+          - generic [ref=e473]: REST APIs
+          - generic [ref=e474]: "+1"
+        - generic [ref=e475]:
+          - generic [ref=e476]: 1 candidate
+          - generic [ref=e482]: View

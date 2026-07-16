@@ -1,0 +1,117 @@
+- generic [ref=f11e35]:
+  - complementary [ref=f11e36]:
+    - generic [ref=f11e37]:
+      - link "CV ScreenAI Recruiting" [ref=f11e39] [cursor=pointer]:
+        - /url: /hr
+        - generic [ref=f11e40]: CV
+        - generic [ref=f11e41]:
+          - generic [ref=f11e42]: ScreenAI
+          - generic [ref=f11e43]: Recruiting
+      - navigation [ref=f11e44]:
+        - paragraph [ref=f11e45]: Menu
+        - link "Overview" [ref=f11e46] [cursor=pointer]:
+          - /url: /hr
+        - link "Jobs" [ref=f11e52] [cursor=pointer]:
+          - /url: /hr/jobs
+        - link "Candidates" [ref=f11e56] [cursor=pointer]:
+          - /url: /hr/candidates
+        - paragraph [ref=f11e62]: Public
+        - link "Careers page" [ref=f11e63] [cursor=pointer]:
+          - /url: /apply
+      - generic [ref=f11e68]:
+        - generic [ref=f11e69]:
+          - generic [ref=f11e70]: HA
+          - generic [ref=f11e71]:
+            - paragraph [ref=f11e72]: HR Admin
+            - paragraph [ref=f11e73]: hr@example.com
+        - button "Sign out" [ref=f11e74]
+  - main [ref=f11e79]:
+    - generic [ref=f11e80]:
+      - generic [ref=f11e81]:
+        - heading "Overview" [level=1] [ref=f11e82]
+        - paragraph [ref=f11e83]: AI-screened candidates across all your open roles.
+      - generic [ref=f11e84]:
+        - link [ref=f11e85] [cursor=pointer]:
+          - /url: /hr/candidates
+          - generic [ref=f11e86]:
+            - paragraph [ref=f11e96]: "1"
+            - paragraph [ref=f11e97]: Total candidates
+            - paragraph [ref=f11e98]: in your pipeline
+        - link [ref=f11e99] [cursor=pointer]:
+          - /url: /hr/jobs
+          - generic [ref=f11e100]:
+            - paragraph [ref=f11e108]: "1"
+            - paragraph [ref=f11e109]: Open jobs
+            - paragraph [ref=f11e110]: accepting applications
+        - generic [ref=f11e112]:
+          - paragraph [ref=f11e118]: 95/100
+          - paragraph [ref=f11e119]: Avg. score
+          - paragraph [ref=f11e120]: AI qualification
+        - link [ref=f11e121] [cursor=pointer]:
+          - /url: /hr/candidates
+          - generic [ref=f11e122]:
+            - paragraph [ref=f11e129]: "1"
+            - paragraph [ref=f11e130]: Shortlisted
+            - paragraph [ref=f11e131]: ready to review
+      - generic [ref=f11e132]:
+        - generic [ref=f11e133]:
+          - generic [ref=f11e134]:
+            - heading "Pipeline by stage" [level=2] [ref=f11e135]
+            - generic [ref=f11e136]: 1 total
+          - 'generic "Shortlisted: 1" [ref=f11e138]'
+          - generic [ref=f11e139]:
+            - generic [ref=f11e140]:
+              - generic [ref=f11e145]: New
+              - generic [ref=f11e146]: "0"
+            - generic [ref=f11e147]:
+              - generic [ref=f11e151]: Shortlisted
+              - generic [ref=f11e152]: "1"
+            - generic [ref=f11e153]:
+              - generic [ref=f11e158]: Interviewing
+              - generic [ref=f11e159]: "0"
+            - generic [ref=f11e160]:
+              - generic [ref=f11e168]: Hired
+              - generic [ref=f11e169]: "0"
+            - generic [ref=f11e170]:
+              - generic [ref=f11e176]: Rejected
+              - generic [ref=f11e177]: "0"
+        - generic [ref=f11e178]:
+          - heading "Candidates by channel" [level=2] [ref=f11e179]
+          - generic [ref=f11e182]:
+            - generic [ref=f11e183]: LinkedIn
+            - generic [ref=f11e186]: "1"
+      - generic [ref=f11e189]:
+        - generic [ref=f11e190]:
+          - heading "Top candidates" [level=2] [ref=f11e191]
+          - link "View all" [ref=f11e192] [cursor=pointer]:
+            - /url: /hr/candidates
+        - table [ref=f11e196]:
+          - rowgroup [ref=f11e197]:
+            - row [ref=f11e198]:
+              - columnheader "Score" [ref=f11e199]
+              - columnheader "Candidate" [ref=f11e200]
+              - columnheader "Role" [ref=f11e201]
+              - columnheader "Source" [ref=f11e202]
+              - columnheader "Quiz" [ref=f11e203]
+              - columnheader "CV origin" [ref=f11e204]
+              - columnheader "Recommendation" [ref=f11e205]
+              - columnheader "Exp." [ref=f11e206]
+              - columnheader "Stage" [ref=f11e207]
+              - columnheader "Status" [ref=f11e208]
+          - rowgroup [ref=f11e209]:
+            - row [ref=f11e210] [cursor=pointer]:
+              - cell "1 97" [ref=f11e211]:
+                - generic [ref=f11e212]:
+                  - generic [ref=f11e213]: "1"
+                  - generic [ref=f11e214]: "97"
+              - cell "Maria Santos maria.santos@example.com" [ref=f11e219]:
+                - generic [ref=f11e220]: Maria Santos
+                - generic [ref=f11e221]: maria.santos@example.com
+              - cell "Senior Backend Engineer" [ref=f11e222]
+              - cell [ref=f11e223]
+              - cell "100" [ref=f11e227]
+              - cell "—" [ref=f11e228]
+              - cell [ref=f11e229]
+              - cell "6 yr" [ref=f11e233]
+              - cell [ref=f11e234]
+              - cell [ref=f11e238]

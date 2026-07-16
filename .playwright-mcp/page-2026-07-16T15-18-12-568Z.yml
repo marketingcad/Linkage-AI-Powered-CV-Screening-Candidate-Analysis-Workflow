@@ -1,0 +1,67 @@
+- generic [ref=f7e3]:
+  - banner [ref=f7e4]:
+    - generic [ref=f7e5]:
+      - generic [ref=f7e6]:
+        - link "CV ScreenAI Recruiting" [ref=f7e7] [cursor=pointer]:
+          - /url: /hr
+          - generic [ref=f7e8]: CV
+          - generic [ref=f7e9]:
+            - generic [ref=f7e10]: ScreenAI
+            - generic [ref=f7e11]: Recruiting
+        - navigation [ref=f7e12]:
+          - link "Overview" [ref=f7e13] [cursor=pointer]:
+            - /url: /hr
+          - link "Jobs" [ref=f7e19] [cursor=pointer]:
+            - /url: /hr/jobs
+          - link "Candidates" [ref=f7e23] [cursor=pointer]:
+            - /url: /hr/candidates
+      - button "HA HR Admin" [ref=f7e30]:
+        - generic [ref=f7e31]: HA
+        - generic [ref=f7e32]: HR Admin
+  - main [ref=f7e35]:
+    - generic [ref=f7e36]:
+      - generic [ref=f7e37]:
+        - generic [ref=f7e38]:
+          - heading "Candidates" [level=1] [ref=f7e39]
+          - paragraph [ref=f7e40]: Ranked by AI qualification score across all roles.
+        - generic [ref=f7e41]:
+          - button "board" [ref=f7e42]
+          - button "table" [active] [ref=f7e43]
+      - generic [ref=f7e47]:
+        - generic [ref=f7e48]:
+          - button "All" [ref=f7e49]
+          - button "New" [ref=f7e50]
+          - button "Shortlisted" [ref=f7e51]
+          - button "Interviewing" [ref=f7e52]
+          - button "Hired" [ref=f7e53]
+          - button "Rejected" [ref=f7e54]
+        - table [ref=f7e56]:
+          - rowgroup [ref=f7e57]:
+            - row [ref=f7e58]:
+              - columnheader "Score" [ref=f7e59]
+              - columnheader "Candidate" [ref=f7e60]
+              - columnheader "Role" [ref=f7e61]
+              - columnheader "Source" [ref=f7e62]
+              - columnheader "Quiz" [ref=f7e63]
+              - columnheader "CV origin" [ref=f7e64]
+              - columnheader "Recommendation" [ref=f7e65]
+              - columnheader "Exp." [ref=f7e66]
+              - columnheader "Stage" [ref=f7e67]
+              - columnheader "Status" [ref=f7e68]
+          - rowgroup [ref=f7e69]:
+            - row [ref=f7e70] [cursor=pointer]:
+              - cell "1 97" [ref=f7e71]:
+                - generic [ref=f7e72]:
+                  - generic [ref=f7e73]: "1"
+                  - generic [ref=f7e74]: "97"
+              - cell "Maria Santos maria.santos@example.com" [ref=f7e79]:
+                - generic [ref=f7e80]: Maria Santos
+                - generic [ref=f7e81]: maria.santos@example.com
+              - cell "Senior Backend Engineer" [ref=f7e82]
+              - cell [ref=f7e83]
+              - cell "100" [ref=f7e87]
+              - cell "—" [ref=f7e88]
+              - cell "Strong match" [ref=f7e89]
+              - cell "6 yr" [ref=f7e91]
+              - cell "Shortlisted" [ref=f7e92]
+              - cell "Analyzed" [ref=f7e94]

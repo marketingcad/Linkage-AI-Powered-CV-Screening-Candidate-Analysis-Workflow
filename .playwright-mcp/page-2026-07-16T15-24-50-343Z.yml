@@ -1,0 +1,12 @@
+- generic [ref=f11e3]:
+  - banner [ref=f11e4]:
+    - generic [ref=f11e5]:
+      - link "CV ScreenAI Careers" [ref=f11e6] [cursor=pointer]:
+        - /url: /apply
+        - generic [ref=f11e7]: CV
+        - generic [ref=f11e8]:
+          - generic [ref=f11e9]: ScreenAI
+          - generic [ref=f11e10]: Careers
+      - link "Recruiter login" [ref=f11e11] [cursor=pointer]:
+        - /url: /login
+  - generic [ref=f11e15]: Loading your application status…

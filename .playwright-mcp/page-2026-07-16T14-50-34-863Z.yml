@@ -1,0 +1,29 @@
+- generic [ref=f2e3]:
+  - banner [ref=f2e4]:
+    - generic [ref=f2e5]:
+      - generic [ref=f2e6]:
+        - generic [ref=f2e7]:
+          - generic [ref=f2e8]: CV
+          - generic [ref=f2e9]: ScreenAI
+        - navigation [ref=f2e10]:
+          - link "Overview" [ref=f2e11] [cursor=pointer]:
+            - /url: /hr
+          - link "Jobs" [ref=f2e12] [cursor=pointer]:
+            - /url: /hr/jobs
+          - link "Candidates" [ref=f2e13] [cursor=pointer]:
+            - /url: /hr/candidates
+      - generic [ref=f2e14]:
+        - generic [ref=f2e15]:
+          - generic [ref=f2e16]: HA
+          - generic [ref=f2e17]: HR Admin
+        - button "Sign out" [ref=f2e18]
+  - main [ref=f2e19]:
+    - generic [ref=f2e20]:
+      - generic [ref=f2e21]:
+        - generic [ref=f2e22]:
+          - heading "Candidates" [level=1] [ref=f2e23]
+          - paragraph [ref=f2e24]: Drag candidates between stages to move them through the pipeline.
+        - generic [ref=f2e25]:
+          - button "board" [ref=f2e26]
+          - button "table" [ref=f2e27]
+      - generic [ref=f2e28]: Loading candidates…

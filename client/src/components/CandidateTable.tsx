@@ -8,6 +8,14 @@ import {
   SourceBadge,
   StageBadge,
 } from './ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/table';
 
 export default function CandidateTable({
   candidates,
@@ -32,68 +40,71 @@ export default function CandidateTable({
     );
   }
 
+  const headCls =
+    'px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500';
+
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-(--shadow-card)">
-      <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-slate-50/70 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-          <tr>
-            <th className="px-4 py-3 text-center">Score</th>
-            <th className="px-4 py-3">Candidate</th>
-            {showJob && <th className="px-4 py-3">Role</th>}
-            <th className="px-4 py-3">Source</th>
-            <th className="px-4 py-3">Quiz</th>
-            <th className="px-4 py-3">CV origin</th>
-            <th className="px-4 py-3">Recommendation</th>
-            <th className="px-4 py-3">Exp.</th>
-            <th className="px-4 py-3">Stage</th>
-            <th className="px-4 py-3">Status</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-(--shadow-card)">
+      <Table>
+        <TableHeader className="bg-slate-50/70">
+          <TableRow className="border-slate-200 hover:bg-transparent">
+            <TableHead className={`${headCls} text-center`}>Score</TableHead>
+            <TableHead className={headCls}>Candidate</TableHead>
+            {showJob && <TableHead className={headCls}>Role</TableHead>}
+            <TableHead className={headCls}>Source</TableHead>
+            <TableHead className={headCls}>Quiz</TableHead>
+            <TableHead className={headCls}>CV origin</TableHead>
+            <TableHead className={headCls}>Recommendation</TableHead>
+            <TableHead className={headCls}>Exp.</TableHead>
+            <TableHead className={headCls}>Stage</TableHead>
+            <TableHead className={headCls}>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {candidates.map((c, i) => (
-            <tr
+            <TableRow
               key={c.id}
               onClick={() => navigate(`/hr/candidates/${c.id}`)}
-              className="group cursor-pointer transition-colors hover:bg-brand-50/40"
+              className="group cursor-pointer border-slate-100 hover:bg-brand-50/40"
             >
-              <td className="px-4 py-3">
+              <TableCell className="px-4 py-3">
                 <div className="flex items-center justify-center gap-2">
                   <span className="w-5 text-right text-xs font-medium text-slate-400">{i + 1}</span>
                   <ScoreRing score={c.overallScore ?? c.qualificationScore} size={44} />
                 </div>
-              </td>
-              <td className="px-4 py-3">
+              </TableCell>
+              <TableCell className="px-4 py-3">
                 <div className="font-medium text-slate-800">{c.fullName}</div>
                 <div className="text-xs text-slate-400">{c.email}</div>
-              </td>
+              </TableCell>
               {showJob && (
-                <td className="px-4 py-3 text-slate-600">{c.jobTitle ?? '—'}</td>
+                <TableCell className="px-4 py-3 text-slate-600">{c.jobTitle ?? '—'}</TableCell>
               )}
-              <td className="px-4 py-3">
+              <TableCell className="px-4 py-3">
                 <SourceBadge source={c.source} />
-              </td>
-              <td className="px-4 py-3 text-slate-600">
+              </TableCell>
+              <TableCell className="px-4 py-3 text-slate-600">
                 {c.quizScore != null ? `${c.quizScore}` : '—'}
-              </td>
-              <td className="px-4 py-3">
+              </TableCell>
+              <TableCell className="px-4 py-3">
                 <AiWrittenBadge likelihood={c.aiLikelihood} />
-              </td>
-              <td className="px-4 py-3">
+              </TableCell>
+              <TableCell className="px-4 py-3">
                 <RecommendationBadge value={c.recommendation} />
-              </td>
-              <td className="px-4 py-3 text-slate-600">
+              </TableCell>
+              <TableCell className="px-4 py-3 text-slate-600">
                 {c.totalYearsExperience != null ? `${c.totalYearsExperience} yr` : '—'}
-              </td>
-              <td className="px-4 py-3">
+              </TableCell>
+              <TableCell className="px-4 py-3">
                 <StageBadge value={c.stage} />
-              </td>
-              <td className="px-4 py-3">
+              </TableCell>
+              <TableCell className="px-4 py-3">
                 <AnalysisStatusBadge value={c.analysisStatus} />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
