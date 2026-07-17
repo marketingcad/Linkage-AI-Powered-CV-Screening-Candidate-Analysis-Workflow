@@ -60,6 +60,7 @@ export default function JobDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [view, setView] = useState<'details' | 'candidates'>('details');
 
   function load() {
     if (!id) return;
@@ -163,8 +164,53 @@ export default function JobDetailPage() {
         </div>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="p-6 lg:col-span-2">
+      {/* View toggle: Job details vs Ranked candidates */}
+      <div
+        role="tablist"
+        aria-label="Job view"
+        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === 'details'}
+          onClick={() => setView('details')}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            view === 'details'
+              ? 'bg-brand-500 text-white shadow-[0_2px_8px_-2px_rgba(51,88,240,0.6)]'
+              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+          }`}
+        >
+          <LuFileText className="h-4 w-4" />
+          Job details
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === 'candidates'}
+          onClick={() => setView('candidates')}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            view === 'candidates'
+              ? 'bg-brand-500 text-white shadow-[0_2px_8px_-2px_rgba(51,88,240,0.6)]'
+              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+          }`}
+        >
+          <LuUsers className="h-4 w-4" />
+          Ranked candidates
+          <span
+            className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+              view === 'candidates' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+            }`}
+          >
+            {candidates.length}
+          </span>
+        </button>
+      </div>
+
+      {view === 'details' && (
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Card className="p-6 lg:col-span-2">
           <div className="mb-4 flex items-center gap-2">
             <LuFileText className="h-4 w-4 text-brand-500" />
             <h2 className="text-sm font-semibold text-slate-700">About this role</h2>
@@ -217,26 +263,30 @@ export default function JobDetailPage() {
             <InfoRow Icon={LuCalendarDays} label="Posted" value={formatDate(job.createdAt)} />
           </div>
         </Card>
-      </div>
-
-      <DistributePanel job={job} />
-
-      <div>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <LuUsers className="h-5 w-5 text-slate-400" />
-            <h2 className="text-lg font-semibold text-slate-900">Ranked candidates</h2>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-              {candidates.length}
-            </span>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
-            <LuCloudUpload className="h-4 w-4" />
-            Import CVs
-          </Button>
+
+          <DistributePanel job={job} />
         </div>
-        <CandidateTable candidates={candidates as Candidate[]} />
-      </div>
+      )}
+
+      {view === 'candidates' && (
+        <div>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <LuUsers className="h-5 w-5 text-slate-400" />
+              <h2 className="text-lg font-semibold text-slate-900">Ranked candidates</h2>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                {candidates.length}
+              </span>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
+              <LuCloudUpload className="h-4 w-4" />
+              Import CVs
+            </Button>
+          </div>
+          <CandidateTable candidates={candidates as Candidate[]} />
+        </div>
+      )}
 
       {editing && <JobForm existing={job} onClose={() => setEditing(false)} onSaved={handleSaved} />}
       {importing && (
