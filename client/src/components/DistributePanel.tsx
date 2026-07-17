@@ -159,7 +159,7 @@ export default function DistributePanel({ job }: { job: Job }) {
               readOnly
               value={linkFor(p.key)}
               onFocus={(e) => e.currentTarget.select()}
-              className="flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
+              className="min-w-0 flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
             />
             <CopyButton text={linkFor(p.key)} />
             <QrButton onClick={() => setQr({ url: linkFor(p.key), label: p.label })} />
@@ -178,7 +178,7 @@ export default function DistributePanel({ job }: { job: Job }) {
             readOnly
             value={linkFor(customSlug)}
             onFocus={(e) => e.currentTarget.select()}
-            className="flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
+            className="min-w-0 flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
           />
           <CopyButton text={linkFor(customSlug)} />
           <QrButton onClick={() => setQr({ url: linkFor(customSlug), label: customSlug || 'direct' })} />
