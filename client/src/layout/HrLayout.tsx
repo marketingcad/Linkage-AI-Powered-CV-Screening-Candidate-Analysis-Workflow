@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LuBriefcase,
-  LuExternalLink,
   LuLayoutDashboard,
   LuLogOut,
   LuMenu,
@@ -87,19 +86,6 @@ export default function HrLayout() {
             {label}
           </NavLink>
         ))}
-
-        <p className="px-3 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          Public
-        </p>
-        <a
-          href="/apply"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-        >
-          <LuExternalLink className="h-4.5 w-4.5" />
-          Careers page
-        </a>
       </nav>
 
       {/* User */}

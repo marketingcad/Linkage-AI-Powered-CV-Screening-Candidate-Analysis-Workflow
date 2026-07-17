@@ -8,7 +8,7 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## What it does
 
-- **Candidate application page** (public) — pick an open role, upload a CV (PDF or DOCX).
+- **Candidate application page** (public) — apply to a role via its shared link and upload a CV (PDF or DOCX).
 - **Automatic CV parsing** — text is extracted from the uploaded file.
 - **AI extraction & scoring** (Gemini) — skills, work experience, education, certifications,
   a qualification score (0–100), skills-match score, strengths, concerns/gaps, a summary,
@@ -108,7 +108,7 @@ npm run dev
 - Web → http://localhost:5173
 
 Open the web app, click **Recruiter login**, sign in, create a job (set required skills),
-then open the candidate application page (`/apply`) in another tab and submit a CV. The
+then open its **Distribute** panel to copy the apply link (`/apply/:jobId`), open it in another tab, and submit a CV. The
 candidate appears — scored and ranked — in the dashboard within seconds.
 
 ## Deployment (Vercel + Render)
@@ -231,7 +231,7 @@ and **redeploy the backend**. To also allow Vercel preview deployments, comma-se
 ### 4. Post-deploy checklist
 
 - Open the Vercel URL, **Recruiter login** with the seeded credentials, then change the password.
-- Create a job, open `/apply`, submit a CV, and confirm the candidate appears scored.
+- Create a job, open its apply link (`/apply/:jobId`), submit a CV, and confirm the candidate appears scored.
 - (Optional) Add custom domains on both platforms and update `CORS_ORIGIN` / `APP_PUBLIC_URL` / `VITE_API_URL` accordingly.
 
 > **Cold starts:** Render's free tier spins the service down after ~15 min idle; the

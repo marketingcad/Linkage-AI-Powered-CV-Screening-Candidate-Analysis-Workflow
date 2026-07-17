@@ -5,7 +5,6 @@ import './index.css';
 import { AuthProvider } from './auth/AuthContext';
 import RequireAuth from './auth/RequireAuth';
 import HrLayout from './layout/HrLayout';
-import ApplyPage from './pages/ApplyPage';
 import ApplyJobPage from './pages/ApplyJobPage';
 import StatusPage from './pages/StatusPage';
 import LoginPage from './pages/LoginPage';
@@ -19,10 +18,9 @@ import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 const router = createBrowserRouter([
-  // Login is the main index (HR-first). The public careers board lives at /apply,
-  // and individual application pages at /apply/:jobId (used by the shared links).
+  // Login is the main index (HR-first). Applicants reach a role only via the shared
+  // per-job links at /apply/:jobId (the app distributes tracked links per platform).
   { path: '/', element: <LoginPage /> },
-  { path: '/apply', element: <ApplyPage /> },
   { path: '/apply/:jobId', element: <ApplyJobPage /> },
   { path: '/status/:token', element: <StatusPage /> },
   { path: '/login', element: <LoginPage /> },
