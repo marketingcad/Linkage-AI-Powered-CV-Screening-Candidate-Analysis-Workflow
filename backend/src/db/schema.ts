@@ -226,10 +226,26 @@ export const emailLogs = pgTable('email_logs', {
 });
 
 // ---------------------------------------------------------------------------
+// Audit log — record of HR actions for compliance/accountability
+// ---------------------------------------------------------------------------
+
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  actorEmail: varchar('actor_email', { length: 255 }), // null = system/anonymous
+  action: varchar('action', { length: 80 }).notNull(), // e.g. login, candidate.stage_change
+  targetType: varchar('target_type', { length: 50 }), // candidate | job | account
+  targetId: varchar('target_id', { length: 255 }),
+  detail: text('detail'),
+  ip: varchar('ip', { length: 64 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 
 export type EmailLog = typeof emailLogs.$inferSelect;
+export type AuditLog = typeof auditLogs.$inferSelect;
 export type HrUser = typeof hrUsers.$inferSelect;
 export type NewHrUser = typeof hrUsers.$inferInsert;
 export type Job = typeof jobs.$inferSelect;

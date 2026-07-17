@@ -41,6 +41,9 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default('uploads'),
   MAX_UPLOAD_MB: z.coerce.number().default(10),
 
+  // GDPR retention: auto-anonymize candidate PII older than N days. 0 = disabled.
+  DATA_RETENTION_DAYS: z.coerce.number().int().min(0).default(0),
+
   // Supabase Storage for CVs (survives redeploys). SUPABASE_URL is auto-derived from
   // DATABASE_URL when unset; the service-role key is required to enable it.
   SUPABASE_URL: z.string().optional(),

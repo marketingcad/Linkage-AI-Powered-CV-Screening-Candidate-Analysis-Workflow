@@ -3,6 +3,7 @@ import { db } from '../db/client.js';
 import { candidates, type Job, type QuizAnswer } from '../db/schema.js';
 import { analyzeCandidate } from './gemini.js';
 import { computeOverallScore, gradeQuiz } from './quiz.js';
+import { candidateProfileText, embedText, storeEmbedding } from './embedding.js';
 import { logger } from '../lib/logger.js';
 
 /**
@@ -59,6 +60,21 @@ export async function runAnalysis(
         updatedAt: new Date(),
       })
       .where(eq(candidates.id, candidateId));
+
+    // Semantic embedding for talent-pool matching (non-fatal — never fails analysis).
+    try {
+      const vec = await embedText(
+        candidateProfileText({
+          extractedSkills: extraction.skills,
+          summary: evaluation.summary,
+          cvText,
+        }),
+        'document',
+      );
+      if (vec) await storeEmbedding(candidateId, vec);
+    } catch (err) {
+      logger.warn({ err, candidateId }, 'candidate embedding failed');
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     logger.error({ err, candidateId }, 'Analysis failed');

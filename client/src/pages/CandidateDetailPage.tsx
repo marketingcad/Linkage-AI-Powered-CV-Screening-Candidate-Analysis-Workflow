@@ -1,17 +1,35 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { LuArrowLeft, LuDownload, LuFileText, LuRefreshCw } from 'react-icons/lu';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
+  LuArrowLeft,
+  LuDownload,
+  LuEllipsisVertical,
+  LuFileJson,
+  LuFileText,
+  LuRefreshCw,
+  LuTrash2,
+  LuTriangleAlert,
+} from 'react-icons/lu';
+import {
+  deleteCandidate,
   fetchCandidate,
   fetchCandidateEmails,
   reanalyzeCandidate,
   resendCandidateEmail,
   updateCandidateStage,
 } from '../api/endpoints';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 import { API_BASE, getToken } from '../api/client';
 import type {
   Candidate,
   CandidateStage,
+  DuplicateApplication,
   EmailLog,
   Job,
   QuizAnswer,
@@ -35,8 +53,10 @@ import {
 
 export default function CandidateDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [job, setJob] = useState<Job | null>(null);
+  const [duplicates, setDuplicates] = useState<DuplicateApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -60,6 +80,7 @@ export default function CandidateDetailPage() {
       .then((res) => {
         setCandidate(res.candidate);
         setJob(res.job);
+        setDuplicates(res.duplicates ?? []);
       })
       .catch(() => setError('Failed to load candidate.'))
       .finally(() => setLoading(false));
@@ -128,6 +149,19 @@ export default function CandidateDetailPage() {
     URL.revokeObjectURL(url);
   }
 
+  // GDPR: permanently erase this candidate (row + stored CV) on request.
+  async function handleDelete() {
+    if (!candidate) return;
+    if (
+      !confirm(
+        `Permanently delete ${candidate.fullName}? This removes their record and CV and cannot be undone.`,
+      )
+    )
+      return;
+    await deleteCandidate(candidate.id);
+    navigate('/hr/candidates');
+  }
+
   if (loading) return <Spinner label="Loading candidate…" />;
   if (error || !candidate) return <Alert kind="error">{error ?? 'Candidate not found.'}</Alert>;
 
@@ -186,6 +220,30 @@ export default function CandidateDetailPage() {
             <LuRefreshCw className={`h-4 w-4 ${busy ? 'animate-spin' : ''}`} />
             Re-run AI
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="More actions"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 data-[state=open]:border-brand-300 data-[state=open]:bg-brand-50 data-[state=open]:text-brand-600"
+              >
+                <LuEllipsisVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem
+                onSelect={() => window.open(`/hr/candidates/${c.id}/data`, '_blank')}
+              >
+                <LuFileJson className="text-slate-500" />
+                Export personal data
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onSelect={() => void handleDelete()}>
+                <LuTrash2 />
+                Delete candidate
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -195,6 +253,41 @@ export default function CandidateDetailPage() {
         </Alert>
       )}
       {c.analysisStatus === 'processing' && <Alert kind="info">Analysis in progress…</Alert>}
+
+      {duplicates.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/60 p-4">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+              <LuTriangleAlert className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-amber-800">
+                Possible re-applicant — this email applied to {duplicates.length} other role
+                {duplicates.length === 1 ? '' : 's'}
+              </p>
+              <ul className="mt-2 space-y-1">
+                {duplicates.map((d) => (
+                  <li key={d.id} className="text-sm text-slate-600">
+                    <Link
+                      to={`/hr/candidates/${d.id}`}
+                      className="font-medium text-brand-600 hover:underline"
+                    >
+                      {d.jobTitle ?? 'Untitled role'}
+                    </Link>
+                    <span className="text-slate-500">
+                      {' · '}
+                      {d.stage}
+                      {(d.overallScore ?? d.qualificationScore) != null &&
+                        ` · score ${d.overallScore ?? d.qualificationScore}`}
+                      {` · ${new Date(d.createdAt).toLocaleDateString()}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Stage controls */}
       <Card className="flex flex-wrap items-center gap-2 p-4">

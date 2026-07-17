@@ -1,17 +1,18 @@
 import { Router } from 'express';
 import { randomUUID } from 'node:crypto';
 import multer from 'multer';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { candidates, jobs, emailLogs } from '../db/schema.js';
 import { updateStageSchema } from '../lib/validation.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { env } from '../config/env.js';
 import { requireAuth } from '../middleware/auth.js';
-import { getCvSource, saveCvFile } from '../services/storage.js';
+import { deleteCvFile, getCvSource, saveCvFile } from '../services/storage.js';
 import { detectCvKind, extractCvText } from '../services/cvParser.js';
 import { extractCvDetails } from '../services/gemini.js';
 import { runAnalysis } from '../services/analysis.js';
+import { recordAudit } from '../services/audit.js';
 import { sendApplicationReceived, sendStatusUpdate } from '../services/email.js';
 import type { StageKey } from '../lib/applicantStatus.js';
 import { logger } from '../lib/logger.js';
@@ -120,6 +121,7 @@ candidatesRouter.get('/', async (req, res) => {
       recommendation: candidates.recommendation,
       summary: candidates.summary,
       totalYearsExperience: candidates.totalYearsExperience,
+      extractedSkills: candidates.extractedSkills,
       stage: candidates.stage,
       analysisStatus: candidates.analysisStatus,
       createdAt: candidates.createdAt,
@@ -146,7 +148,28 @@ candidatesRouter.get('/:id', async (req, res) => {
 
   const [job] = await db.select().from(jobs).where(eq(jobs.id, candidate.jobId)).limit(1);
 
-  res.json({ candidate, job: job ?? null });
+  // Duplicate / re-application detection: other candidate records with the same email.
+  const duplicates = await db
+    .select({
+      id: candidates.id,
+      jobId: candidates.jobId,
+      jobTitle: jobs.title,
+      stage: candidates.stage,
+      overallScore: candidates.overallScore,
+      qualificationScore: candidates.qualificationScore,
+      createdAt: candidates.createdAt,
+    })
+    .from(candidates)
+    .leftJoin(jobs, eq(jobs.id, candidates.jobId))
+    .where(
+      and(
+        sql`lower(${candidates.email}) = lower(${candidate.email})`,
+        ne(candidates.id, candidate.id),
+      ),
+    )
+    .orderBy(desc(candidates.createdAt));
+
+  res.json({ candidate, job: job ?? null, duplicates });
 });
 
 candidatesRouter.patch('/:id/stage', async (req, res) => {
@@ -187,7 +210,68 @@ candidatesRouter.patch('/:id/stage', async (req, res) => {
     ).catch((err) => logger.error({ err }, 'status email failed'));
   }
 
+  if (stage !== existing.stage) {
+    void recordAudit({
+      actorEmail: req.user?.email ?? null,
+      action: 'candidate.stage_change',
+      targetType: 'candidate',
+      targetId: candidate.id,
+      detail: `${candidate.fullName}: ${existing.stage} → ${stage}`,
+      ip: req.ip ?? null,
+    });
+  }
+
   res.json({ candidate });
+});
+
+// GDPR: return everything held about a candidate (feeds the readable data-export page;
+// the client also offers the raw JSON download for data portability).
+candidatesRouter.get('/:id/export', async (req, res) => {
+  const [candidate] = await db
+    .select()
+    .from(candidates)
+    .where(eq(candidates.id, req.params.id))
+    .limit(1);
+  if (!candidate) throw notFound('Candidate not found');
+
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, candidate.jobId)).limit(1);
+
+  void recordAudit({
+    actorEmail: req.user?.email ?? null,
+    action: 'candidate.export',
+    targetType: 'candidate',
+    targetId: candidate.id,
+    detail: `Exported data for ${candidate.fullName}`,
+    ip: req.ip ?? null,
+  });
+
+  const safe = candidate as Record<string, unknown>;
+  delete safe.embedding;
+  res.json({ candidate: safe, job: job ?? null, exportedAt: new Date().toISOString() });
+});
+
+// GDPR: erase a candidate on request (removes the row + stored CV).
+candidatesRouter.delete('/:id', async (req, res) => {
+  const [candidate] = await db
+    .select({ id: candidates.id, fullName: candidates.fullName, cvStoragePath: candidates.cvStoragePath })
+    .from(candidates)
+    .where(eq(candidates.id, req.params.id))
+    .limit(1);
+  if (!candidate) throw notFound('Candidate not found');
+
+  await deleteCvFile(candidate.cvStoragePath);
+  await db.delete(candidates).where(eq(candidates.id, candidate.id));
+
+  void recordAudit({
+    actorEmail: req.user?.email ?? null,
+    action: 'candidate.delete',
+    targetType: 'candidate',
+    targetId: candidate.id,
+    detail: `Deleted ${candidate.fullName}`,
+    ip: req.ip ?? null,
+  });
+
+  res.json({ ok: true });
 });
 
 // List the notification emails sent to this candidate.

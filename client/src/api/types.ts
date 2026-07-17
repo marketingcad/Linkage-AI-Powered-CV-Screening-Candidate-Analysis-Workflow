@@ -139,6 +139,42 @@ export interface SkillMatch {
   evidence: string | null;
 }
 
+/** An entry in the HR activity/audit log. */
+export interface AuditLog {
+  id: string;
+  actorEmail: string | null;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  detail: string | null;
+  ip: string | null;
+  createdAt: string;
+}
+
+/** A past applicant (from another role) ranked by semantic fit to a new job. */
+export interface TalentMatch {
+  id: string;
+  fullName: string;
+  email: string;
+  jobId: string;
+  jobTitle: string | null;
+  overallScore: number | null;
+  qualificationScore: number | null;
+  stage: CandidateStage;
+  similarity: number;
+}
+
+/** Another application by the same person (same email) — for duplicate detection. */
+export interface DuplicateApplication {
+  id: string;
+  jobId: string;
+  jobTitle: string | null;
+  stage: CandidateStage;
+  overallScore: number | null;
+  qualificationScore: number | null;
+  createdAt: string;
+}
+
 export interface CandidateSummary {
   id: string;
   jobId: string;
@@ -156,6 +192,7 @@ export interface CandidateSummary {
   recommendation: Recommendation | null;
   summary: string | null;
   totalYearsExperience: number | null;
+  extractedSkills: string[] | null;
   stage: CandidateStage;
   analysisStatus: AnalysisStatus;
   createdAt: string;

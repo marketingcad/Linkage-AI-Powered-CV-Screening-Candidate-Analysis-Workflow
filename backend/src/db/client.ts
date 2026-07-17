@@ -7,4 +7,4 @@ import * as schema from './schema.js';
 const client = postgres(env.DATABASE_URL, { prepare: false });
 
 export const db = drizzle(client, { schema });
-export { schema };
+export { schema, client };

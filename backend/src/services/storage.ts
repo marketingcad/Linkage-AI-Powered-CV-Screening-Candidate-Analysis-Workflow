@@ -63,6 +63,21 @@ export async function saveCvFile(
   return { storagePath: path.join(env.UPLOAD_DIR, filename), filename };
 }
 
+/** Remove a stored CV (Supabase object or local file). Never throws. */
+export async function deleteCvFile(storagePath: string | null): Promise<void> {
+  if (!storagePath) return;
+  try {
+    if (storagePath.startsWith(SUPABASE_PREFIX)) {
+      if (supabase) await supabase.storage.from(bucket).remove([storagePath.slice(SUPABASE_PREFIX.length)]);
+      return;
+    }
+    const { unlink } = await import('node:fs/promises');
+    await unlink(path.resolve(process.cwd(), storagePath)).catch(() => {});
+  } catch {
+    /* best-effort */
+  }
+}
+
 export type CvSource =
   | { kind: 'redirect'; url: string }
   | { kind: 'file'; absPath: string };

@@ -1,9 +1,11 @@
 import { apiRequest } from './client';
 import type {
   ApplicationStatus,
+  AuditLog,
   Candidate,
   CandidateStage,
   CandidateSummary,
+  DuplicateApplication,
   EmailLog,
   HrUser,
   Job,
@@ -13,6 +15,7 @@ import type {
   PublicJobListItem,
   QuizQuestion,
   Stats,
+  TalentMatch,
 } from './types';
 
 // --- Auth -------------------------------------------------------------------
@@ -110,6 +113,11 @@ export function submitApplication(form: FormData) {
   }>('/applications', { method: 'POST', body: form, isForm: true, auth: false });
 }
 
+/** Rank past applicants (from other roles) by semantic fit to this job. */
+export function scanTalentPool(jobId: string, limit = 10) {
+  return apiRequest<{ matches: TalentMatch[] }>(`/jobs/${jobId}/talent-pool?limit=${limit}`);
+}
+
 /** HR bulk import: upload one CV against a job (client loops over a batch). */
 export function importCv(jobId: string, file: File) {
   const form = new FormData();
@@ -185,13 +193,28 @@ export function fetchCandidates(
   return apiRequest<{ candidates: CandidateSummary[] }>(`/candidates${qs ? `?${qs}` : ''}`);
 }
 export function fetchCandidate(id: string) {
-  return apiRequest<{ candidate: Candidate; job: Job | null }>(`/candidates/${id}`);
+  return apiRequest<{
+    candidate: Candidate;
+    job: Job | null;
+    duplicates: DuplicateApplication[];
+  }>(`/candidates/${id}`);
 }
 export function updateCandidateStage(id: string, stage: CandidateStage) {
   return apiRequest<{ candidate: Candidate }>(`/candidates/${id}/stage`, {
     method: 'PATCH',
     body: { stage },
   });
+}
+export function deleteCandidate(id: string) {
+  return apiRequest<{ ok: true }>(`/candidates/${id}`, { method: 'DELETE' });
+}
+export function fetchCandidateExport(id: string) {
+  return apiRequest<{ candidate: Candidate; job: Job | null; exportedAt: string }>(
+    `/candidates/${id}/export`,
+  );
+}
+export function fetchAuditLog() {
+  return apiRequest<{ entries: AuditLog[] }>('/audit');
 }
 export function reanalyzeCandidate(id: string) {
   return apiRequest<{ candidate: Candidate }>(`/candidates/${id}/reanalyze`, { method: 'POST' });

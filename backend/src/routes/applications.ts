@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import { eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
@@ -15,6 +16,22 @@ import { logger } from '../lib/logger.js';
 import { APPLICANT_TIMELINE, statusFor } from '../lib/applicantStatus.js';
 
 export const applicationsRouter = Router();
+
+// Spam protection for the public endpoints — cap submissions per IP.
+applicationsRouter.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 20,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: {
+      error: {
+        code: 'RATE_LIMITED',
+        message: 'Too many requests from this device. Please try again in a few minutes.',
+      },
+    },
+  }),
+);
 
 const upload = multer({
   storage: multer.memoryStorage(),

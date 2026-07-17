@@ -19,6 +19,7 @@ import {
 import { badRequest, conflict, notFound, unauthorized } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
 import { createTotpSecret, totpAuthUrl, verifyTotp } from '../lib/totp.js';
+import { recordAudit } from '../services/audit.js';
 
 export const authRouter = Router();
 
@@ -75,6 +76,7 @@ authRouter.post('/login', async (req, res) => {
     role: user.role,
   });
 
+  void recordAudit({ actorEmail: user.email, action: 'auth.login', ip: req.ip ?? null });
   res.json({ token, user: toPublicUser(user) });
 });
 
@@ -103,6 +105,7 @@ authRouter.post('/login/mfa', async (req, res) => {
     name: user.name,
     role: user.role,
   });
+  void recordAudit({ actorEmail: user.email, action: 'auth.login', detail: '2FA', ip: req.ip ?? null });
   res.json({ token, user: toPublicUser(user) });
 });
 

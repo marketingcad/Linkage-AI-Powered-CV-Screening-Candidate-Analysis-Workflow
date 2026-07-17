@@ -10,6 +10,7 @@ import {
   LuClipboardList,
   LuClock,
   LuCloudUpload,
+  LuSparkles,
   LuEllipsisVertical,
   LuFileText,
   LuGraduationCap,
@@ -25,6 +26,7 @@ import { Alert, Button, Card, Skeleton, TableSkeleton } from '../components/ui';
 import CandidateTable from '../components/CandidateTable';
 import JobForm from '../components/JobForm';
 import ImportCvsDialog from '../components/ImportCvsDialog';
+import TalentPoolDialog from '../components/TalentPoolDialog';
 import DistributePanel from '../components/DistributePanel';
 import {
   DropdownMenu,
@@ -60,6 +62,7 @@ export default function JobDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [view, setView] = useState<'details' | 'candidates'>('details');
 
   function load() {
@@ -301,10 +304,16 @@ export default function JobDetailPage() {
                 {candidates.length}
               </span>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
-              <LuCloudUpload className="h-4 w-4" />
-              Import CVs
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => setScanning(true)}>
+                <LuSparkles className="h-4 w-4" />
+                Scan talent pool
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
+                <LuCloudUpload className="h-4 w-4" />
+                Import CVs
+              </Button>
+            </div>
           </div>
           <CandidateTable candidates={candidates as Candidate[]} />
         </div>
@@ -317,6 +326,9 @@ export default function JobDetailPage() {
           onClose={() => setImporting(false)}
           onImported={load}
         />
+      )}
+      {scanning && (
+        <TalentPoolDialog jobId={job.id} jobTitle={job.title} onClose={() => setScanning(false)} />
       )}
     </div>
   );

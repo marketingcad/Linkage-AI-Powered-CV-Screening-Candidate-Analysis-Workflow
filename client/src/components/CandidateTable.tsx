@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { LuCopy } from 'react-icons/lu';
 import type { CandidateSummary } from '../api/types';
 import {
   AiWrittenBadge,
@@ -23,12 +24,14 @@ export default function CandidateTable({
   selectable = false,
   selectedIds,
   onToggleSelect,
+  duplicateEmails,
 }: {
   candidates: CandidateSummary[];
   showJob?: boolean;
   selectable?: boolean;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
+  duplicateEmails?: Set<string>;
 }) {
   const navigate = useNavigate();
 
@@ -94,7 +97,18 @@ export default function CandidateTable({
                 </div>
               </TableCell>
               <TableCell className="px-4 py-3">
-                <div className="font-medium text-slate-800">{c.fullName}</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium text-slate-800">{c.fullName}</span>
+                  {duplicateEmails?.has(c.email.toLowerCase()) && (
+                    <span
+                      title="This email applied to more than one role"
+                      className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"
+                    >
+                      <LuCopy className="h-2.5 w-2.5" />
+                      Dup
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-slate-400">{c.email}</div>
               </TableCell>
               {showJob && (

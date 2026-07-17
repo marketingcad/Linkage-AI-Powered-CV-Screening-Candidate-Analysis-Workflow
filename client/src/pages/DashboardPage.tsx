@@ -1,7 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { IconType } from 'react-icons';
-import { LuArrowRight, LuBriefcase, LuGauge, LuStar, LuUsers } from 'react-icons/lu';
+import {
+  LuArrowRight,
+  LuBriefcase,
+  LuChartColumn,
+  LuFilter,
+  LuGauge,
+  LuStar,
+  LuTarget,
+  LuUsers,
+} from 'react-icons/lu';
 import { fetchCandidates, fetchStats } from '../api/endpoints';
 import type { CandidateStage, CandidateSummary, Stats } from '../api/types';
 import { Alert, Card, Skeleton, SourceBadge, STAGE_ICONS, TableSkeleton } from '../components/ui';
@@ -18,7 +27,7 @@ const STAGE_ORDER: { stage: CandidateStage; label: string; bar: string; text: st
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [top, setTop] = useState<CandidateSummary[]>([]);
+  const [all, setAll] = useState<CandidateSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,11 +35,66 @@ export default function DashboardPage() {
     Promise.all([fetchStats(), fetchCandidates()])
       .then(([s, c]) => {
         setStats(s);
-        setTop(c.candidates.slice(0, 5));
+        setAll(c.candidates);
       })
       .catch(() => setError('Failed to load dashboard data.'))
       .finally(() => setLoading(false));
   }, []);
+
+  // Recruitment analytics computed from the full candidate list.
+  const analytics = useMemo(() => {
+    const scored = all
+      .map((c) => c.overallScore ?? c.qualificationScore)
+      .filter((n): n is number => n != null);
+    const buckets: [string, number, number][] = [
+      ['0–19', 0, 19],
+      ['20–39', 20, 39],
+      ['40–59', 40, 59],
+      ['60–79', 60, 79],
+      ['80–100', 80, 100],
+    ];
+    const dist = buckets.map(([label, min, max]) => ({
+      label,
+      count: scored.filter((s) => s >= min && s <= max).length,
+    }));
+
+    const inStages = (st: CandidateStage[]) => all.filter((c) => st.includes(c.stage)).length;
+    const funnel = [
+      { label: 'Applied', value: all.length },
+      { label: 'Shortlisted', value: inStages(['shortlisted', 'interviewing', 'hired']) },
+      { label: 'Interviewing', value: inStages(['interviewing', 'hired']) },
+      { label: 'Hired', value: inStages(['hired']) },
+    ];
+
+    const srcMap = new Map<string, { count: number; sum: number; n: number; hired: number }>();
+    for (const c of all) {
+      const e = srcMap.get(c.source) ?? { count: 0, sum: 0, n: 0, hired: 0 };
+      e.count++;
+      const s = c.overallScore ?? c.qualificationScore;
+      if (s != null) {
+        e.sum += s;
+        e.n++;
+      }
+      if (c.stage === 'hired') e.hired++;
+      srcMap.set(c.source, e);
+    }
+    const sources = [...srcMap.entries()]
+      .map(([source, e]) => ({
+        source,
+        count: e.count,
+        avg: e.n ? Math.round(e.sum / e.n) : null,
+        hired: e.hired,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      dist,
+      maxDist: Math.max(1, ...dist.map((d) => d.count)),
+      totalScored: scored.length,
+      funnel,
+      sources,
+    };
+  }, [all]);
 
   if (error) return <Alert kind="error">{error}</Alert>;
 
@@ -176,6 +240,108 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Analytics: funnel + score distribution */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-5">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <LuFilter className="h-4 w-4 text-brand-500" />
+            Recruitment funnel
+          </h2>
+          {analytics.funnel[0]!.value === 0 ? (
+            <EmptyHint text="No candidates yet." />
+          ) : (
+            <div className="space-y-3">
+              {analytics.funnel.map((f, i) => {
+                const base = analytics.funnel[0]!.value || 1;
+                const pct = Math.round((f.value / base) * 100);
+                return (
+                  <div key={f.label}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span className="text-slate-600">{f.label}</span>
+                      <span className="font-semibold text-slate-800">
+                        {f.value}{' '}
+                        <span className="text-xs font-normal text-slate-400">({pct}%)</span>
+                      </span>
+                    </div>
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className={`h-full rounded-full ${FUNNEL_COLORS[i] ?? 'bg-slate-400'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-5">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <LuChartColumn className="h-4 w-4 text-brand-500" />
+            Score distribution
+          </h2>
+          {analytics.totalScored === 0 ? (
+            <EmptyHint text="No scored candidates yet." />
+          ) : (
+            <div className="flex h-40 items-end gap-2">
+              {analytics.dist.map((d) => (
+                <div
+                  key={d.label}
+                  className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+                >
+                  <span className="text-xs font-semibold text-slate-700">{d.count}</span>
+                  <div
+                    className="w-full rounded-t bg-brand-400"
+                    style={{
+                      height: `${Math.round((d.count / analytics.maxDist) * 78)}%`,
+                      minHeight: d.count ? 4 : 0,
+                    }}
+                  />
+                  <span className="text-[10px] text-slate-400">{d.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Source effectiveness */}
+      <Card className="p-5">
+        <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <LuTarget className="h-4 w-4 text-brand-500" />
+          Source effectiveness
+        </h2>
+        {analytics.sources.length === 0 ? (
+          <EmptyHint text="No applications yet." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  <th className="pb-2">Source</th>
+                  <th className="pb-2 text-right">Applicants</th>
+                  <th className="pb-2 text-right">Avg score</th>
+                  <th className="pb-2 text-right">Hired</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {analytics.sources.map((s) => (
+                  <tr key={s.source}>
+                    <td className="py-2.5">
+                      <SourceBadge source={s.source} />
+                    </td>
+                    <td className="py-2.5 text-right font-medium text-slate-700">{s.count}</td>
+                    <td className="py-2.5 text-right font-medium text-slate-700">{s.avg ?? '—'}</td>
+                    <td className="py-2.5 text-right font-medium text-slate-700">{s.hired}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900">Top candidates</h2>
@@ -186,7 +352,7 @@ export default function DashboardPage() {
             View all <LuArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <CandidateTable candidates={top} showJob />
+        <CandidateTable candidates={all.slice(0, 5)} showJob />
       </div>
     </div>
   );
@@ -199,6 +365,8 @@ function EmptyHint({ text }: { text: string }) {
     </div>
   );
 }
+
+const FUNNEL_COLORS = ['bg-slate-400', 'bg-brand-500', 'bg-violet-500', 'bg-emerald-500'];
 
 const TINTS: Record<string, string> = {
   brand: 'bg-brand-50 text-brand-600',

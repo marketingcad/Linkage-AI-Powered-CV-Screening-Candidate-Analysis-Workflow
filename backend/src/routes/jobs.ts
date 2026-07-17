@@ -1,11 +1,19 @@
 import { Router } from 'express';
 import { and, desc, eq, sql } from 'drizzle-orm';
-import { db } from '../db/client.js';
+import { client, db } from '../db/client.js';
 import { candidates, jobs, type QuizQuestion } from '../db/schema.js';
 import { createJobSchema, generateQuizSchema, updateJobSchema } from '../lib/validation.js';
-import { notFound } from '../lib/errors.js';
+import { notFound, serverError } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
 import { generateQuiz } from '../services/gemini.js';
+import { recordAudit } from '../services/audit.js';
+import {
+  candidateProfileText,
+  cosineSim,
+  embedText,
+  jobProfileText,
+  storeEmbedding,
+} from '../services/embedding.js';
 
 export const jobsRouter = Router();
 
@@ -54,6 +62,71 @@ jobsRouter.get('/public/:id', async (req, res) => {
 
 // --- Everything below requires HR authentication ----------------------------
 jobsRouter.use(requireAuth);
+
+// Talent-pool re-matching: rank candidates who applied to OTHER roles by semantic
+// fit to this job (embedding cosine similarity). Lets HR reuse past applicants.
+jobsRouter.get('/:id/talent-pool', async (req, res) => {
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, req.params.id)).limit(1);
+  if (!job) throw notFound('Job not found');
+
+  const jobVec = await embedText(jobProfileText(job), 'query');
+  if (!jobVec) throw serverError('Could not analyze this job for matching. Try again.');
+
+  type PoolRow = {
+    id: string;
+    fullName: string;
+    email: string;
+    jobId: string;
+    jobTitle: string | null;
+    overallScore: number | null;
+    qualificationScore: number | null;
+    stage: string;
+    embedding: number[] | null;
+    cvText: string | null;
+    summary: string | null;
+    extractedSkills: string[] | null;
+    currentTitle: string | null;
+  };
+
+  const rows = (await client`
+    SELECT c.id, c.full_name AS "fullName", c.email, c.job_id AS "jobId",
+           c.overall_score AS "overallScore", c.qualification_score AS "qualificationScore",
+           c.stage, c.embedding, c.cv_text AS "cvText", c.summary,
+           c.extracted_skills AS "extractedSkills", c.current_title AS "currentTitle",
+           j.title AS "jobTitle"
+    FROM candidates c
+    LEFT JOIN jobs j ON j.id = c.job_id
+    WHERE c.job_id <> ${job.id}
+  `) as unknown as PoolRow[];
+
+  // Lazy backfill: embed up to 20 candidates that don't have a vector yet.
+  for (const r of rows.filter((x) => !x.embedding).slice(0, 20)) {
+    const vec = await embedText(candidateProfileText(r), 'document');
+    if (vec) {
+      r.embedding = vec;
+      await storeEmbedding(r.id, vec);
+    }
+  }
+
+  const limit = Math.min(Number(req.query.limit) || 10, 25);
+  const matches = rows
+    .filter((r) => r.embedding && r.embedding.length)
+    .map((r) => ({
+      id: r.id,
+      fullName: r.fullName,
+      email: r.email,
+      jobId: r.jobId,
+      jobTitle: r.jobTitle,
+      overallScore: r.overallScore,
+      qualificationScore: r.qualificationScore,
+      stage: r.stage,
+      similarity: Math.round(cosineSim(jobVec, r.embedding as number[]) * 100),
+    }))
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, limit);
+
+  res.json({ matches });
+});
 
 // Generate a position-specific screening quiz with AI from draft job details.
 jobsRouter.post('/generate-quiz', async (req, res) => {
@@ -122,5 +195,13 @@ jobsRouter.put('/:id', async (req, res) => {
 jobsRouter.delete('/:id', async (req, res) => {
   const [job] = await db.delete(jobs).where(eq(jobs.id, req.params.id)).returning();
   if (!job) throw notFound('Job not found');
+  void recordAudit({
+    actorEmail: req.user?.email ?? null,
+    action: 'job.delete',
+    targetType: 'job',
+    targetId: job.id,
+    detail: `Deleted "${job.title}"`,
+    ip: req.ip ?? null,
+  });
   res.status(204).end();
 });

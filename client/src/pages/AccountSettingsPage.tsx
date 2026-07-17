@@ -1,21 +1,39 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { LuLogOut, LuShieldCheck, LuSmartphone, LuTrash2, LuUpload } from 'react-icons/lu';
+import {
+  LuHistory,
+  LuLogOut,
+  LuShieldCheck,
+  LuSmartphone,
+  LuTrash2,
+  LuUpload,
+} from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../api/client';
 import {
   changePassword,
   disable2fa,
   enable2fa,
+  fetchAuditLog,
   setup2fa,
   updateProfile,
 } from '../api/endpoints';
+import type { AuditLog } from '../api/types';
 import { Alert, Button, Card, Spinner } from '../components/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import avatarPlaceholder from '../assets/avatar-placeholder.png';
+
+const ACTION_LABELS: Record<string, string> = {
+  'auth.login': 'Signed in',
+  'candidate.stage_change': 'Moved candidate',
+  'candidate.delete': 'Deleted candidate',
+  'candidate.export': 'Exported candidate data',
+  'job.delete': 'Deleted job',
+  'retention.purge': 'Data retention purge',
+};
 
 function initials(name?: string): string {
   if (!name) return 'HR';
@@ -55,6 +73,16 @@ function resizeImage(file: File, size = 256): Promise<string> {
 export default function AccountSettingsPage() {
   const { user, applyAuth, updateUser, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Recent activity (audit log)
+  const [activity, setActivity] = useState<AuditLog[]>([]);
+  useEffect(() => {
+    fetchAuditLog()
+      .then((r) => setActivity(r.entries))
+      .catch(() => {
+        /* non-critical */
+      });
+  }, []);
 
   // --- Two-factor (TOTP) ---
   const [setupData, setSetupData] = useState<{ secret: string; otpauthUrl: string } | null>(null);
@@ -476,6 +504,37 @@ export default function AccountSettingsPage() {
           <div className="mt-4">
             <Alert kind="success">{twoFAMsg}</Alert>
           </div>
+        )}
+      </Card>
+
+      {/* Recent activity */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2">
+          <LuHistory className="h-4 w-4 text-slate-500" />
+          <h2 className="text-sm font-semibold text-slate-700">Recent activity</h2>
+        </div>
+        <p className="mt-1 text-sm text-slate-500">
+          An audit trail of recent recruiter and system actions.
+        </p>
+        {activity.length === 0 ? (
+          <p className="mt-4 text-sm text-slate-400">No activity recorded yet.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-slate-100">
+            {activity.slice(0, 12).map((e) => (
+              <li key={e.id} className="flex items-start justify-between gap-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-700">
+                    {ACTION_LABELS[e.action] ?? e.action}
+                  </p>
+                  {e.detail && <p className="truncate text-xs text-slate-500">{e.detail}</p>}
+                  <p className="text-xs text-slate-400">{e.actorEmail ?? 'system'}</p>
+                </div>
+                <span className="shrink-0 text-xs text-slate-400">
+                  {new Date(e.createdAt).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
         )}
       </Card>
 
