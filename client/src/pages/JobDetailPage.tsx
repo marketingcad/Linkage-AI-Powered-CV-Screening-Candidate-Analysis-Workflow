@@ -133,10 +133,18 @@ export default function JobDetailPage() {
                 </span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {job.department && <MetaChip Icon={LuBuilding2} text={job.department} />}
-                {job.location && <MetaChip Icon={LuMapPin} text={job.location} />}
-                {job.employmentType && <MetaChip Icon={LuClock} text={job.employmentType} />}
-                <MetaChip Icon={LuCalendarDays} text={`Posted ${formatDate(job.createdAt)}`} />
+                {job.department && (
+                  <MetaChip Icon={LuBuilding2} text={job.department} tint="indigo" />
+                )}
+                {job.location && <MetaChip Icon={LuMapPin} text={job.location} tint="emerald" />}
+                {job.employmentType && (
+                  <MetaChip Icon={LuClock} text={job.employmentType} tint="amber" />
+                )}
+                <MetaChip
+                  Icon={LuCalendarDays}
+                  text={`Posted ${formatDate(job.createdAt)}`}
+                  tint="slate"
+                />
               </div>
             </div>
           </div>
@@ -211,9 +219,11 @@ export default function JobDetailPage() {
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="p-6 lg:col-span-2">
-          <div className="mb-4 flex items-center gap-2">
-            <LuFileText className="h-4 w-4 text-brand-500" />
-            <h2 className="text-sm font-semibold text-slate-700">About this role</h2>
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+              <LuFileText className="h-4 w-4" />
+            </span>
+            <h2 className="text-sm font-semibold text-slate-800">About this role</h2>
           </div>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
             {job.description}
@@ -223,33 +233,37 @@ export default function JobDetailPage() {
             <SkillGroup
               title="Required skills"
               skills={job.requiredSkills}
-              tone="brand"
+              tone="required"
               Icon={LuCircleCheck}
             />
             <SkillGroup
               title="Nice to have"
               skills={job.niceToHaveSkills}
-              tone="slate"
+              tone="nice"
               Icon={LuPlus}
             />
           </div>
         </Card>
 
         <Card className="p-5">
-          <div className="mb-2 flex items-center gap-2">
-            <LuClipboardList className="h-4 w-4 text-brand-500" />
-            <h2 className="text-sm font-semibold text-slate-700">Requirements</h2>
+          <div className="mb-2 flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+              <LuClipboardList className="h-4 w-4" />
+            </span>
+            <h2 className="text-sm font-semibold text-slate-800">Requirements</h2>
           </div>
           <div className="divide-y divide-slate-100">
             <InfoRow
               Icon={LuBriefcase}
               label="Min. experience"
               value={job.minYearsExperience != null ? `${job.minYearsExperience} years` : 'Any'}
+              tint="violet"
             />
             <InfoRow
               Icon={LuGraduationCap}
               label="Education"
               value={job.educationRequirement || 'Not specified'}
+              tint="amber"
             />
             <InfoRow
               Icon={LuFileText}
@@ -259,8 +273,14 @@ export default function JobDetailPage() {
                   ? `${job.quiz.length} question${job.quiz.length === 1 ? '' : 's'}`
                   : 'None'
               }
+              tint="sky"
             />
-            <InfoRow Icon={LuCalendarDays} label="Posted" value={formatDate(job.createdAt)} />
+            <InfoRow
+              Icon={LuCalendarDays}
+              label="Posted"
+              value={formatDate(job.createdAt)}
+              tint="emerald"
+            />
           </div>
         </Card>
           </div>
@@ -273,7 +293,9 @@ export default function JobDetailPage() {
         <div>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <LuUsers className="h-5 w-5 text-slate-400" />
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <LuUsers className="h-4 w-4" />
+              </span>
               <h2 className="text-lg font-semibold text-slate-900">Ranked candidates</h2>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
                 {candidates.length}
@@ -300,24 +322,56 @@ export default function JobDetailPage() {
   );
 }
 
-function MetaChip({ Icon, text }: { Icon: IconType; text: string }) {
+// Colour tokens shared by chips + icon tiles on this page.
+const CHIP_TINTS: Record<string, string> = {
+  indigo: 'bg-indigo-50 text-indigo-700',
+  emerald: 'bg-emerald-50 text-emerald-700',
+  amber: 'bg-amber-50 text-amber-700',
+  brand: 'bg-brand-50 text-brand-700',
+  slate: 'bg-slate-100 text-slate-600',
+};
+
+const TILE_TINTS: Record<string, string> = {
+  brand: 'bg-brand-50 text-brand-600',
+  violet: 'bg-violet-50 text-violet-600',
+  amber: 'bg-amber-50 text-amber-600',
+  sky: 'bg-sky-50 text-sky-600',
+  emerald: 'bg-emerald-50 text-emerald-600',
+  slate: 'bg-slate-100 text-slate-500',
+};
+
+function MetaChip({ Icon, text, tint = 'slate' }: { Icon: IconType; text: string; tint?: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600">
-      <Icon className="h-3.5 w-3.5 text-slate-400" />
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${CHIP_TINTS[tint] ?? CHIP_TINTS.slate}`}
+    >
+      <Icon className="h-3.5 w-3.5 opacity-80" />
       {text}
     </span>
   );
 }
 
-function InfoRow({ Icon, label, value }: { Icon: IconType; label: string; value: string }) {
+function InfoRow({
+  Icon,
+  label,
+  value,
+  tint = 'slate',
+}: {
+  Icon: IconType;
+  label: string;
+  value: string;
+  tint?: string;
+}) {
   return (
     <div className="flex items-start gap-3 py-3">
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
+      <span
+        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${TILE_TINTS[tint] ?? TILE_TINTS.slate}`}
+      >
         <Icon className="h-4 w-4" />
       </span>
       <div className="min-w-0">
         <p className="text-xs font-medium text-slate-400">{label}</p>
-        <p className="text-sm text-slate-700">{value}</p>
+        <p className="text-sm font-medium text-slate-700">{value}</p>
       </div>
     </div>
   );
@@ -331,11 +385,12 @@ function SkillGroup({
 }: {
   title: string;
   skills: string[];
-  tone: 'brand' | 'slate';
+  tone: 'required' | 'nice';
   Icon: IconType;
 }) {
-  const chip = tone === 'brand' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-600';
-  const iconCls = tone === 'brand' ? 'text-brand-500' : 'text-slate-400';
+  const chip =
+    tone === 'required' ? 'bg-brand-50 text-brand-700' : 'bg-violet-50 text-violet-700';
+  const iconCls = tone === 'required' ? 'text-emerald-500' : 'text-violet-500';
   return (
     <div>
       <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">

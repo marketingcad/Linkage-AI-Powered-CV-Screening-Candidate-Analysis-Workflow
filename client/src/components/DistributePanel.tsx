@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import type { IconType } from 'react-icons';
-import { LuBriefcase, LuCheck, LuCopy, LuQrCode } from 'react-icons/lu';
+import { LuBriefcase, LuCheck, LuCopy, LuQrCode, LuShare2 } from 'react-icons/lu';
 import { SiGlassdoor, SiIndeed } from 'react-icons/si';
 import { FaLinkedin } from 'react-icons/fa6';
 import type { Job } from '../api/types';
@@ -14,11 +14,11 @@ import {
   DialogTitle,
 } from './ui/dialog';
 
-const PLATFORMS: { key: string; label: string; Icon: IconType }[] = [
-  { key: 'indeed', label: 'Indeed', Icon: SiIndeed },
-  { key: 'linkedin', label: 'LinkedIn', Icon: FaLinkedin },
-  { key: 'jobstreet', label: 'JobStreet', Icon: LuBriefcase },
-  { key: 'glassdoor', label: 'Glassdoor', Icon: SiGlassdoor },
+const PLATFORMS: { key: string; label: string; Icon: IconType; tint: string }[] = [
+  { key: 'indeed', label: 'Indeed', Icon: SiIndeed, tint: 'bg-blue-50 text-blue-600' },
+  { key: 'linkedin', label: 'LinkedIn', Icon: FaLinkedin, tint: 'bg-sky-50 text-sky-600' },
+  { key: 'jobstreet', label: 'JobStreet', Icon: LuBriefcase, tint: 'bg-orange-50 text-orange-600' },
+  { key: 'glassdoor', label: 'Glassdoor', Icon: SiGlassdoor, tint: 'bg-emerald-50 text-emerald-600' },
 ];
 
 function QrButton({ onClick }: { onClick: () => void }) {
@@ -129,8 +129,13 @@ export default function DistributePanel({ job }: { job: Job }) {
 
   return (
     <Card className="p-5">
-      <h2 className="text-sm font-semibold text-slate-700">Distribute this job</h2>
-      <p className="mt-1 text-xs text-slate-500">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+          <LuShare2 className="h-4 w-4" />
+        </span>
+        <h2 className="text-sm font-semibold text-slate-800">Distribute this job</h2>
+      </div>
+      <p className="mt-1.5 text-xs text-slate-500">
         Paste these tracked links into each platform. Applicants who use them are tagged by source,
         so you can see which channel each candidate came from.
       </p>
@@ -144,8 +149,10 @@ export default function DistributePanel({ job }: { job: Job }) {
       <div className="mt-4 space-y-2">
         {PLATFORMS.map((p) => (
           <div key={p.key} className="flex items-center gap-2">
-            <span className="flex w-24 shrink-0 items-center gap-1.5 text-xs font-medium text-slate-600">
-              <p.Icon className="h-3.5 w-3.5" />
+            <span className="flex w-24 shrink-0 items-center gap-2 text-xs font-medium text-slate-700">
+              <span className={`flex h-6 w-6 items-center justify-center rounded-md ${p.tint}`}>
+                <p.Icon className="h-3.5 w-3.5" />
+              </span>
               {p.label}
             </span>
             <input
@@ -188,7 +195,7 @@ export default function DistributePanel({ job }: { job: Job }) {
         <textarea
           readOnly
           value={postingText}
-          rows={6}
+          rows={10}
           onFocus={(e) => e.currentTarget.select()}
           className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600"
         />
