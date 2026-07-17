@@ -6,8 +6,10 @@ import { serverError } from '../lib/errors.js';
 import type {
   ExtractedEducation,
   ExtractedExperience,
+  InterviewQuestion,
   Job,
   QuizQuestion,
+  ScoreExplanation,
   SkillMatch,
 } from '../db/schema.js';
 
@@ -24,7 +26,10 @@ export type AnalysisResult = {
   evaluation: {
     qualificationScore: number;
     skillsMatchScore: number;
+    experienceScore: number;
+    educationScore: number;
     skillMatches: SkillMatch[];
+    scoreExplanations: ScoreExplanation[];
     strengths: string[];
     concerns: string[];
     summary: string;
@@ -97,6 +102,16 @@ const responseSchema = {
           type: Type.INTEGER,
           description: 'How well the candidate skills match the required skills, 0 to 100.',
         },
+        experienceScore: {
+          type: Type.INTEGER,
+          description:
+            'How well the candidate\'s work experience fits the role — depth, relevance, seniority, and years vs the minimum required. 0 (no relevant experience) to 100 (ideal). Judge relevance, not just tenure.',
+        },
+        educationScore: {
+          type: Type.INTEGER,
+          description:
+            'How well the candidate\'s education/qualifications meet the role\'s education requirement. 0 to 100. If the role states no education requirement, score based on general relevance and default to ~70 when adequate.',
+        },
         skillMatches: {
           type: Type.ARRAY,
           description: 'One entry per required/nice-to-have skill indicating whether it was found.',
@@ -105,9 +120,36 @@ const responseSchema = {
             properties: {
               skill: { type: Type.STRING },
               matched: { type: Type.BOOLEAN },
-              evidence: { type: Type.STRING, nullable: true },
+              evidence: {
+                type: Type.STRING,
+                nullable: true,
+                description:
+                  'A short verbatim quote from the CV that proves this skill (or the closest relevant phrase). Null if the skill is absent.',
+              },
             },
             required: ['skill', 'matched'],
+          },
+        },
+        scoreExplanations: {
+          type: Type.ARRAY,
+          description:
+            'Exactly three entries — one each for "skills", "experience", and "education" — explaining why that component earned its score.',
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              component: { type: Type.STRING, enum: ['skills', 'experience', 'education'] },
+              reasoning: {
+                type: Type.STRING,
+                description: '1-2 sentences on what earned or lost points for this component.',
+              },
+              evidence: {
+                type: Type.ARRAY,
+                description:
+                  '0-3 short verbatim excerpts quoted directly from the CV that justify the score. Copy the wording exactly; do not paraphrase or invent.',
+                items: { type: Type.STRING },
+              },
+            },
+            required: ['component', 'reasoning', 'evidence'],
           },
         },
         strengths: {
@@ -132,7 +174,10 @@ const responseSchema = {
       required: [
         'qualificationScore',
         'skillsMatchScore',
+        'experienceScore',
+        'educationScore',
         'skillMatches',
+        'scoreExplanations',
         'strengths',
         'concerns',
         'summary',
@@ -186,7 +231,15 @@ function buildPrompt(job: Job, cvText: string): string {
     'You are an expert technical recruiter screening a CV against a specific job opening.',
     'First extract the candidate\'s information from the CV, then objectively evaluate their fit.',
     'Base every judgement strictly on evidence in the CV. Do not invent experience.',
-    'In skillMatches, include an entry for each required skill and each nice-to-have skill.',
+    'Score the three components independently and specifically: skillsMatchScore (skills vs the',
+    'required/nice-to-have list), experienceScore (relevance, depth and seniority of work history vs',
+    'the role and its minimum years), and educationScore (qualifications vs the education requirement).',
+    'These are scored separately from the holistic qualificationScore.',
+    'In skillMatches, include an entry for each required skill and each nice-to-have skill;',
+    'when a skill is present, quote the exact CV wording that proves it in "evidence".',
+    'In scoreExplanations, give one entry each for skills, experience and education: a short',
+    'reasoning plus verbatim CV excerpts (copied word-for-word, never paraphrased) that justify',
+    'the score. If nothing in the CV supports a component, use an empty evidence list and say so.',
     'Finally, in aiDetection, estimate whether the CV text itself was written by a generative AI.',
     'Weigh style signals (generic/templated phrasing, uniform tone, buzzword density, vague and',
     'non-verifiable claims, unusually polished structure) against signs of authentic authorship',
@@ -229,6 +282,8 @@ function clampScores(result: AnalysisResult): AnalysisResult {
   const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
   result.evaluation.qualificationScore = clamp(result.evaluation.qualificationScore);
   result.evaluation.skillsMatchScore = clamp(result.evaluation.skillsMatchScore);
+  result.evaluation.experienceScore = clamp(result.evaluation.experienceScore);
+  result.evaluation.educationScore = clamp(result.evaluation.educationScore);
   if (result.aiDetection) {
     result.aiDetection.aiGeneratedLikelihood = clamp(result.aiDetection.aiGeneratedLikelihood);
   }
@@ -676,5 +731,117 @@ export async function rankCandidatesForJob(
   } catch (err) {
     logger.error({ err }, 'Candidate ranking failed');
     throw serverError('AI ranking failed', err instanceof Error ? err.message : String(err));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Interview question generation — tailored to one candidate's strengths/gaps
+// ---------------------------------------------------------------------------
+
+const interviewQuestionsSchema = {
+  type: Type.OBJECT,
+  properties: {
+    questions: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          focus: {
+            type: Type.STRING,
+            enum: ['strength', 'concern', 'skill', 'experience', 'motivation'],
+            description:
+              'What the question targets: validate a strength, probe a concern/gap, test a required skill, explore experience, or gauge motivation/role fit.',
+          },
+          question: { type: Type.STRING, description: 'The interview question to ask.' },
+          rationale: {
+            type: Type.STRING,
+            description: 'One sentence: what a strong answer demonstrates, or what to listen for.',
+          },
+        },
+        required: ['focus', 'question', 'rationale'],
+      },
+    },
+  },
+  required: ['questions'],
+};
+
+export type InterviewQuestionInput = {
+  job: Job;
+  fullName: string;
+  currentTitle?: string | null;
+  summary?: string | null;
+  strengths?: string[] | null;
+  concerns?: string[] | null;
+  skills?: string[] | null;
+  totalYearsExperience?: number | null;
+};
+
+/**
+ * Generate a tailored interview kit for one candidate: questions that validate their
+ * strengths, probe their concerns/gaps, test key role skills, and gauge motivation —
+ * each with a note on what to listen for. Single structured Gemini call.
+ */
+export async function generateInterviewQuestions(
+  input: InterviewQuestionInput,
+): Promise<InterviewQuestion[]> {
+  const { job } = input;
+  const context = [
+    '=== ROLE ===',
+    `Title: ${job.title}`,
+    job.minYearsExperience != null ? `Minimum experience: ${job.minYearsExperience} years` : null,
+    job.educationRequirement ? `Education: ${job.educationRequirement}` : null,
+    `Required skills: ${job.requiredSkills?.length ? job.requiredSkills.join(', ') : 'n/a'}`,
+    `Nice-to-have: ${job.niceToHaveSkills?.length ? job.niceToHaveSkills.join(', ') : 'n/a'}`,
+    '',
+    'Description:',
+    job.description,
+    '',
+    '=== CANDIDATE ===',
+    `Name: ${input.fullName}`,
+    input.currentTitle ? `Current title: ${input.currentTitle}` : null,
+    input.totalYearsExperience != null ? `Total experience: ${input.totalYearsExperience} years` : null,
+    input.skills?.length ? `Skills: ${input.skills.join(', ')}` : null,
+    input.summary ? `Summary: ${input.summary}` : null,
+    input.strengths?.length ? `Strengths:\n- ${input.strengths.join('\n- ')}` : null,
+    input.concerns?.length ? `Concerns / gaps:\n- ${input.concerns.join('\n- ')}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const prompt = [
+    'You are an expert interviewer preparing to interview the candidate below for this specific role.',
+    'Write 8 sharp, tailored interview questions grounded in THIS candidate\'s profile — not generic',
+    'questions. Cover a balanced mix:',
+    '- probe each significant concern/gap to test whether it is real,',
+    '- let the candidate substantiate their key strengths with specifics,',
+    '- test depth in the most important required skills,',
+    '- explore the most relevant experience, and',
+    '- one question on motivation / fit for this role.',
+    'For each, set "focus" to the category and give a one-sentence "rationale" on what a strong',
+    'answer demonstrates or what to listen for. Keep questions open-ended and specific.',
+    '',
+    context,
+  ].join('\n');
+
+  try {
+    const response = await ai.models.generateContent({
+      model: env.GEMINI_MODEL,
+      contents: prompt,
+      config: { responseMimeType: 'application/json', responseSchema: interviewQuestionsSchema, temperature: 0.5 },
+    });
+    const text = response.text;
+    if (!text) throw new Error('Empty response from Gemini');
+    const parsed = JSON.parse(text) as { questions: InterviewQuestion[] };
+    return (parsed.questions ?? [])
+      .filter((q) => q.question?.trim())
+      .slice(0, 12)
+      .map((q) => ({
+        focus: q.focus,
+        question: q.question.trim(),
+        rationale: q.rationale?.trim() ?? '',
+      }));
+  } catch (err) {
+    logger.error({ err }, 'Interview question generation failed');
+    throw serverError('AI interview-question generation failed', err instanceof Error ? err.message : String(err));
   }
 }

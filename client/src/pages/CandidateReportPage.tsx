@@ -14,6 +14,21 @@ import {
   StageBadge,
 } from '../components/ui';
 
+// Maps a score-explanation component to its label + the matching score field.
+const REPORT_COMPONENT_META: Record<string, { label: string; field: 'skillsMatchScore' | 'experienceScore' | 'educationScore' }> = {
+  skills: { label: 'Skills match', field: 'skillsMatchScore' },
+  experience: { label: 'Experience', field: 'experienceScore' },
+  education: { label: 'Education', field: 'educationScore' },
+};
+
+const REPORT_FOCUS_LABEL: Record<string, string> = {
+  strength: 'Strength',
+  concern: 'Probe gap',
+  skill: 'Skill',
+  experience: 'Experience',
+  motivation: 'Motivation',
+};
+
 export default function CandidateReportPage() {
   const { id } = useParams<{ id: string }>();
   const [candidate, setCandidate] = useState<Candidate | null>(null);
@@ -93,10 +108,12 @@ export default function CandidateReportPage() {
 
         {/* Scores */}
         <Section title="Scores">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <ScoreTile label="Overall" value={c.overallScore} />
             <ScoreTile label="CV qualification" value={c.qualificationScore} />
             <ScoreTile label="Skills match" value={c.skillsMatchScore} />
+            <ScoreTile label="Experience" value={c.experienceScore} />
+            <ScoreTile label="Education" value={c.educationScore} />
             <ScoreTile label="Quiz / exam" value={c.quizScore} />
           </div>
           <p className="mt-3 text-sm text-slate-500">
@@ -118,6 +135,69 @@ export default function CandidateReportPage() {
             <div className="grid gap-6 sm:grid-cols-2">
               <ReportList title="Strengths" items={c.strengths} marker="text-emerald-500" />
               <ReportList title="Concerns / gaps" items={c.concerns} marker="text-amber-500" />
+            </div>
+          </Section>
+        )}
+
+        {c.interviewQuestions && c.interviewQuestions.length > 0 && (
+          <Section title="Suggested interview questions">
+            <ol className="space-y-2.5">
+              {c.interviewQuestions.map((q, i) => (
+                <li key={i} className="flex gap-2 break-inside-avoid text-sm">
+                  <span className="font-semibold text-slate-400">{i + 1}.</span>
+                  <div>
+                    <p className="font-medium text-slate-700">
+                      {q.question}
+                      <span className="ml-2 text-xs font-normal uppercase tracking-wide text-slate-400">
+                        {REPORT_FOCUS_LABEL[q.focus] ?? q.focus}
+                      </span>
+                    </p>
+                    {q.rationale && (
+                      <p className="mt-0.5 text-xs text-slate-500">Listen for: {q.rationale}</p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Section>
+        )}
+
+        {c.scoreExplanations && c.scoreExplanations.length > 0 && (
+          <Section title="Score rationale">
+            <div className="space-y-3">
+              {c.scoreExplanations.map((ex) => {
+                const meta = REPORT_COMPONENT_META[ex.component];
+                const score = meta ? c[meta.field] : null;
+                return (
+                  <div key={ex.component} className="break-inside-avoid">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-700">
+                        {meta?.label ?? ex.component}
+                      </span>
+                      {score != null && (
+                        <span className={`rounded px-1.5 py-0.5 text-xs font-bold ${scoreBg(score)}`}>
+                          {score}
+                        </span>
+                      )}
+                    </div>
+                    {ex.reasoning && (
+                      <p className="mt-1 text-sm leading-relaxed text-slate-600">{ex.reasoning}</p>
+                    )}
+                    {ex.evidence.length > 0 && (
+                      <div className="mt-1.5 space-y-1">
+                        {ex.evidence.map((quote, i) => (
+                          <p
+                            key={i}
+                            className="border-l-2 border-slate-300 pl-2.5 text-xs italic text-slate-500"
+                          >
+                            “{quote}”
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </Section>
         )}

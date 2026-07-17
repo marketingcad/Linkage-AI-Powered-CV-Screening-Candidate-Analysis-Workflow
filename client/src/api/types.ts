@@ -101,6 +101,22 @@ export interface JobSummary {
   candidateCount: number;
 }
 
+/** Relative importance of each scoring component in the overall ranking (per job).
+ * Values are 0-100 and are normalized at compute time, so they need not sum to 100. */
+export interface ScoringWeights {
+  skills: number;
+  experience: number;
+  education: number;
+  quiz: number;
+}
+
+export const DEFAULT_SCORING_WEIGHTS: ScoringWeights = {
+  skills: 40,
+  experience: 30,
+  education: 15,
+  quiz: 15,
+};
+
 export interface Job {
   id: string;
   title: string;
@@ -113,6 +129,7 @@ export interface Job {
   minYearsExperience: number | null;
   educationRequirement: string | null;
   quiz: QuizQuestion[];
+  scoringWeights: ScoringWeights;
   status: JobStatus;
   createdAt: string;
   updatedAt: string;
@@ -137,6 +154,24 @@ export interface SkillMatch {
   skill: string;
   matched: boolean;
   evidence: string | null;
+}
+
+export type ScoreComponentKey = 'skills' | 'experience' | 'education';
+
+/** Per-component "why this score" rationale + verbatim CV evidence. */
+export interface ScoreExplanation {
+  component: ScoreComponentKey;
+  reasoning: string;
+  evidence: string[];
+}
+
+export type InterviewFocus = 'strength' | 'concern' | 'skill' | 'experience' | 'motivation';
+
+/** An AI-suggested, candidate-tailored interview question. */
+export interface InterviewQuestion {
+  focus: InterviewFocus;
+  question: string;
+  rationale: string;
 }
 
 /** AI re-ranking of a compared shortlist against a role. */
@@ -193,6 +228,8 @@ export interface CandidateSummary {
   source: string;
   qualificationScore: number | null;
   skillsMatchScore: number | null;
+  experienceScore: number | null;
+  educationScore: number | null;
   quizScore: number | null;
   overallScore: number | null;
   aiLikelihood: number | null;
@@ -223,6 +260,8 @@ export interface Candidate extends CandidateSummary {
   extractedEducation: ExtractedEducation[] | null;
   extractedCertifications: string[] | null;
   skillMatches: SkillMatch[] | null;
+  scoreExplanations: ScoreExplanation[] | null;
+  interviewQuestions: InterviewQuestion[] | null;
   strengths: string[] | null;
   concerns: string[] | null;
   aiSignals: string[] | null;

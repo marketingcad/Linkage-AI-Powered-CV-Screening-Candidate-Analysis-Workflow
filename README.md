@@ -19,6 +19,9 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## Recent updates
 
+- AI interview questions — generate a tailored interview kit for any candidate in one click: questions that probe their gaps and validate their strengths, each with what to listen for (saved to the candidate and included in the printable report).
+- Explainable scoring — every candidate now shows a “Why this score” breakdown: each factor’s score, how much it counts, the reasoning, and exact quotes from the CV behind it (also in the printable report).
+- Custom ranking weights — for each job, choose how much skills, experience, education, and the exam count toward a candidate’s overall score; changing them instantly re-ranks everyone.
 - Login page redesign — professional split-screen layout with a video background, subtle animations, and a cleaner sign-in card (with show/hide password).
 - Two-factor sign-in — optional authenticator-app (Google Authenticator, Authy) security for recruiters.
 - Account settings — upload a profile photo, update name/email, and change password.

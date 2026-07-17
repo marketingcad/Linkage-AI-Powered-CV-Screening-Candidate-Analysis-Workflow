@@ -85,6 +85,14 @@ export const quizAnswerSchema = z.object({
   text: z.string().max(5000).optional(),
 });
 
+// Per-job ranking weights. Each 0-100; normalized at compute time so they need not sum to 100.
+export const scoringWeightsSchema = z.object({
+  skills: z.number().int().min(0).max(100),
+  experience: z.number().int().min(0).max(100),
+  education: z.number().int().min(0).max(100),
+  quiz: z.number().int().min(0).max(100),
+});
+
 export const createJobSchema = z.object({
   title: z.string().min(2).max(255),
   department: z.string().max(255).optional(),
@@ -96,6 +104,7 @@ export const createJobSchema = z.object({
   minYearsExperience: z.number().int().min(0).max(60).nullable().optional(),
   educationRequirement: z.string().max(2000).nullable().optional(),
   quiz: z.array(quizQuestionSchema).max(30).default([]),
+  scoringWeights: scoringWeightsSchema.optional(),
   status: z.enum(['open', 'closed', 'draft']).default('open'),
 });
 

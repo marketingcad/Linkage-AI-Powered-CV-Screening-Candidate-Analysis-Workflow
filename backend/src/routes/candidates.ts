@@ -10,7 +10,11 @@ import { env } from '../config/env.js';
 import { requireAuth } from '../middleware/auth.js';
 import { deleteCvFile, getCvSource, saveCvFile } from '../services/storage.js';
 import { detectCvKind, extractCvText } from '../services/cvParser.js';
-import { extractCvDetails, rankCandidatesForJob } from '../services/gemini.js';
+import {
+  extractCvDetails,
+  generateInterviewQuestions,
+  rankCandidatesForJob,
+} from '../services/gemini.js';
 import { runAnalysis } from '../services/analysis.js';
 import { recordAudit } from '../services/audit.js';
 import { sendApplicationReceived, sendStatusUpdate } from '../services/email.js';
@@ -144,6 +148,8 @@ candidatesRouter.get('/', async (req, res) => {
       source: candidates.source,
       qualificationScore: candidates.qualificationScore,
       skillsMatchScore: candidates.skillsMatchScore,
+      experienceScore: candidates.experienceScore,
+      educationScore: candidates.educationScore,
       quizScore: candidates.quizScore,
       overallScore: candidates.overallScore,
       aiLikelihood: candidates.aiLikelihood,
@@ -354,6 +360,47 @@ candidatesRouter.post('/:id/resend', async (req, res) => {
         );
 
   res.json({ result });
+});
+
+// Generate (or regenerate) tailored interview questions for a candidate and store them.
+candidatesRouter.post('/:id/interview-questions', async (req, res) => {
+  const [candidate] = await db
+    .select()
+    .from(candidates)
+    .where(eq(candidates.id, req.params.id))
+    .limit(1);
+  if (!candidate) throw notFound('Candidate not found');
+
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, candidate.jobId)).limit(1);
+  if (!job) throw notFound('Associated job not found');
+
+  const questions = await generateInterviewQuestions({
+    job,
+    fullName: candidate.fullName,
+    currentTitle: candidate.currentTitle,
+    summary: candidate.summary,
+    strengths: candidate.strengths,
+    concerns: candidate.concerns,
+    skills: candidate.extractedSkills,
+    totalYearsExperience: candidate.totalYearsExperience,
+  });
+
+  const [updated] = await db
+    .update(candidates)
+    .set({ interviewQuestions: questions, updatedAt: new Date() })
+    .where(eq(candidates.id, candidate.id))
+    .returning();
+
+  void recordAudit({
+    actorEmail: req.user?.email ?? null,
+    action: 'candidate.interview_questions',
+    targetType: 'candidate',
+    targetId: candidate.id,
+    detail: `Generated ${questions.length} interview questions for ${candidate.fullName}`,
+    ip: req.ip ?? null,
+  });
+
+  res.json({ candidate: updated });
 });
 
 candidatesRouter.post('/:id/reanalyze', async (req, res) => {

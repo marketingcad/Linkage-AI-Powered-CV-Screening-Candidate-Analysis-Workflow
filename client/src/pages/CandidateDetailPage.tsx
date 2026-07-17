@@ -2,11 +2,18 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   LuArrowLeft,
+  LuCheck,
+  LuCopy,
   LuDownload,
   LuEllipsisVertical,
   LuFileJson,
   LuFileText,
+  LuLoaderCircle,
+  LuMessagesSquare,
+  LuQuote,
   LuRefreshCw,
+  LuScale,
+  LuSparkles,
   LuTrash2,
   LuTriangleAlert,
 } from 'react-icons/lu';
@@ -14,6 +21,7 @@ import {
   deleteCandidate,
   fetchCandidate,
   fetchCandidateEmails,
+  generateInterviewQuestions,
   reanalyzeCandidate,
   resendCandidateEmail,
   updateCandidateStage,
@@ -34,6 +42,7 @@ import type {
   Job,
   QuizAnswer,
   QuizQuestionResult,
+  ScoreComponentKey,
 } from '../api/types';
 import {
   AiWrittenBadge,
@@ -63,6 +72,9 @@ export default function CandidateDetailPage() {
   const [emails, setEmails] = useState<EmailLog[]>([]);
   const [resending, setResending] = useState<'confirmation' | 'status' | null>(null);
   const [resendNote, setResendNote] = useState<string | null>(null);
+  const [genQ, setGenQ] = useState(false);
+  const [genQErr, setGenQErr] = useState<string | null>(null);
+  const [copiedQ, setCopiedQ] = useState(false);
 
   function loadEmails() {
     if (!id) return;
@@ -132,6 +144,35 @@ export default function CandidateDetailPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function generateQuestions() {
+    if (!candidate) return;
+    setGenQ(true);
+    setGenQErr(null);
+    try {
+      const res = await generateInterviewQuestions(candidate.id);
+      setCandidate(res.candidate);
+    } catch {
+      setGenQErr('Failed to generate interview questions. Please try again.');
+    } finally {
+      setGenQ(false);
+    }
+  }
+
+  function copyQuestions() {
+    const qs = candidate?.interviewQuestions ?? [];
+    if (!qs.length) return;
+    const text = qs.map((q, i) => `${i + 1}. ${q.question}\n   Listen for: ${q.rationale}`).join('\n\n');
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopiedQ(true);
+        setTimeout(() => setCopiedQ(false), 1500);
+      })
+      .catch(() => {
+        /* clipboard unavailable */
+      });
   }
 
   async function downloadCv() {
@@ -324,6 +365,8 @@ export default function CandidateDetailPage() {
             </Card>
           )}
 
+          <WhyThisScore c={c} job={job} />
+
           {c.aiLikelihood != null && (
             <Card className="p-5">
               <div className="mb-3 flex items-center justify-between">
@@ -367,6 +410,91 @@ export default function CandidateDetailPage() {
             <ListCard title="Strengths" items={c.strengths} tone="positive" empty="No strengths recorded." />
             <ListCard title="Concerns / gaps" items={c.concerns} tone="negative" empty="No concerns recorded." />
           </div>
+
+          {(c.analysisStatus === 'completed' || (c.interviewQuestions?.length ?? 0) > 0) && (
+            <Card className="p-5">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+                    <LuMessagesSquare className="h-3.5 w-3.5" />
+                  </span>
+                  <h2 className="text-sm font-semibold text-slate-700">Interview questions</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(c.interviewQuestions?.length ?? 0) > 0 && (
+                    <button
+                      type="button"
+                      onClick={copyQuestions}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                    >
+                      {copiedQ ? (
+                        <LuCheck className="h-3.5 w-3.5 text-emerald-600" />
+                      ) : (
+                        <LuCopy className="h-3.5 w-3.5" />
+                      )}
+                      {copiedQ ? 'Copied' : 'Copy'}
+                    </button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={generateQuestions} disabled={genQ}>
+                    {genQ ? (
+                      <>
+                        <LuLoaderCircle className="h-4 w-4 animate-spin" />
+                        Generating…
+                      </>
+                    ) : (
+                      <>
+                        <LuSparkles className="h-4 w-4" />
+                        {(c.interviewQuestions?.length ?? 0) > 0 ? 'Regenerate' : 'Generate'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <p className="mb-3 text-xs text-slate-500">
+                Tailored to this candidate’s strengths and gaps — each with what to listen for.
+              </p>
+
+              {genQErr && (
+                <div className="mb-3">
+                  <Alert kind="error">{genQErr}</Alert>
+                </div>
+              )}
+
+              {c.interviewQuestions && c.interviewQuestions.length > 0 ? (
+                <ol className="space-y-3">
+                  {c.interviewQuestions.map((q, i) => (
+                    <li
+                      key={i}
+                      className="rounded-lg border border-slate-100 bg-slate-50/50 p-3.5"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <span className="mt-0.5 text-xs font-semibold text-slate-400">{i + 1}.</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1.5">
+                            <FocusTag focus={q.focus} />
+                          </div>
+                          <p className="text-sm font-medium text-slate-700">{q.question}</p>
+                          {q.rationale && (
+                            <p className="mt-1 text-xs text-slate-500">
+                              <span className="font-medium text-slate-400">Listen for:</span>{' '}
+                              {q.rationale}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                !genQ && (
+                  <p className="text-sm text-slate-400">
+                    No questions yet — generate a tailored interview kit from this candidate’s
+                    screening results.
+                  </p>
+                )
+              )}
+            </Card>
+          )}
 
           {c.skillMatches && c.skillMatches.length > 0 && (
             <Card className="p-5">
@@ -484,6 +612,8 @@ export default function CandidateDetailPage() {
             <ScoreLine label="Overall" value={c.overallScore} />
             <ScoreLine label="CV qualification" value={c.qualificationScore} />
             <ScoreLine label="Skills match" value={c.skillsMatchScore} />
+            {c.experienceScore != null && <ScoreLine label="Experience" value={c.experienceScore} />}
+            {c.educationScore != null && <ScoreLine label="Education" value={c.educationScore} />}
             {c.quizScore != null && <ScoreLine label="Quiz / exam" value={c.quizScore} />}
             <div className="mt-3 flex justify-between text-sm">
               <span className="text-slate-500">Total experience</span>
@@ -588,6 +718,141 @@ export default function CandidateDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Colour + label per interview-question focus.
+const FOCUS_META: Record<string, { label: string; cls: string }> = {
+  strength: { label: 'Strength', cls: 'bg-emerald-100 text-emerald-700' },
+  concern: { label: 'Probe gap', cls: 'bg-amber-100 text-amber-700' },
+  skill: { label: 'Skill', cls: 'bg-blue-100 text-blue-700' },
+  experience: { label: 'Experience', cls: 'bg-violet-100 text-violet-700' },
+  motivation: { label: 'Motivation', cls: 'bg-brand-100 text-brand-700' },
+};
+
+function FocusTag({ focus }: { focus: string }) {
+  const meta = FOCUS_META[focus] ?? { label: focus, cls: 'bg-slate-100 text-slate-600' };
+  return (
+    <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
+      {meta.label}
+    </span>
+  );
+}
+
+// Colour + label per scoring component, shared by the "Why this score" breakdown.
+const COMPONENT_META: {
+  key: ScoreComponentKey | 'quiz';
+  label: string;
+  dot: string;
+  chip: string;
+}[] = [
+  { key: 'skills', label: 'Skills match', dot: 'bg-blue-500', chip: 'bg-blue-50 text-blue-700' },
+  { key: 'experience', label: 'Experience', dot: 'bg-violet-500', chip: 'bg-violet-50 text-violet-700' },
+  { key: 'education', label: 'Education', dot: 'bg-amber-500', chip: 'bg-amber-50 text-amber-700' },
+  { key: 'quiz', label: 'Quiz / exam', dot: 'bg-emerald-500', chip: 'bg-emerald-50 text-emerald-700' },
+];
+
+/**
+ * Explainable-scoring panel: for each component shows its score, how much it counts
+ * toward the overall (from the job's weights), the AI's reasoning, and verbatim CV
+ * excerpts — turning the score into a defensible, auditable decision.
+ */
+function WhyThisScore({ c, job }: { c: Candidate; job: Job | null }) {
+  const scoreFor: Record<string, number | null> = {
+    skills: c.skillsMatchScore,
+    experience: c.experienceScore,
+    education: c.educationScore,
+    quiz: c.quizScore,
+  };
+  const weights = job?.scoringWeights;
+  const weightFor = (key: string): number => {
+    if (!weights) return 0;
+    switch (key) {
+      case 'skills':
+        return weights.skills;
+      case 'experience':
+        return weights.experience;
+      case 'education':
+        return weights.education;
+      case 'quiz':
+        return weights.quiz;
+      default:
+        return 0;
+    }
+  };
+
+  // Contribution % mirrors the backend blend: only components with a score count.
+  const active = COMPONENT_META.filter((m) => scoreFor[m.key] != null && weightFor(m.key) > 0);
+  const totalW = active.reduce((sum, m) => sum + weightFor(m.key), 0);
+
+  const explanationFor = (key: string) =>
+    (c.scoreExplanations ?? []).find((e) => e.component === key);
+
+  const rows = COMPONENT_META.filter((m) => scoreFor[m.key] != null || explanationFor(m.key));
+  if (rows.length === 0) return null;
+
+  return (
+    <Card className="p-5">
+      <div className="mb-1 flex items-center gap-2">
+        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+          <LuScale className="h-3.5 w-3.5" />
+        </span>
+        <h2 className="text-sm font-semibold text-slate-700">Why this score</h2>
+      </div>
+      <p className="mb-4 text-xs text-slate-500">
+        How each factor scored, what it counts toward the overall, and the CV evidence behind it.
+      </p>
+
+      <div className="space-y-4">
+        {rows.map((m) => {
+          const score = scoreFor[m.key];
+          const w = weightFor(m.key);
+          const contribution =
+            totalW > 0 && score != null && w > 0 ? Math.round((w / totalW) * 100) : null;
+          const ex = explanationFor(m.key);
+          return (
+            <div key={m.key} className="rounded-lg border border-slate-100 bg-slate-50/50 p-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${m.dot}`} />
+                  <span className="text-sm font-medium text-slate-700">{m.label}</span>
+                  <span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${scoreBg(score)}`}>
+                    {score ?? '—'}
+                  </span>
+                </div>
+                {contribution != null && (
+                  <span className="text-xs font-medium text-slate-400">
+                    {contribution}% of overall
+                  </span>
+                )}
+              </div>
+
+              {ex?.reasoning && (
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{ex.reasoning}</p>
+              )}
+
+              {ex && ex.evidence.length > 0 && (
+                <div className="mt-2.5 space-y-1.5">
+                  {ex.evidence.map((quote, i) => (
+                    <blockquote
+                      key={i}
+                      className="flex gap-1.5 rounded-md border-l-2 border-slate-300 bg-white px-2.5 py-1.5 text-xs italic text-slate-500"
+                    >
+                      <LuQuote className="mt-0.5 h-3 w-3 shrink-0 text-slate-300" />
+                      <span>{quote}</span>
+                    </blockquote>
+                  ))}
+                </div>
+              )}
+
+              {m.key === 'quiz' && (
+                <p className="mt-2 text-xs text-slate-400">Graded from the screening exam (see below).</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 

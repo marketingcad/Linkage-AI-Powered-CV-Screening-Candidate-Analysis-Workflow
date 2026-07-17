@@ -5,10 +5,6 @@ import type {
 } from '../db/schema.js';
 import { gradeShortAnswers, type ShortAnswerItem } from './gemini.js';
 
-// Weight of the CV qualification score vs the quiz score in the combined ranking.
-const CV_WEIGHT = 0.6;
-const QUIZ_WEIGHT = 0.4;
-
 export type QuizGrade = {
   quizScore: number | null; // 0-100 normalized, null when the job has no quiz
   results: QuizQuestionResult[];
@@ -95,18 +91,4 @@ export async function gradeQuiz(
   const quizScore = Math.max(0, Math.min(100, Math.round((awarded / totalPoints) * 100)));
 
   return { quizScore, results };
-}
-
-/**
- * Combines the CV qualification score with the quiz score into a single 0-100
- * ranking value. Falls back to whichever score is available.
- */
-export function computeOverallScore(
-  qualificationScore: number | null,
-  quizScore: number | null,
-): number | null {
-  if (qualificationScore == null && quizScore == null) return null;
-  if (quizScore == null) return qualificationScore;
-  if (qualificationScore == null) return quizScore;
-  return Math.round(qualificationScore * CV_WEIGHT + quizScore * QUIZ_WEIGHT);
 }

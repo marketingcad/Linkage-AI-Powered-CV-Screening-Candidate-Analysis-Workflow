@@ -2,7 +2,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { candidates, type Job, type QuizAnswer } from '../db/schema.js';
 import { analyzeCandidate } from './gemini.js';
-import { computeOverallScore, gradeQuiz } from './quiz.js';
+import { gradeQuiz } from './quiz.js';
+import { computeWeightedScore, DEFAULT_SCORING_WEIGHTS } from './scoring.js';
 import { candidateProfileText, embedText, storeEmbedding } from './embedding.js';
 import { logger } from '../lib/logger.js';
 
@@ -29,9 +30,14 @@ export async function runAnalysis(
       gradeQuiz(job.title, job.quiz ?? [], quizAnswers),
     ]);
 
-    const overallScore = computeOverallScore(
-      evaluation.qualificationScore,
-      quizGrade.quizScore,
+    const overallScore = computeWeightedScore(
+      {
+        skills: evaluation.skillsMatchScore,
+        experience: evaluation.experienceScore,
+        education: evaluation.educationScore,
+        quiz: quizGrade.quizScore,
+      },
+      job.scoringWeights ?? DEFAULT_SCORING_WEIGHTS,
     );
 
     await db
@@ -44,7 +50,10 @@ export async function runAnalysis(
         totalYearsExperience: extraction.totalYearsExperience,
         qualificationScore: evaluation.qualificationScore,
         skillsMatchScore: evaluation.skillsMatchScore,
+        experienceScore: evaluation.experienceScore,
+        educationScore: evaluation.educationScore,
         skillMatches: evaluation.skillMatches,
+        scoreExplanations: evaluation.scoreExplanations,
         strengths: evaluation.strengths,
         concerns: evaluation.concerns,
         summary: evaluation.summary,

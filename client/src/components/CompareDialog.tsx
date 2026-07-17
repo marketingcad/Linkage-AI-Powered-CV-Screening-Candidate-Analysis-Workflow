@@ -19,6 +19,8 @@ const NUM_ROWS: NumRow[] = [
   { key: 'overall', label: 'Overall score', get: (c) => c.overallScore },
   { key: 'qual', label: 'CV qualification', get: (c) => c.qualificationScore },
   { key: 'skills', label: 'Skills match', get: (c) => c.skillsMatchScore },
+  { key: 'expfit', label: 'Experience fit', get: (c) => c.experienceScore },
+  { key: 'edufit', label: 'Education fit', get: (c) => c.educationScore },
   { key: 'quiz', label: 'Quiz / exam', get: (c) => c.quizScore },
   { key: 'exp', label: 'Experience (yrs)', get: (c) => c.totalYearsExperience },
 ];

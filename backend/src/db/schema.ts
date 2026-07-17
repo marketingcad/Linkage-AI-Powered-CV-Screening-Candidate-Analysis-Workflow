@@ -90,6 +90,27 @@ export type QuizQuestionResult = {
 };
 
 // ---------------------------------------------------------------------------
+// Scoring weights (per job) — how the overall ranking score is composed
+// ---------------------------------------------------------------------------
+
+/** Relative importance of each scoring component when computing the overall rank. */
+export type ScoringWeights = {
+  skills: number;
+  experience: number;
+  education: number;
+  quiz: number;
+};
+
+/** Sensible starting balance. Weights are normalized at compute time, so they
+ * don't have to sum to 100 — recruiters can tune each independently. */
+export const DEFAULT_SCORING_WEIGHTS: ScoringWeights = {
+  skills: 40,
+  experience: 30,
+  education: 15,
+  quiz: 15,
+};
+
+// ---------------------------------------------------------------------------
 // Jobs / positions
 // ---------------------------------------------------------------------------
 
@@ -107,6 +128,11 @@ export const jobs = pgTable('jobs', {
   educationRequirement: text('education_requirement'),
   // Optional position-specific exam/quiz (includes correct answers — never sent to applicants)
   quiz: jsonb('quiz').$type<QuizQuestion[]>().notNull().default(sql`'[]'::jsonb`),
+  // How the overall ranking score is weighted for this role (skills/experience/education/quiz).
+  scoringWeights: jsonb('scoring_weights')
+    .$type<ScoringWeights>()
+    .notNull()
+    .default(sql`'{"skills":40,"experience":30,"education":15,"quiz":15}'::jsonb`),
   status: jobStatusEnum('status').notNull().default('open'),
   createdBy: uuid('created_by').references(() => hrUsers.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -136,6 +162,24 @@ export type SkillMatch = {
   skill: string;
   matched: boolean;
   evidence: string | null;
+};
+
+/** Per-component rationale + verbatim CV evidence behind a score ("why this score"). */
+export type ScoreComponentKey = 'skills' | 'experience' | 'education';
+
+export type ScoreExplanation = {
+  component: ScoreComponentKey;
+  reasoning: string; // 1-2 sentences on why this component scored as it did
+  evidence: string[]; // short verbatim excerpts quoted from the CV (may be empty)
+};
+
+/** An AI-suggested interview question tailored to a candidate's strengths/gaps. */
+export type InterviewFocus = 'strength' | 'concern' | 'skill' | 'experience' | 'motivation';
+
+export type InterviewQuestion = {
+  focus: InterviewFocus;
+  question: string;
+  rationale: string; // what a strong answer looks like / why to ask this
 };
 
 export const candidates = pgTable('candidates', {
@@ -178,9 +222,15 @@ export const candidates = pgTable('candidates', {
   totalYearsExperience: integer('total_years_experience'),
 
   // AI evaluation vs the job
-  qualificationScore: integer('qualification_score'), // 0-100
-  skillsMatchScore: integer('skills_match_score'), // 0-100
+  qualificationScore: integer('qualification_score'), // 0-100 holistic AI fit
+  skillsMatchScore: integer('skills_match_score'), // 0-100 (skills component)
+  experienceScore: integer('experience_score'), // 0-100 (experience component)
+  educationScore: integer('education_score'), // 0-100 (education component)
   skillMatches: jsonb('skill_matches').$type<SkillMatch[]>(),
+  // Per-component "why this score" rationale + verbatim CV evidence (explainability).
+  scoreExplanations: jsonb('score_explanations').$type<ScoreExplanation[]>(),
+  // AI-generated interview questions tailored to this candidate (on-demand).
+  interviewQuestions: jsonb('interview_questions').$type<InterviewQuestion[]>(),
   strengths: jsonb('strengths').$type<string[]>(),
   concerns: jsonb('concerns').$type<string[]>(),
   summary: text('summary'),
@@ -196,7 +246,7 @@ export const candidates = pgTable('candidates', {
   quizResults: jsonb('quiz_results').$type<QuizQuestionResult[]>(),
   quizScore: integer('quiz_score'), // 0-100 normalized (null if job has no quiz)
 
-  // Combined ranking score: CV qualification + quiz (0-100)
+  // Combined ranking score: weighted blend of skills/experience/education/quiz (0-100)
   overallScore: integer('overall_score'),
 
   // Pipeline / workflow state

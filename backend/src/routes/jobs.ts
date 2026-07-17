@@ -7,6 +7,7 @@ import { notFound, serverError } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
 import { generateQuiz } from '../services/gemini.js';
 import { recordAudit } from '../services/audit.js';
+import { recomputeJobScores } from '../services/scoring.js';
 import {
   candidateProfileText,
   cosineSim,
@@ -189,6 +190,13 @@ jobsRouter.put('/:id', async (req, res) => {
     .where(eq(jobs.id, req.params.id))
     .returning();
   if (!job) throw notFound('Job not found');
+
+  // When ranking weights change, instantly re-rank existing candidates from their
+  // stored component scores — no re-analysis / AI calls needed.
+  if (input.scoringWeights) {
+    await recomputeJobScores(job);
+  }
+
   res.json({ job });
 });
 

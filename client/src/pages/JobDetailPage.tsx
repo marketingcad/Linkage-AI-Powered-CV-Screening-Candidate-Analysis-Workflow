@@ -17,6 +17,8 @@ import {
   LuMapPin,
   LuPencil,
   LuPlus,
+  LuScale,
+  LuSlidersHorizontal,
   LuTrash2,
   LuUsers,
 } from 'react-icons/lu';
@@ -298,6 +300,8 @@ export default function JobDetailPage() {
         </Card>
           </div>
 
+          <WeightsCard job={job} onAdjust={() => setEditing(true)} />
+
           <DistributePanel job={job} />
         </div>
       )}
@@ -396,6 +400,67 @@ function InfoRow({
         <p className="text-sm font-medium text-slate-700">{value}</p>
       </div>
     </div>
+  );
+}
+
+const WEIGHT_META: { key: keyof Job['scoringWeights']; label: string; bar: string; text: string }[] = [
+  { key: 'skills', label: 'Skills match', bar: 'bg-blue-500', text: 'text-blue-600' },
+  { key: 'experience', label: 'Experience', bar: 'bg-violet-500', text: 'text-violet-600' },
+  { key: 'education', label: 'Education', bar: 'bg-amber-500', text: 'text-amber-600' },
+  { key: 'quiz', label: 'Quiz / exam', bar: 'bg-emerald-500', text: 'text-emerald-600' },
+];
+
+/** Read-only summary of how this role's overall ranking score is weighted. */
+function WeightsCard({ job, onAdjust }: { job: Job; onAdjust: () => void }) {
+  const w = job.scoringWeights;
+  const hasQuiz = job.quiz.length > 0;
+  // Effective share: quiz only counts when the role actually has an exam.
+  const rows = WEIGHT_META.map((m) => ({
+    ...m,
+    raw: m.key === 'quiz' && !hasQuiz ? 0 : w[m.key] || 0,
+    inactive: m.key === 'quiz' && !hasQuiz,
+  }));
+  const total = rows.reduce((sum, r) => sum + r.raw, 0);
+
+  return (
+    <Card className="p-6">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+            <LuScale className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-800">Ranking weights</h2>
+            <p className="text-xs text-slate-500">How each factor counts toward the overall score.</p>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={onAdjust}>
+          <LuSlidersHorizontal className="h-4 w-4" />
+          Adjust
+        </Button>
+      </div>
+      <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+        {rows.map((r) => {
+          const pct = total > 0 ? Math.round((r.raw / total) * 100) : 0;
+          return (
+            <div key={r.key}>
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="font-medium text-slate-700">{r.label}</span>
+                <span className={`text-xs font-semibold ${r.inactive ? 'text-slate-400' : r.text}`}>
+                  {r.inactive ? 'no exam' : `${pct}%`}
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={`h-full rounded-full ${r.inactive ? 'bg-slate-300' : r.bar}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 

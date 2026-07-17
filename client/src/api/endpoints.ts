@@ -15,6 +15,7 @@ import type {
   PublicJobListItem,
   QuizQuestion,
   RankedCandidate,
+  ScoringWeights,
   Stats,
   TalentMatch,
 } from './types';
@@ -156,6 +157,7 @@ export interface JobInput {
   minYearsExperience?: number | null;
   educationRequirement?: string | null;
   quiz: QuizQuestion[];
+  scoringWeights?: ScoringWeights;
   status: JobStatus;
 }
 export function fetchJobs() {
@@ -227,6 +229,12 @@ export function fetchAuditLog() {
 }
 export function reanalyzeCandidate(id: string) {
   return apiRequest<{ candidate: Candidate }>(`/candidates/${id}/reanalyze`, { method: 'POST' });
+}
+/** Generate (or regenerate) AI interview questions tailored to a candidate. */
+export function generateInterviewQuestions(id: string) {
+  return apiRequest<{ candidate: Candidate }>(`/candidates/${id}/interview-questions`, {
+    method: 'POST',
+  });
 }
 export function fetchCandidateEmails(id: string) {
   return apiRequest<{ emails: EmailLog[] }>(`/candidates/${id}/emails`);

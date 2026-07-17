@@ -1,8 +1,14 @@
 import { useState } from 'react';
-import { LuBriefcase } from 'react-icons/lu';
+import { LuBriefcase, LuRotateCcw, LuScale } from 'react-icons/lu';
 import { createJob, generateQuiz, updateJob, type JobInput } from '../api/endpoints';
 import { ApiError } from '../api/client';
-import type { Job, JobStatus, QuizQuestion } from '../api/types';
+import {
+  DEFAULT_SCORING_WEIGHTS,
+  type Job,
+  type JobStatus,
+  type QuizQuestion,
+  type ScoringWeights,
+} from '../api/types';
 import { Alert, Button, Spinner } from './ui';
 import {
   Dialog,
@@ -45,6 +51,9 @@ export default function JobForm({
   );
   const [education, setEducation] = useState(existing?.educationRequirement ?? '');
   const [quiz, setQuiz] = useState<QuizQuestion[]>(existing?.quiz ?? []);
+  const [weights, setWeights] = useState<ScoringWeights>(
+    existing?.scoringWeights ?? DEFAULT_SCORING_WEIGHTS,
+  );
   const [status, setStatus] = useState<JobStatus>(existing?.status ?? 'open');
 
   const [saving, setSaving] = useState(false);
@@ -97,6 +106,7 @@ export default function JobForm({
       minYearsExperience: minYears ? Number(minYears) : null,
       educationRequirement: education.trim() || null,
       quiz,
+      scoringWeights: weights,
       status,
     };
 
@@ -216,6 +226,21 @@ export default function JobForm({
           </div>
 
           <div className="border-t border-slate-200 pt-4">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+                <LuScale className="h-3.5 w-3.5" />
+              </span>
+              <span className="text-sm font-semibold text-slate-800">Ranking weights</span>
+            </div>
+            <p className="mb-3 text-xs text-slate-500">
+              Control how much each factor counts toward a candidate&apos;s overall score for this
+              role. They don&apos;t need to add up to 100 — we balance them for you. Changing them
+              instantly re-ranks existing candidates.
+            </p>
+            <WeightsEditor value={weights} onChange={setWeights} hasQuiz={quiz.length > 0} />
+          </div>
+
+          <div className="border-t border-slate-200 pt-4">
             <div className="mb-1 flex items-center justify-between">
               <span className="text-sm font-semibold text-slate-800">Screening exam / quiz</span>
               <span className="text-xs text-slate-400">
@@ -295,5 +320,86 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
       {children}
     </label>
+  );
+}
+
+const WEIGHT_ROWS: {
+  key: keyof ScoringWeights;
+  label: string;
+  hint: string;
+  accent: string;
+  bar: string;
+}[] = [
+  { key: 'skills', label: 'Skills match', hint: 'required & nice-to-have skills', accent: 'text-blue-600', bar: 'accent-blue-600' },
+  { key: 'experience', label: 'Experience', hint: 'relevance, depth & seniority', accent: 'text-violet-600', bar: 'accent-violet-600' },
+  { key: 'education', label: 'Education', hint: 'qualifications vs requirement', accent: 'text-amber-600', bar: 'accent-amber-600' },
+  { key: 'quiz', label: 'Quiz / exam', hint: 'screening exam result', accent: 'text-emerald-600', bar: 'accent-emerald-600' },
+];
+
+/** Four sliders that set the per-job ranking weights, with a live "effective %" readout. */
+function WeightsEditor({
+  value,
+  onChange,
+  hasQuiz,
+}: {
+  value: ScoringWeights;
+  onChange: (w: ScoringWeights) => void;
+  hasQuiz: boolean;
+}) {
+  const total = WEIGHT_ROWS.reduce((sum, r) => sum + (value[r.key] || 0), 0);
+  const isDefault = WEIGHT_ROWS.every((r) => value[r.key] === DEFAULT_SCORING_WEIGHTS[r.key]);
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="space-y-3.5">
+        {WEIGHT_ROWS.map((r) => {
+          const raw = value[r.key] || 0;
+          const effective = total > 0 ? Math.round((raw / total) * 100) : 0;
+          const inactive = r.key === 'quiz' && !hasQuiz;
+          return (
+            <div key={r.key}>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-slate-700">
+                  {r.label}
+                  <span className="ml-1.5 text-xs font-normal text-slate-400">· {r.hint}</span>
+                </span>
+                <span className={`shrink-0 text-xs font-semibold ${inactive ? 'text-slate-400' : r.accent}`}>
+                  {inactive ? 'no exam' : `${effective}%`}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={raw}
+                onChange={(e) => onChange({ ...value, [r.key]: Number(e.target.value) })}
+                className={`h-1.5 w-full cursor-pointer ${r.bar}`}
+                aria-label={`${r.label} weight`}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
+        <p className="text-xs text-slate-500">
+          {total === 0
+            ? 'Set at least one weight above zero.'
+            : hasQuiz
+              ? 'Percentages show each factor’s share of the overall score.'
+              : 'Add a quiz to include exam results in the score.'}
+        </p>
+        <button
+          type="button"
+          onClick={() => onChange(DEFAULT_SCORING_WEIGHTS)}
+          disabled={isDefault}
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40"
+        >
+          <LuRotateCcw className="h-3.5 w-3.5" />
+          Reset
+        </button>
+      </div>
+    </div>
   );
 }
