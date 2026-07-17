@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { IconType } from 'react-icons';
 import {
   LuBot,
@@ -85,11 +86,37 @@ export function scoreBg(score: number | null | undefined): string {
 }
 
 export function ScoreRing({ score, size = 56 }: { score: number | null; size?: number }) {
-  const value = score ?? 0;
+  const target = score ?? 0;
+  // Sweep the ring + count the number up from 0 on mount (respects reduced motion).
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    if (score == null) {
+      setP(0);
+      return;
+    }
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      setP(target);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / 800);
+      setP(target * (1 - Math.pow(1 - t, 3))); // easeOutCubic
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, score]);
+
   const radius = (size - 8) / 2;
   const circ = 2 * Math.PI * radius;
-  const offset = circ - (value / 100) * circ;
-  const stroke = score == null ? '#cbd5e1' : value >= 80 ? '#059669' : value >= 60 ? '#d97706' : '#e11d48';
+  const offset = circ - (p / 100) * circ;
+  const stroke =
+    score == null ? '#cbd5e1' : target >= 80 ? '#059669' : target >= 60 ? '#d97706' : '#e11d48';
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
@@ -107,7 +134,7 @@ export function ScoreRing({ score, size = 56 }: { score: number | null; size?: n
         />
       </svg>
       <span className={`absolute text-sm font-bold ${scoreColor(score)}`}>
-        {score == null ? '—' : score}
+        {score == null ? '—' : Math.round(p)}
       </span>
     </div>
   );
@@ -165,10 +192,19 @@ export function AnalysisStatusBadge({ value }: { value: AnalysisStatus }) {
   );
 }
 
-export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function Card({
+  children,
+  className = '',
+  style,
+}: {
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+}) {
   return (
     <div
       className={`rounded-2xl border border-slate-200/80 bg-white shadow-(--shadow-card) ${className}`}
+      style={style}
     >
       {children}
     </div>

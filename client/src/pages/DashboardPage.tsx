@@ -96,6 +96,14 @@ export default function DashboardPage() {
     };
   }, [all]);
 
+  // Grow the bars from 0 once the (post-loading) content is on screen.
+  const [grow, setGrow] = useState(false);
+  useEffect(() => {
+    if (loading) return;
+    const id = requestAnimationFrame(() => setGrow(true));
+    return () => cancelAnimationFrame(id);
+  }, [loading]);
+
   if (error) return <Alert kind="error">{error}</Alert>;
 
   if (loading) {
@@ -122,8 +130,8 @@ export default function DashboardPage() {
   const maxSource = Math.max(1, ...(stats?.bySource ?? []).map((s) => s.value));
 
   return (
-    <div className="animate-rise space-y-8">
-      <div>
+    <div className="space-y-8">
+      <div className="animate-rise">
         <h1 className="text-2xl font-semibold text-slate-900">Overview</h1>
         <p className="mt-1 text-sm text-slate-500">
           AI-screened candidates across all your open roles.
@@ -139,6 +147,7 @@ export default function DashboardPage() {
           Icon={LuUsers}
           tint="brand"
           to="/hr/candidates"
+          delay={60}
         />
         <StatCard
           label="Open jobs"
@@ -147,6 +156,7 @@ export default function DashboardPage() {
           Icon={LuBriefcase}
           tint="violet"
           to="/hr/jobs"
+          delay={120}
         />
         <StatCard
           label="Avg. score"
@@ -155,6 +165,7 @@ export default function DashboardPage() {
           caption="AI qualification"
           Icon={LuGauge}
           tint="emerald"
+          delay={180}
         />
         <StatCard
           label="Shortlisted"
@@ -163,12 +174,13 @@ export default function DashboardPage() {
           Icon={LuStar}
           tint="amber"
           to="/hr/candidates"
+          delay={240}
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Pipeline by stage */}
-        <Card className="p-5">
+        <Card className="animate-rise p-5" style={{ animationDelay: '300ms' }}>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-700">Pipeline by stage</h2>
             <span className="text-xs text-slate-400">{totalStaged} total</span>
@@ -186,8 +198,8 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={s.stage}
-                      className={s.bar}
-                      style={{ width: `${(v / totalStaged) * 100}%` }}
+                      className={`${s.bar} transition-[width] duration-700 ease-out motion-reduce:transition-none`}
+                      style={{ width: grow ? `${(v / totalStaged) * 100}%` : '0%' }}
                       title={`${s.label}: ${v}`}
                     />
                   );
@@ -215,7 +227,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Candidates by channel */}
-        <Card className="p-5">
+        <Card className="animate-rise p-5" style={{ animationDelay: '360ms' }}>
           <h2 className="mb-4 text-sm font-semibold text-slate-700">Candidates by channel</h2>
           {!stats || stats.bySource.length === 0 ? (
             <EmptyHint text="No applications yet." />
@@ -229,8 +241,8 @@ export default function DashboardPage() {
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full bg-brand-400"
-                      style={{ width: `${(s.value / maxSource) * 100}%` }}
+                      className="h-full rounded-full bg-brand-400 transition-[width] duration-700 ease-out motion-reduce:transition-none"
+                      style={{ width: grow ? `${(s.value / maxSource) * 100}%` : '0%' }}
                     />
                   </div>
                 </div>
@@ -242,7 +254,7 @@ export default function DashboardPage() {
 
       {/* Analytics: funnel + score distribution */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-5">
+        <Card className="animate-rise p-5" style={{ animationDelay: '420ms' }}>
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
             <LuFilter className="h-4 w-4 text-brand-500" />
             Recruitment funnel
@@ -265,8 +277,8 @@ export default function DashboardPage() {
                     </div>
                     <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className={`h-full rounded-full ${FUNNEL_COLORS[i] ?? 'bg-slate-400'}`}
-                        style={{ width: `${pct}%` }}
+                        className={`h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none ${FUNNEL_COLORS[i] ?? 'bg-slate-400'}`}
+                        style={{ width: grow ? `${pct}%` : '0%' }}
                       />
                     </div>
                   </div>
@@ -276,7 +288,7 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        <Card className="p-5">
+        <Card className="animate-rise p-5" style={{ animationDelay: '480ms' }}>
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
             <LuChartColumn className="h-4 w-4 text-brand-500" />
             Score distribution
@@ -292,10 +304,10 @@ export default function DashboardPage() {
                 >
                   <span className="text-xs font-semibold text-slate-700">{d.count}</span>
                   <div
-                    className="w-full rounded-t bg-brand-400"
+                    className="w-full rounded-t bg-brand-400 transition-[height] duration-700 ease-out motion-reduce:transition-none"
                     style={{
-                      height: `${Math.round((d.count / analytics.maxDist) * 78)}%`,
-                      minHeight: d.count ? 4 : 0,
+                      height: grow ? `${Math.round((d.count / analytics.maxDist) * 78)}%` : '0%',
+                      minHeight: grow && d.count ? 4 : 0,
                     }}
                   />
                   <span className="text-[10px] text-slate-400">{d.label}</span>
@@ -307,7 +319,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Source effectiveness */}
-      <Card className="p-5">
+      <Card className="animate-rise p-5" style={{ animationDelay: '540ms' }}>
         <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
           <LuTarget className="h-4 w-4 text-brand-500" />
           Source effectiveness
@@ -342,7 +354,7 @@ export default function DashboardPage() {
         )}
       </Card>
 
-      <div>
+      <div className="animate-rise" style={{ animationDelay: '600ms' }}>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900">Top candidates</h2>
           <Link
@@ -375,6 +387,34 @@ const TINTS: Record<string, string> = {
   amber: 'bg-amber-50 text-amber-600',
 };
 
+/** Animate a number from 0 up to `target` on mount (respects reduced motion). */
+function useCountUp(target: number, duration = 900): number {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!Number.isFinite(target) || target <= 0) {
+      setVal(target > 0 ? target : 0);
+      return;
+    }
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      setVal(target);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      setVal(Math.round(target * (1 - Math.pow(1 - t, 3)))); // easeOutCubic
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
+
 function StatCard({
   label,
   value,
@@ -383,6 +423,7 @@ function StatCard({
   Icon,
   tint,
   to,
+  delay = 0,
 }: {
   label: string;
   value: number;
@@ -391,7 +432,9 @@ function StatCard({
   Icon: IconType;
   tint: keyof typeof TINTS;
   to?: string;
+  delay?: number;
 }) {
+  const shown = useCountUp(value);
   const body = (
     <Card className="h-full p-5 transition-all group-hover:-translate-y-0.5 group-hover:shadow-(--shadow-raised)">
       <div className="flex items-start justify-between">
@@ -403,7 +446,7 @@ function StatCard({
         )}
       </div>
       <p className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">
-        {value}
+        {shown}
         {suffix && <span className="text-base font-medium text-slate-400">{suffix}</span>}
       </p>
       <p className="mt-0.5 text-sm font-medium text-slate-600">{label}</p>
@@ -412,10 +455,12 @@ function StatCard({
   );
 
   return to ? (
-    <Link to={to} className="group block">
+    <Link to={to} className="group block animate-rise" style={{ animationDelay: `${delay}ms` }}>
       {body}
     </Link>
   ) : (
-    <div className="group">{body}</div>
+    <div className="group animate-rise" style={{ animationDelay: `${delay}ms` }}>
+      {body}
+    </div>
   );
 }
