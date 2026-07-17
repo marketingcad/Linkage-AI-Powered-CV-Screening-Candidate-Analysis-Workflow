@@ -122,7 +122,7 @@ export default function LoginPage() {
           <source src={loginHeroVideo} type="video/mp4" />
         </video>
         {/* Brand gradient for legibility + colour cohesion */}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-brand-950/85 via-brand-900/78 to-brand-950/94" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-brand-950/85 via-brand-900/40 to-brand-950/94" />
         <div className="pointer-events-none absolute inset-0 bg-brand-700/25 mix-blend-multiply" />
 
         <div className="relative flex items-center gap-2.5">
