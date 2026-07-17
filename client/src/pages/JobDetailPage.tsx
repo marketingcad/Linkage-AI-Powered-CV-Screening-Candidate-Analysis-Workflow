@@ -79,6 +79,16 @@ export default function JobDetailPage() {
 
   useEffect(load, [id]);
 
+  // Refresh only the candidate list (no full-page skeleton) — keeps dialogs mounted.
+  function refreshCandidates() {
+    if (!id) return;
+    fetchCandidates({ jobId: id })
+      .then((c) => setCandidates(c.candidates))
+      .catch(() => {
+        /* keep the current list on a transient failure */
+      });
+  }
+
   async function handleDelete() {
     if (!job) return;
     if (!confirm(`Delete "${job.title}" and all its candidates? This cannot be undone.`)) return;
@@ -324,7 +334,7 @@ export default function JobDetailPage() {
         <ImportCvsDialog
           jobId={job.id}
           onClose={() => setImporting(false)}
-          onImported={load}
+          onImported={refreshCandidates}
         />
       )}
       {scanning && (
