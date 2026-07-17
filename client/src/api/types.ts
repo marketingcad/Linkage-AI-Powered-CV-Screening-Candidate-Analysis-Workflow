@@ -139,6 +139,14 @@ export interface SkillMatch {
   evidence: string | null;
 }
 
+/** AI re-ranking of a compared shortlist against a role. */
+export interface RankedCandidate {
+  candidateId: string;
+  rank: number;
+  fitScore: number;
+  reason: string;
+}
+
 /** An entry in the HR activity/audit log. */
 export interface AuditLog {
   id: string;

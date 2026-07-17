@@ -14,6 +14,7 @@ import type {
   PublicJob,
   PublicJobListItem,
   QuizQuestion,
+  RankedCandidate,
   Stats,
   TalentMatch,
 } from './types';
@@ -111,6 +112,14 @@ export function submitApplication(form: FormData) {
     analysisStatus: string;
     trackingToken: string;
   }>('/applications', { method: 'POST', body: form, isForm: true, auth: false });
+}
+
+/** AI re-rank a compared shortlist against the role (first candidate's job). */
+export function rankCandidatesAI(candidateIds: string[]) {
+  return apiRequest<{ jobTitle: string; ranking: RankedCandidate[] }>('/candidates/rank', {
+    method: 'POST',
+    body: { candidateIds },
+  });
 }
 
 /** Rank past applicants (from other roles) by semantic fit to this job. */

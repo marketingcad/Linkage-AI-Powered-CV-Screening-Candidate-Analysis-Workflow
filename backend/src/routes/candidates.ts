@@ -1,16 +1,16 @@
 import { Router } from 'express';
 import { randomUUID } from 'node:crypto';
 import multer from 'multer';
-import { and, desc, eq, ne, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { candidates, jobs, emailLogs } from '../db/schema.js';
-import { updateStageSchema } from '../lib/validation.js';
+import { rankCandidatesSchema, updateStageSchema } from '../lib/validation.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { env } from '../config/env.js';
 import { requireAuth } from '../middleware/auth.js';
 import { deleteCvFile, getCvSource, saveCvFile } from '../services/storage.js';
 import { detectCvKind, extractCvText } from '../services/cvParser.js';
-import { extractCvDetails } from '../services/gemini.js';
+import { extractCvDetails, rankCandidatesForJob } from '../services/gemini.js';
 import { runAnalysis } from '../services/analysis.js';
 import { recordAudit } from '../services/audit.js';
 import { sendApplicationReceived, sendStatusUpdate } from '../services/email.js';
@@ -87,6 +87,36 @@ candidatesRouter.post('/import', upload.single('cv'), async (req, res) => {
     .where(eq(candidates.id, candidate.id))
     .limit(1);
   res.status(201).json({ candidate: updated });
+});
+
+/**
+ * AI re-rank a shortlist against a role. Re-analyzes the selected candidates with the
+ * LLM and orders them by fit to the position (the first candidate's job).
+ * POST /api/candidates/rank  { candidateIds: string[] }
+ */
+candidatesRouter.post('/rank', async (req, res) => {
+  const { candidateIds } = rankCandidatesSchema.parse(req.body);
+
+  const rows = await db.select().from(candidates).where(inArray(candidates.id, candidateIds));
+  if (rows.length < 2) throw badRequest('Select at least 2 candidates to rank.');
+
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, rows[0]!.jobId)).limit(1);
+  if (!job) throw notFound('Job not found for these candidates.');
+
+  const ranking = await rankCandidatesForJob(
+    job,
+    rows.map((r) => ({
+      id: r.id,
+      fullName: r.fullName,
+      currentTitle: r.currentTitle,
+      totalYearsExperience: r.totalYearsExperience,
+      skills: r.extractedSkills,
+      summary: r.summary,
+      cvText: r.cvText,
+    })),
+  );
+
+  res.json({ jobTitle: job.title, ranking });
 });
 
 /**

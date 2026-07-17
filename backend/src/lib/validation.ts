@@ -43,6 +43,10 @@ export const mfaLoginSchema = z.object({
   code: codeField,
 });
 
+export const rankCandidatesSchema = z.object({
+  candidateIds: z.array(z.string().uuid()).min(2).max(6),
+});
+
 // --- Quiz -------------------------------------------------------------------
 
 export const quizOptionSchema = z.object({

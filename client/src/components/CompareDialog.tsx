@@ -1,5 +1,10 @@
-import type { CandidateSummary } from '../api/types';
-import { RecommendationBadge, ScoreRing, SourceBadge, StageBadge } from './ui';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { LuChevronRight, LuLoaderCircle, LuSparkles, LuTrophy } from 'react-icons/lu';
+import type { CandidateSummary, RankedCandidate } from '../api/types';
+import { rankCandidatesAI } from '../api/endpoints';
+import { ApiError } from '../api/client';
+import { Alert, Button, RecommendationBadge, ScoreRing, SourceBadge, StageBadge } from './ui';
 import {
   Dialog,
   DialogContent,
@@ -32,17 +37,105 @@ export default function CompareDialog({
     best[row.key] = vals.length ? Math.max(...vals) : null;
   }
 
+  const nameById = new Map(candidates.map((c) => [c.id, c.fullName]));
+
+  const [ranking, setRanking] = useState<RankedCandidate[] | null>(null);
+  const [rankJob, setRankJob] = useState('');
+  const [ranking_, setRanking_] = useState(false); // in-flight
+  const [rankErr, setRankErr] = useState<string | null>(null);
+
+  async function runAiRank() {
+    setRankErr(null);
+    setRanking_(true);
+    try {
+      const res = await rankCandidatesAI(candidates.map((c) => c.id));
+      setRankJob(res.jobTitle);
+      setRanking(res.ranking);
+    } catch (err) {
+      setRankErr(err instanceof ApiError ? err.message : 'AI ranking failed. Please try again.');
+    } finally {
+      setRanking_(false);
+    }
+  }
+
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
         <DialogHeader className="shrink-0 space-y-0 border-b border-slate-200 px-6 py-4 text-left">
-          <DialogTitle className="font-display text-lg font-semibold text-slate-900">
-            Compare candidates
-          </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500">
-            Best value in each row is highlighted.
-          </DialogDescription>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <DialogTitle className="font-display text-lg font-semibold text-slate-900">
+                Compare candidates
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Best value in each row is highlighted.
+              </DialogDescription>
+            </div>
+            <Button size="sm" onClick={runAiRank} disabled={ranking_}>
+              {ranking_ ? (
+                <>
+                  <LuLoaderCircle className="h-4 w-4 animate-spin" />
+                  Ranking…
+                </>
+              ) : (
+                <>
+                  <LuSparkles className="h-4 w-4" />
+                  Rank with AI
+                </>
+              )}
+            </Button>
+          </div>
         </DialogHeader>
+
+        {(rankErr || ranking) && (
+          <div className="shrink-0 border-b border-slate-200 bg-brand-50/40 px-6 py-4">
+            {rankErr ? (
+              <Alert kind="error">{rankErr}</Alert>
+            ) : (
+              ranking && (
+                <>
+                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <LuTrophy className="h-4 w-4 text-amber-500" />
+                    AI ranking for {rankJob || 'this role'}
+                  </div>
+                  <ol className="space-y-1.5">
+                    {ranking.map((r) => (
+                      <li key={r.candidateId}>
+                        <Link
+                          to={`/hr/candidates/${r.candidateId}`}
+                          onClick={onClose}
+                          className="group flex items-start gap-3 rounded-lg border border-transparent px-2 py-1.5 transition hover:border-brand-200 hover:bg-white"
+                        >
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                              r.rank === 1
+                                ? 'bg-amber-400 text-amber-950'
+                                : 'bg-slate-200 text-slate-600'
+                            }`}
+                          >
+                            {r.rank}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-slate-800 group-hover:text-brand-700">
+                                {nameById.get(r.candidateId) ?? 'Candidate'}
+                              </span>
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                {r.fitScore}% fit
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500">{r.reason}</p>
+                          </div>
+                          <LuChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              )
+            )}
+          </div>
+        )}
 
         <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full border-collapse text-sm">

@@ -568,3 +568,113 @@ function clean(v: string | null | undefined): string | null {
   if (!t || t.toLowerCase() === 'null' || t.toLowerCase() === 'n/a') return null;
   return t;
 }
+
+// ---------------------------------------------------------------------------
+// Compare re-ranking — rank a shortlist against a specific role
+// ---------------------------------------------------------------------------
+
+const rankSchema = {
+  type: Type.OBJECT,
+  properties: {
+    ranking: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          candidateId: { type: Type.STRING },
+          rank: { type: Type.INTEGER, description: '1 = best fit' },
+          fitScore: { type: Type.INTEGER, description: '0-100 fit for THIS role' },
+          reason: { type: Type.STRING, description: 'one concise sentence' },
+        },
+        required: ['candidateId', 'rank', 'fitScore', 'reason'],
+      },
+    },
+  },
+  required: ['ranking'],
+};
+
+export type RankedCandidate = {
+  candidateId: string;
+  rank: number;
+  fitScore: number;
+  reason: string;
+};
+
+export type RankInputCandidate = {
+  id: string;
+  fullName: string;
+  currentTitle?: string | null;
+  totalYearsExperience?: number | null;
+  skills?: string[] | null;
+  summary?: string | null;
+  cvText?: string | null;
+};
+
+/** Re-analyze a shortlist with AI and rank candidates by fit to a specific role. */
+export async function rankCandidatesForJob(
+  job: Job,
+  candidates: RankInputCandidate[],
+): Promise<RankedCandidate[]> {
+  const jobInfo = [
+    `Title: ${job.title}`,
+    job.minYearsExperience != null ? `Minimum experience: ${job.minYearsExperience} years` : null,
+    job.educationRequirement ? `Education: ${job.educationRequirement}` : null,
+    `Required skills: ${job.requiredSkills?.length ? job.requiredSkills.join(', ') : 'n/a'}`,
+    `Nice-to-have: ${job.niceToHaveSkills?.length ? job.niceToHaveSkills.join(', ') : 'n/a'}`,
+    '',
+    'Description:',
+    job.description,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const candidateBlocks = candidates
+    .map((c, i) =>
+      [
+        `--- Candidate ${i + 1} (id: ${c.id}) ---`,
+        `Name: ${c.fullName}`,
+        c.currentTitle ? `Current title: ${c.currentTitle}` : null,
+        c.totalYearsExperience != null ? `Total experience: ${c.totalYearsExperience} years` : null,
+        c.skills?.length ? `Skills: ${c.skills.join(', ')}` : null,
+        c.summary ? `Summary: ${c.summary}` : null,
+        c.cvText ? `CV excerpt:\n${c.cvText.slice(0, 2500)}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    )
+    .join('\n\n');
+
+  const prompt = [
+    'Rank the candidates below by how well each fits THIS specific role, best first (rank 1).',
+    'Give each a fitScore from 0-100 and a one-sentence reason grounded in the role requirements.',
+    'Use the exact candidate id provided. Every candidate must appear exactly once.',
+    '',
+    '=== ROLE ===',
+    jobInfo,
+    '',
+    '=== CANDIDATES ===',
+    candidateBlocks,
+  ].join('\n');
+
+  try {
+    const response = await ai.models.generateContent({
+      model: env.GEMINI_MODEL,
+      contents: prompt,
+      config: { responseMimeType: 'application/json', responseSchema: rankSchema, temperature: 0.2 },
+    });
+    const text = response.text;
+    if (!text) throw new Error('Empty response from Gemini');
+    const parsed = JSON.parse(text) as { ranking: RankedCandidate[] };
+    return (parsed.ranking ?? [])
+      .map((r) => ({
+        candidateId: r.candidateId,
+        rank: r.rank,
+        fitScore: Math.max(0, Math.min(100, Math.round(r.fitScore ?? 0))),
+        reason: r.reason ?? '',
+      }))
+      .sort((a, b) => a.rank - b.rank);
+  } catch (err) {
+    logger.error({ err }, 'Candidate ranking failed');
+    throw serverError('AI ranking failed', err instanceof Error ? err.message : String(err));
+  }
+}
