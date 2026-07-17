@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { LuArrowLeft, LuDownload, LuRefreshCw } from 'react-icons/lu';
+import { LuArrowLeft, LuDownload, LuFileText, LuRefreshCw } from 'react-icons/lu';
 import {
   fetchCandidate,
   fetchCandidateEmails,
@@ -170,6 +170,14 @@ export default function CandidateDetailPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(`/hr/candidates/${c.id}/report`, '_blank')}
+          >
+            <LuFileText className="h-4 w-4" />
+            Export PDF
+          </Button>
           <Button variant="outline" size="sm" onClick={downloadCv} disabled={!c.cvStoragePath}>
             <LuDownload className="h-4 w-4" />
             Download CV

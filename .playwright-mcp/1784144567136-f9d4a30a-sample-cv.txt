@@ -1,0 +1,22 @@
+Maria Santos
+Senior Backend Engineer — maria.santos@example.com — +1 555 222 3344
+
+SUMMARY
+Backend engineer with 6 years building scalable Node.js + TypeScript services and REST APIs.
+Deep PostgreSQL experience: schema design, indexing, query optimization. Comfortable with
+Docker and AWS.
+
+EXPERIENCE
+Senior Backend Engineer, Cloudway (2020 - Present)
+- Designed and built REST APIs in Node.js/TypeScript serving 2M requests/day.
+- Owned PostgreSQL schema design and added indexes that cut p95 latency by 40%.
+- Integrated third-party payment and email APIs; added Redis caching.
+
+Backend Engineer, DataForge (2018 - 2020)
+- Built microservices in Node.js, containerized with Docker, deployed on AWS ECS.
+
+EDUCATION
+B.Sc. Computer Science, State University, 2018
+
+SKILLS
+Node.js, TypeScript, PostgreSQL, SQL, REST APIs, Docker, AWS, Redis, Git

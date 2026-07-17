@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { IconType } from 'react-icons';
-import { LuColumns3, LuTable } from 'react-icons/lu';
+import { LuColumns3, LuGitCompare, LuTable, LuX } from 'react-icons/lu';
 import { fetchCandidates, updateCandidateStage } from '../api/endpoints';
 import type { CandidateStage, CandidateSummary } from '../api/types';
-import { Alert, Spinner } from '../components/ui';
+import { Alert, Button, Spinner } from '../components/ui';
 import CandidateTable from '../components/CandidateTable';
 import CandidateBoard from '../components/CandidateBoard';
+import CompareDialog from '../components/CompareDialog';
 
 const FILTERS: { value: '' | CandidateStage; label: string }[] = [
   { value: '', label: 'All' },
@@ -30,6 +31,17 @@ export default function CandidatesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [comparing, setComparing] = useState(false);
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < 4) next.add(id);
+      return next;
+    });
+  }
 
   useEffect(() => {
     fetchCandidates()
@@ -108,24 +120,61 @@ export default function CandidatesPage() {
         <CandidateBoard candidates={candidates} onMove={handleMove} />
       ) : (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                type="button"
-                onClick={() => setStage(f.value)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                  stage === f.value
-                    ? 'bg-brand-500 text-white'
-                    : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setStage(f.value)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                    stage === f.value
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {selected.size > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-500">
+                  {selected.size} selected{selected.size >= 4 ? ' (max)' : ''}
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => setComparing(true)}
+                  disabled={selected.size < 2}
+                  title={selected.size < 2 ? 'Select at least 2 candidates' : undefined}
+                >
+                  <LuGitCompare className="h-4 w-4" />
+                  Compare
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
+                  <LuX className="h-4 w-4" />
+                  Clear
+                </Button>
+              </div>
+            )}
           </div>
-          <CandidateTable candidates={filtered} showJob />
+
+          <CandidateTable
+            candidates={filtered}
+            showJob
+            selectable
+            selectedIds={selected}
+            onToggleSelect={toggleSelect}
+          />
         </div>
+      )}
+
+      {comparing && (
+        <CompareDialog
+          candidates={candidates.filter((c) => selected.has(c.id))}
+          onClose={() => setComparing(false)}
+        />
       )}
     </div>
   );

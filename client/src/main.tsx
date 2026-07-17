@@ -14,6 +14,7 @@ import JobsPage from './pages/JobsPage';
 import JobDetailPage from './pages/JobDetailPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
+import CandidateReportPage from './pages/CandidateReportPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -25,6 +26,15 @@ const router = createBrowserRouter([
   { path: '/apply/:jobId', element: <ApplyJobPage /> },
   { path: '/status/:token', element: <StatusPage /> },
   { path: '/login', element: <LoginPage /> },
+  // Full-page, print-optimized candidate report (no dashboard chrome).
+  {
+    path: '/hr/candidates/:id/report',
+    element: (
+      <RequireAuth>
+        <CandidateReportPage />
+      </RequireAuth>
+    ),
+  },
   {
     path: '/hr',
     element: (

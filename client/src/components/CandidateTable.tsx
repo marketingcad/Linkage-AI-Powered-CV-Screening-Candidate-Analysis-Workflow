@@ -20,9 +20,15 @@ import {
 export default function CandidateTable({
   candidates,
   showJob = false,
+  selectable = false,
+  selectedIds,
+  onToggleSelect,
 }: {
   candidates: CandidateSummary[];
   showJob?: boolean;
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }) {
   const navigate = useNavigate();
 
@@ -48,6 +54,7 @@ export default function CandidateTable({
       <Table>
         <TableHeader className="bg-slate-50/70">
           <TableRow className="border-slate-200 hover:bg-transparent">
+            {selectable && <TableHead className={`${headCls} w-10`} />}
             <TableHead className={`${headCls} text-center`}>Score</TableHead>
             <TableHead className={headCls}>Candidate</TableHead>
             {showJob && <TableHead className={headCls}>Role</TableHead>}
@@ -65,8 +72,21 @@ export default function CandidateTable({
             <TableRow
               key={c.id}
               onClick={() => navigate(`/hr/candidates/${c.id}`)}
-              className="group cursor-pointer border-slate-100 hover:bg-brand-50/40"
+              className={`group cursor-pointer border-slate-100 hover:bg-brand-50/40 ${
+                selectable && selectedIds?.has(c.id) ? 'bg-brand-50/50' : ''
+              }`}
             >
+              {selectable && (
+                <TableCell className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${c.fullName}`}
+                    checked={selectedIds?.has(c.id) ?? false}
+                    onChange={() => onToggleSelect?.(c.id)}
+                    className="h-4 w-4 cursor-pointer rounded border-slate-300 text-brand-500 accent-brand-500 focus:ring-brand-400"
+                  />
+                </TableCell>
+              )}
               <TableCell className="px-4 py-3">
                 <div className="flex items-center justify-center gap-2">
                   <span className="w-5 text-right text-xs font-medium text-slate-400">{i + 1}</span>
