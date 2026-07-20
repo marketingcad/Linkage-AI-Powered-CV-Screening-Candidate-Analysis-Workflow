@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   LuArrowLeft,
+  LuCalendarPlus,
   LuCheck,
   LuCopy,
   LuDownload,
@@ -59,6 +60,7 @@ import {
   STAGE_ICONS,
   STAGES,
 } from '../components/ui';
+import ScheduleInterviewDialog from '../components/ScheduleInterviewDialog';
 
 export default function CandidateDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -75,6 +77,8 @@ export default function CandidateDetailPage() {
   const [genQ, setGenQ] = useState(false);
   const [genQErr, setGenQErr] = useState<string | null>(null);
   const [copiedQ, setCopiedQ] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
+  const [scheduledNote, setScheduledNote] = useState<string | null>(null);
 
   function loadEmails() {
     if (!id) return;
@@ -245,6 +249,10 @@ export default function CandidateDetailPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => setScheduling(true)}>
+            <LuCalendarPlus className="h-4 w-4" />
+            Schedule interview
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -287,6 +295,8 @@ export default function CandidateDetailPage() {
           </DropdownMenu>
         </div>
       </div>
+
+      {scheduledNote && <Alert kind="success">{scheduledNote}</Alert>}
 
       {c.analysisStatus === 'failed' && (
         <Alert kind="error">
@@ -717,6 +727,22 @@ export default function CandidateDetailPage() {
           </Card>
         </div>
       </div>
+
+      {scheduling && (
+        <ScheduleInterviewDialog
+          candidate={{ id: c.id, fullName: c.fullName }}
+          onClose={() => setScheduling(false)}
+          onSaved={(iv) => {
+            setScheduling(false);
+            setScheduledNote(
+              `Interview scheduled for ${new Date(iv.scheduledAt).toLocaleString('en-US', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })}. You'll be reminded before it starts.`,
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -13,6 +13,9 @@ import type {
   JobSummary,
   PublicJob,
   PublicJobListItem,
+  Interview,
+  InterviewMode,
+  InterviewStatus,
   QuizQuestion,
   RankedCandidate,
   ScoringWeights,
@@ -249,4 +252,36 @@ export function resendCandidateEmail(id: string, type: 'confirmation' | 'status'
 // --- HR: stats --------------------------------------------------------------
 export function fetchStats() {
   return apiRequest<Stats>('/stats');
+}
+
+// --- HR: interviews / scheduler --------------------------------------------
+export interface InterviewInput {
+  candidateId: string;
+  title?: string | null;
+  scheduledAt: string; // ISO timestamp
+  durationMinutes?: number;
+  mode?: InterviewMode;
+  location?: string | null;
+  notes?: string | null;
+  reminderMinutes?: number;
+}
+export function fetchInterviews(params: { from?: string; to?: string; status?: string } = {}) {
+  const q = new URLSearchParams();
+  if (params.from) q.set('from', params.from);
+  if (params.to) q.set('to', params.to);
+  if (params.status) q.set('status', params.status);
+  const qs = q.toString();
+  return apiRequest<{ interviews: Interview[] }>(`/interviews${qs ? `?${qs}` : ''}`);
+}
+export function createInterview(input: InterviewInput) {
+  return apiRequest<{ interview: Interview }>('/interviews', { method: 'POST', body: input });
+}
+export function updateInterview(
+  id: string,
+  input: Partial<InterviewInput> & { status?: InterviewStatus },
+) {
+  return apiRequest<{ interview: Interview }>(`/interviews/${id}`, { method: 'PATCH', body: input });
+}
+export function deleteInterview(id: string) {
+  return apiRequest<{ ok: true }>(`/interviews/${id}`, { method: 'DELETE' });
 }

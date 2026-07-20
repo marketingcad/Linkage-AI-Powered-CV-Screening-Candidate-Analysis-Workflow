@@ -142,6 +142,32 @@ export const updateStageSchema = z.object({
   stage: z.enum(['new', 'shortlisted', 'rejected', 'interviewing', 'hired']),
 });
 
+// --- Interviews / scheduler -------------------------------------------------
+
+export const createInterviewSchema = z.object({
+  candidateId: z.string().uuid(),
+  title: z.string().max(255).nullable().optional(),
+  scheduledAt: z.coerce.date(),
+  durationMinutes: z.number().int().min(5).max(600).default(45),
+  mode: z.enum(['video', 'onsite', 'phone']).default('video'),
+  location: z.string().max(1000).nullable().optional(),
+  notes: z.string().max(5000).nullable().optional(),
+  reminderMinutes: z.number().int().min(0).max(10080).default(30),
+});
+
+export const updateInterviewSchema = z
+  .object({
+    title: z.string().max(255).nullable().optional(),
+    scheduledAt: z.coerce.date().optional(),
+    durationMinutes: z.number().int().min(5).max(600).optional(),
+    mode: z.enum(['video', 'onsite', 'phone']).optional(),
+    location: z.string().max(1000).nullable().optional(),
+    notes: z.string().max(5000).nullable().optional(),
+    reminderMinutes: z.number().int().min(0).max(10080).optional(),
+    status: z.enum(['scheduled', 'completed', 'canceled']).optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, 'Provide at least one field to update');
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateJobInput = z.infer<typeof createJobSchema>;
 export type UpdateJobInput = z.infer<typeof updateJobSchema>;

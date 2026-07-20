@@ -19,21 +19,18 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## Recent updates
 
-- AI interview questions — generate a tailored interview kit for any candidate in one click: questions that probe their gaps and validate their strengths, each with what to listen for (saved to the candidate and included in the printable report).
-- Explainable scoring — every candidate now shows a “Why this score” breakdown: each factor’s score, how much it counts, the reasoning, and exact quotes from the CV behind it (also in the printable report).
-- Custom ranking weights — for each job, choose how much skills, experience, education, and the exam count toward a candidate’s overall score; changing them instantly re-ranks everyone.
-- Login page redesign — professional split-screen layout with a video background, subtle animations, and a cleaner sign-in card (with show/hide password).
-- Two-factor sign-in — optional authenticator-app (Google Authenticator, Authy) security for recruiters.
-- Account settings — upload a profile photo, update name/email, and change password.
-- Bulk CV upload — drop a batch of CVs onto a job and screen them all at once.
-- Cloud CV storage — uploaded CVs are stored safely and stay available after updates.
-- New branding — Linkage ScreenAI logo and a refreshed look across the app.
-- UI/UX polish — improved job details page, candidate board/table toggle, icons, and overall layout.
-- Public page cleanup — recruiter-only controls are hidden from the public careers page.
-- Deployment ready — step-by-step guide to publish the app online.
-
-### Work in progress
-- Candidate comparison + PDF report 
+- Scheduler — pin candidates to a calendar and get an in-app + email reminder before each interview.
+- AI interview questions — a tailored interview kit for any candidate in one click.
+- Explainable scoring — a clear “why this score”, with the exact quotes from the CV.
+- Custom ranking weights — set what matters most per role and re-rank instantly.
+- Candidate comparison + PDF report — compare a shortlist and export a clean report.
+- Bulk CV upload — screen a whole batch of CVs at once.
+- Talent-pool matching — resurface strong past applicants for a new role.
+- Duplicate detection — automatically flag people who applied more than once.
+- Smart filters & search — find the right candidates in seconds.
+- Recruitment analytics — pipeline, sources, and score insights on the dashboard.
+- Two-factor sign-in — optional authenticator-app security for recruiters.
+- Fresh look — new Linkage ScreenAI branding and a polished, responsive interface.
 
 ## Tech stack
 

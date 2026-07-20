@@ -207,3 +207,58 @@ export async function sendStatusUpdate(
     ...statusUpdateEmail(name, jobTitle, stage, token),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Interview reminder (to the recruiter) — not tied to a candidate email log
+// ---------------------------------------------------------------------------
+
+export type InterviewReminderInfo = {
+  candidateName: string;
+  jobTitle: string | null;
+  whenText: string;
+  minutes: number;
+  mode: string;
+  location?: string | null;
+};
+
+export function interviewReminderEmail(info: InterviewReminderInfo) {
+  const subject = `Reminder: interview with ${info.candidateName} in ${info.minutes} minutes`;
+  const details = [
+    `<b>Candidate:</b> ${escapeHtml(info.candidateName)}`,
+    info.jobTitle ? `<b>Role:</b> ${escapeHtml(info.jobTitle)}` : null,
+    `<b>When:</b> ${escapeHtml(info.whenText)}`,
+    `<b>Mode:</b> ${escapeHtml(info.mode)}`,
+    info.location ? `<b>Where:</b> ${escapeHtml(info.location)}` : null,
+  ]
+    .filter(Boolean)
+    .join('<br/>');
+  const html = layout({
+    heading: `Interview in ${info.minutes} minutes`,
+    tone: 'neutral',
+    bodyHtml: `This is a reminder for your upcoming interview.<br/><br/>${details}`,
+  });
+  const text = `Reminder: interview with ${info.candidateName} in ${info.minutes} minutes.\nRole: ${info.jobTitle ?? '—'}\nWhen: ${info.whenText}\nMode: ${info.mode}${info.location ? `\nWhere: ${info.location}` : ''}`;
+  return { subject, html, text };
+}
+
+/** Send an interview reminder to a recruiter. Never throws. */
+export async function sendInterviewReminder(
+  to: string,
+  info: InterviewReminderInfo,
+): Promise<SendResult> {
+  const tx = getTransporter();
+  const { subject, html, text } = interviewReminderEmail(info);
+  if (!tx) {
+    logger.info({ to, subject }, '[email] interview reminder skipped (SMTP not configured)');
+    return { sent: false, skipped: true };
+  }
+  try {
+    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text });
+    logger.info({ to, subject }, '[email] interview reminder sent');
+    return { sent: true };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    logger.error({ err, to }, '[email] interview reminder failed');
+    return { sent: false, error };
+  }
+}

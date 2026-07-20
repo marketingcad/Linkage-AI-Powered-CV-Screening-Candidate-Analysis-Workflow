@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LuBriefcase,
+  LuCalendarClock,
   LuLayoutDashboard,
   LuLogOut,
   LuMenu,
@@ -9,6 +10,7 @@ import {
   LuX,
 } from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
+import InterviewReminders from '../components/InterviewReminders';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import {
   Tooltip,
@@ -22,6 +24,7 @@ const navItems = [
   { to: '/hr', label: 'Overview', end: true, Icon: LuLayoutDashboard },
   { to: '/hr/jobs', label: 'Jobs', end: false, Icon: LuBriefcase },
   { to: '/hr/candidates', label: 'Candidates', end: false, Icon: LuUsers },
+  { to: '/hr/scheduler', label: 'Scheduler', end: false, Icon: LuCalendarClock },
 ];
 
 function initials(name?: string): string {
@@ -177,6 +180,9 @@ export default function HrLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* In-app interview reminders (toasts + browser notifications) */}
+      <InterviewReminders />
     </div>
   );
 }

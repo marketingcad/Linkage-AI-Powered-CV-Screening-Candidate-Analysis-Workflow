@@ -293,6 +293,31 @@ export interface EmailLog {
   createdAt: string;
 }
 
+export type InterviewMode = 'video' | 'onsite' | 'phone';
+export type InterviewStatus = 'scheduled' | 'completed' | 'canceled';
+
+/** A scheduled interview pinned to the calendar (with candidate + job info joined). */
+export interface Interview {
+  id: string;
+  candidateId: string;
+  jobId: string | null;
+  title: string | null;
+  scheduledAt: string; // ISO timestamp
+  durationMinutes: number;
+  mode: InterviewMode;
+  location: string | null;
+  notes: string | null;
+  reminderMinutes: number;
+  reminderSent: boolean;
+  status: InterviewStatus;
+  createdAt: string;
+  updatedAt: string;
+  candidateName: string | null;
+  candidateEmail: string | null;
+  candidateStage: CandidateStage | null;
+  jobTitle: string | null;
+}
+
 export interface Stats {
   totalCandidates: number;
   avgScore: number;

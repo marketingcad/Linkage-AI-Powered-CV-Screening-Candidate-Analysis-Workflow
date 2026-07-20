@@ -276,6 +276,38 @@ export const emailLogs = pgTable('email_logs', {
 });
 
 // ---------------------------------------------------------------------------
+// Interviews — scheduled interviews pinned to the calendar (with reminders)
+// ---------------------------------------------------------------------------
+
+export type InterviewMode = 'video' | 'onsite' | 'phone';
+export type InterviewStatus = 'scheduled' | 'completed' | 'canceled';
+
+export const interviews = pgTable('interviews', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  candidateId: uuid('candidate_id')
+    .references(() => candidates.id, { onDelete: 'cascade' })
+    .notNull(),
+  jobId: uuid('job_id').references(() => jobs.id, { onDelete: 'set null' }),
+  createdBy: uuid('created_by').references(() => hrUsers.id, { onDelete: 'set null' }),
+
+  title: varchar('title', { length: 255 }),
+  scheduledAt: timestamp('scheduled_at', { withTimezone: true }).notNull(),
+  durationMinutes: integer('duration_minutes').notNull().default(45),
+  mode: varchar('mode', { length: 20 }).notNull().default('video'), // video | onsite | phone
+  location: text('location'), // meeting link or address
+  notes: text('notes'),
+
+  // Lead time (minutes before the interview) to fire the reminder.
+  reminderMinutes: integer('reminder_minutes').notNull().default(30),
+  reminderSent: boolean('reminder_sent').notNull().default(false),
+
+  status: varchar('status', { length: 20 }).notNull().default('scheduled'), // scheduled | completed | canceled
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ---------------------------------------------------------------------------
 // Audit log — record of HR actions for compliance/accountability
 // ---------------------------------------------------------------------------
 
@@ -296,6 +328,8 @@ export const auditLogs = pgTable('audit_logs', {
 
 export type EmailLog = typeof emailLogs.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
+export type Interview = typeof interviews.$inferSelect;
+export type NewInterview = typeof interviews.$inferInsert;
 export type HrUser = typeof hrUsers.$inferSelect;
 export type NewHrUser = typeof hrUsers.$inferInsert;
 export type Job = typeof jobs.$inferSelect;

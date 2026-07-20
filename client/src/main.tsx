@@ -13,6 +13,7 @@ import JobsPage from './pages/JobsPage';
 import JobDetailPage from './pages/JobDetailPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
+import SchedulerPage from './pages/SchedulerPage';
 import CandidateReportPage from './pages/CandidateReportPage';
 import CandidateDataExportPage from './pages/CandidateDataExportPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
@@ -55,6 +56,7 @@ const router = createBrowserRouter([
       { path: 'jobs/:id', element: <JobDetailPage /> },
       { path: 'candidates', element: <CandidatesPage /> },
       { path: 'candidates/:id', element: <CandidateDetailPage /> },
+      { path: 'scheduler', element: <SchedulerPage /> },
       { path: 'settings', element: <AccountSettingsPage /> },
     ],
   },
