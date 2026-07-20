@@ -3,15 +3,19 @@ import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import { eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { candidates, jobs } from '../db/schema.js';
+import { candidates, hrUsers, jobs } from '../db/schema.js';
 import { applicationSchema } from '../lib/validation.js';
 import { badRequest, notFound } from '../lib/errors.js';
-import { env } from '../config/env.js';
+import { env, recruiterNotifyEmails } from '../config/env.js';
 import { detectCvKind, extractCvText } from '../services/cvParser.js';
 import { saveCvFile } from '../services/storage.js';
 import { runAnalysis } from '../services/analysis.js';
 import { extractCvDetails } from '../services/gemini.js';
-import { sendApplicationReceived } from '../services/email.js';
+import {
+  sendApplicationReceived,
+  sendNewApplicationAlert,
+  type NewApplicationInfo,
+} from '../services/email.js';
 import { logger } from '../lib/logger.js';
 import { APPLICANT_TIMELINE, statusFor } from '../lib/applicantStatus.js';
 
@@ -139,10 +143,22 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res) => {
       id: candidates.id,
       analysisStatus: candidates.analysisStatus,
       qualificationScore: candidates.qualificationScore,
+      overallScore: candidates.overallScore,
+      recommendation: candidates.recommendation,
     })
     .from(candidates)
     .where(eq(candidates.id, candidate!.id))
     .limit(1);
+
+  // Alert recruiters that a new candidate applied (fire-and-forget — never block the response).
+  void notifyRecruiters({
+    candidateId: candidate!.id,
+    candidateName: candidate!.fullName,
+    jobTitle: job.title,
+    source: candidate!.source,
+    overallScore: result!.overallScore ?? result!.qualificationScore,
+    recommendation: result!.recommendation,
+  }).catch((err) => logger.error({ err }, 'recruiter alert failed'));
 
   res.status(201).json({
     message: 'Application received and analyzed.',
@@ -187,6 +203,19 @@ applicationsRouter.get('/status/:token', async (req, res) => {
     },
   });
 });
+
+/**
+ * Email new-application alerts. Uses RECRUITER_NOTIFY_EMAIL if configured (a shared
+ * recruiting inbox), otherwise notifies every HR user. Never throws.
+ */
+async function notifyRecruiters(info: NewApplicationInfo): Promise<void> {
+  let recipients = recruiterNotifyEmails;
+  if (recipients.length === 0) {
+    const users = await db.select({ email: hrUsers.email }).from(hrUsers);
+    recipients = users.map((u) => u.email).filter(Boolean);
+  }
+  await Promise.all(recipients.map((to) => sendNewApplicationAlert(to, info)));
+}
 
 /** Normalizes a free-form source tag (e.g. "LinkedIn") to a short, safe slug. */
 function normalizeSource(source: string | undefined): string {

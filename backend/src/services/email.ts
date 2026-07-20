@@ -264,6 +264,84 @@ export async function sendInterviewReminder(
 }
 
 // ---------------------------------------------------------------------------
+// Recruiter alert — a new candidate has applied
+// ---------------------------------------------------------------------------
+
+export type NewApplicationInfo = {
+  candidateId: string;
+  candidateName: string;
+  jobTitle: string;
+  source: string;
+  overallScore: number | null;
+  recommendation: string | null;
+};
+
+const RECOMMENDATION_LABEL: Record<string, string> = {
+  strong_match: 'Strong match',
+  possible: 'Possible',
+  not_a_fit: 'Not a fit',
+};
+
+export function newApplicationAlertEmail(info: NewApplicationInfo) {
+  const reviewUrl = `${appPublicUrl}/hr/candidates/${info.candidateId}`;
+  const subject = `New applicant: ${info.candidateName} — ${info.jobTitle}`;
+  const rows = [
+    `<b>Candidate:</b> ${escapeHtml(info.candidateName)}`,
+    `<b>Role:</b> ${escapeHtml(info.jobTitle)}`,
+    `<b>Source:</b> ${escapeHtml(info.source)}`,
+    info.overallScore != null ? `<b>AI score:</b> ${info.overallScore}/100` : null,
+    info.recommendation
+      ? `<b>AI recommendation:</b> ${escapeHtml(RECOMMENDATION_LABEL[info.recommendation] ?? info.recommendation)}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join('<br/>');
+  const html = layout({
+    heading: 'New application received',
+    tone: 'neutral',
+    bodyHtml: `A new candidate has applied and been screened by AI.<br/><br/>${rows}`,
+    ctaLabel: 'Review candidate',
+    ctaUrl: reviewUrl,
+  });
+  const text = [
+    'A new candidate has applied and been screened by AI.',
+    '',
+    `Candidate: ${info.candidateName}`,
+    `Role: ${info.jobTitle}`,
+    `Source: ${info.source}`,
+    info.overallScore != null ? `AI score: ${info.overallScore}/100` : '',
+    info.recommendation ? `AI recommendation: ${RECOMMENDATION_LABEL[info.recommendation] ?? info.recommendation}` : '',
+    '',
+    `Review: ${reviewUrl}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return { subject, html, text };
+}
+
+/** Notify a recruiter that a new candidate has applied. Never throws. */
+export async function sendNewApplicationAlert(
+  to: string,
+  info: NewApplicationInfo,
+): Promise<SendResult> {
+  const tx = getTransporter();
+  const { subject, html, text } = newApplicationAlertEmail(info);
+  if (!tx) {
+    logger.info({ to, subject }, '[email] new-application alert skipped (SMTP not configured)');
+    return { sent: false, skipped: true };
+  }
+  try {
+    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text });
+    logger.info({ to, subject }, '[email] new-application alert sent');
+    return { sent: true };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    logger.error({ err, to }, '[email] new-application alert failed');
+    return { sent: false, error };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Candidate interview invitation / update / cancellation (with .ics attachment)
 // ---------------------------------------------------------------------------
 

@@ -21,6 +21,7 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 - Scheduler — pin candidates to a calendar and get an in-app + email reminder before each interview.
 - Candidate interview invitations — candidates are automatically emailed the date, time, meeting link, and a calendar (.ics) invite when you schedule (and a notice if you reschedule or cancel).
+- New-application alerts — recruiters are emailed the moment a candidate applies, with the source, AI score, recommendation, and a one-click link to review.
 - AI interview questions — a tailored interview kit for any candidate in one click.
 - Explainable scoring — a clear “why this score”, with the exact quotes from the CV.
 - Custom ranking weights — set what matters most per role and re-rank instantly.

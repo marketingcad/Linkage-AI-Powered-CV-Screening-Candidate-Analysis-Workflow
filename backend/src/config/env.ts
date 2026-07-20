@@ -37,6 +37,9 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().default('ScreenAI Careers <no-reply@screenai.local>'),
 
+  // Where "new application" alerts go. Comma-separated. If unset, all HR users are notified.
+  RECRUITER_NOTIFY_EMAIL: z.string().optional(),
+
   // Local file storage for uploaded CVs (fallback when Supabase Storage isn't configured)
   UPLOAD_DIR: z.string().default('uploads'),
   MAX_UPLOAD_MB: z.coerce.number().default(10),
@@ -102,3 +105,10 @@ export const appPublicUrl = (
 
 // Whether real email sending is configured.
 export const emailEnabled = Boolean(env.SMTP_HOST);
+
+// Optional override for where new-application alerts are sent (a shared recruiting inbox).
+// When empty, the app notifies all HR users instead.
+export const recruiterNotifyEmails = (env.RECRUITER_NOTIFY_EMAIL ?? '')
+  .split(',')
+  .map((e) => e.trim())
+  .filter(Boolean);
