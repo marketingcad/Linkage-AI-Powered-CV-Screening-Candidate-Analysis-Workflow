@@ -4,6 +4,7 @@ import type { CandidateSummary } from '../api/types';
 import {
   AiWrittenBadge,
   AnalysisStatusBadge,
+  InterviewChip,
   RecommendationBadge,
   ScoreRing,
   SourceBadge,
@@ -108,6 +109,7 @@ export default function CandidateTable({
                       Dup
                     </span>
                   )}
+                  <InterviewChip at={c.nextInterviewAt} />
                 </div>
                 <div className="text-xs text-slate-400">{c.email}</div>
               </TableCell>

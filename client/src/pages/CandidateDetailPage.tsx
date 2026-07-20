@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   LuArrowLeft,
+  LuCalendarClock,
   LuCalendarPlus,
   LuCheck,
   LuCopy,
@@ -22,6 +23,7 @@ import {
   deleteCandidate,
   fetchCandidate,
   fetchCandidateEmails,
+  fetchInterviews,
   generateInterviewQuestions,
   reanalyzeCandidate,
   resendCandidateEmail,
@@ -40,6 +42,7 @@ import type {
   CandidateStage,
   DuplicateApplication,
   EmailLog,
+  Interview,
   Job,
   QuizAnswer,
   QuizQuestionResult,
@@ -79,11 +82,22 @@ export default function CandidateDetailPage() {
   const [copiedQ, setCopiedQ] = useState(false);
   const [scheduling, setScheduling] = useState(false);
   const [scheduledNote, setScheduledNote] = useState<string | null>(null);
+  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
 
   function loadEmails() {
     if (!id) return;
     fetchCandidateEmails(id)
       .then((res) => setEmails(res.emails))
+      .catch(() => {
+        /* non-critical */
+      });
+  }
+
+  function loadInterviews() {
+    if (!id) return;
+    fetchInterviews({ candidateId: id })
+      .then((res) => setInterviews(res.interviews))
       .catch(() => {
         /* non-critical */
       });
@@ -101,6 +115,7 @@ export default function CandidateDetailPage() {
       .catch(() => setError('Failed to load candidate.'))
       .finally(() => setLoading(false));
     loadEmails();
+    loadInterviews();
   }
 
   useEffect(load, [id]);
@@ -586,6 +601,76 @@ export default function CandidateDetailPage() {
 
         {/* Right: extracted facts */}
         <div className="space-y-6">
+          <Card className="p-5">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-violet-50 text-violet-600">
+                  <LuCalendarClock className="h-3.5 w-3.5" />
+                </span>
+                <h2 className="text-sm font-semibold text-slate-700">Interviews</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setScheduling(true)}
+                className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+              >
+                <LuCalendarPlus className="h-3.5 w-3.5" />
+                Schedule
+              </button>
+            </div>
+            {interviews.length === 0 ? (
+              <p className="text-sm text-slate-400">No interviews scheduled yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {interviews.map((iv) => {
+                  const d = new Date(iv.scheduledAt);
+                  const upcoming = iv.status === 'scheduled' && d.getTime() >= Date.now();
+                  return (
+                    <li key={iv.id}>
+                      <button
+                        type="button"
+                        onClick={() => setEditingInterview(iv)}
+                        className="flex w-full items-center gap-3 rounded-lg border border-slate-100 p-2.5 text-left transition hover:border-violet-200 hover:bg-violet-50/40"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-slate-50 text-center">
+                          <span className="text-[10px] font-semibold uppercase text-slate-400">
+                            {d.toLocaleDateString('en-US', { month: 'short' })}
+                          </span>
+                          <span className="text-sm font-bold leading-none text-slate-700">
+                            {d.getDate()}
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-slate-700">
+                            {d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                            <span className="ml-1.5 font-normal capitalize text-slate-400">
+                              · {iv.mode}
+                            </span>
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {d.toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                            {upcoming ? '' : ' · past'}
+                          </p>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${interviewStatusCls(
+                            iv.status,
+                          )}`}
+                        >
+                          {iv.status}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+
           {(c.location ||
             c.currentTitle ||
             c.declaredYearsExperience != null ||
@@ -732,19 +817,44 @@ export default function CandidateDetailPage() {
         <ScheduleInterviewDialog
           candidate={{ id: c.id, fullName: c.fullName }}
           onClose={() => setScheduling(false)}
-          onSaved={(iv) => {
+          onSaved={(iv, email) => {
             setScheduling(false);
-            setScheduledNote(
-              `Interview scheduled for ${new Date(iv.scheduledAt).toLocaleString('en-US', {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}. You'll be reminded before it starts.`,
-            );
+            loadInterviews();
+            const when = new Date(iv.scheduledAt).toLocaleString('en-US', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            });
+            const emailNote = email?.sent
+              ? ' The candidate was emailed an invitation with the details.'
+              : email?.skipped
+                ? ' (Candidate invitation was logged — configure SMTP to actually send it.)'
+                : " You'll be reminded before it starts.";
+            setScheduledNote(`Interview scheduled for ${when}.${emailNote}`);
+          }}
+        />
+      )}
+      {editingInterview && (
+        <ScheduleInterviewDialog
+          existing={editingInterview}
+          onClose={() => setEditingInterview(null)}
+          onSaved={() => {
+            setEditingInterview(null);
+            loadInterviews();
+          }}
+          onDeleted={() => {
+            setEditingInterview(null);
+            loadInterviews();
           }}
         />
       )}
     </div>
   );
+}
+
+function interviewStatusCls(status: string): string {
+  if (status === 'completed') return 'bg-emerald-100 text-emerald-700';
+  if (status === 'canceled') return 'bg-slate-100 text-slate-500';
+  return 'bg-violet-100 text-violet-700';
 }
 
 // Colour + label per interview-question focus.

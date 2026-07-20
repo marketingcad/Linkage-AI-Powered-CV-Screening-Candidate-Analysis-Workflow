@@ -241,6 +241,8 @@ export interface CandidateSummary {
   stage: CandidateStage;
   analysisStatus: AnalysisStatus;
   createdAt: string;
+  /** Earliest upcoming scheduled interview (ISO), or null if none is booked. */
+  nextInterviewAt?: string | null;
 }
 
 export interface Candidate extends CandidateSummary {

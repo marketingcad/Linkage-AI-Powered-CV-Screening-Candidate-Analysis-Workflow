@@ -5,6 +5,7 @@ import {
   LuBot,
   LuBriefcase,
   LuCalendarCheck,
+  LuCalendarClock,
   LuCircleAlert,
   LuCircleCheck,
   LuCircleHelp,
@@ -271,6 +272,27 @@ export function AiWrittenBadge({
     >
       <LuBot className="h-3.5 w-3.5" />
       AI-written ~{likelihood}%
+    </span>
+  );
+}
+
+/** Compact chip flagging that a candidate has an upcoming interview booked. */
+export function InterviewChip({ at }: { at?: string | null }) {
+  if (!at) return null;
+  const d = new Date(at);
+  const label = d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  return (
+    <span
+      title={`Interview scheduled: ${d.toLocaleString()}`}
+      className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700"
+    >
+      <LuCalendarClock className="h-2.5 w-2.5" />
+      {label}
     </span>
   );
 }

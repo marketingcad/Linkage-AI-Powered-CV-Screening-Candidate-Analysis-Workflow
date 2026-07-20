@@ -153,6 +153,8 @@ export const createInterviewSchema = z.object({
   location: z.string().max(1000).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   reminderMinutes: z.number().int().min(0).max(10080).default(30),
+  // Whether to email the candidate an invitation with the details (default true).
+  notifyCandidate: z.boolean().optional(),
 });
 
 export const updateInterviewSchema = z
@@ -165,6 +167,7 @@ export const updateInterviewSchema = z
     notes: z.string().max(5000).nullable().optional(),
     reminderMinutes: z.number().int().min(0).max(10080).optional(),
     status: z.enum(['scheduled', 'completed', 'canceled']).optional(),
+    notifyCandidate: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, 'Provide at least one field to update');
 

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { CandidateStage, CandidateSummary } from '../api/types';
-import { RecommendationBadge, ScoreRing, SourceBadge } from './ui';
+import { InterviewChip, RecommendationBadge, ScoreRing, SourceBadge } from './ui';
 
 const COLUMNS: { stage: CandidateStage; label: string; dot: string; ring: string }[] = [
   { stage: 'new', label: 'New', dot: 'bg-slate-400', ring: 'ring-slate-200' },
@@ -112,6 +112,7 @@ export default function CandidateBoard({
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                     <RecommendationBadge value={c.recommendation} />
                     <SourceBadge source={c.source} />
+                    <InterviewChip at={c.nextInterviewAt} />
                   </div>
                 </article>
               ))}

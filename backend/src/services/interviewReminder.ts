@@ -45,8 +45,9 @@ export async function sweepInterviewReminders(): Promise<number> {
         eq(interviews.status, 'scheduled'),
         eq(interviews.reminderSent, false),
         gt(interviews.scheduledAt, now),
-        // Reminder lead time reached: scheduledAt - reminderMinutes <= now
-        sql`${interviews.scheduledAt} - make_interval(mins => ${interviews.reminderMinutes}) <= ${now}`,
+        // Reminder lead time reached: scheduledAt - reminderMinutes <= now.
+        // Bind the timestamp as an ISO string — postgres.js can't bind a raw Date here.
+        sql`${interviews.scheduledAt} - make_interval(mins => ${interviews.reminderMinutes}) <= ${now.toISOString()}::timestamptz`,
       ),
     );
 

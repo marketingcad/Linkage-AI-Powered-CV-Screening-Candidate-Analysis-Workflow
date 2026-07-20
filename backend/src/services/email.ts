@@ -262,3 +262,208 @@ export async function sendInterviewReminder(
     return { sent: false, error };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Candidate interview invitation / update / cancellation (with .ics attachment)
+// ---------------------------------------------------------------------------
+
+export type CandidateInterviewKind = 'invite' | 'updated' | 'canceled';
+
+export type CandidateInterviewInfo = {
+  interviewId: string;
+  candidateName: string;
+  jobTitle: string | null;
+  start: Date;
+  durationMinutes: number;
+  mode: string; // video | onsite | phone
+  location?: string | null;
+  sequence?: number; // bump on updates so calendars replace the event
+};
+
+const MODE_LABEL: Record<string, string> = {
+  video: 'Video call',
+  onsite: 'On-site',
+  phone: 'Phone call',
+};
+
+function isUrl(v: string): boolean {
+  return /^https?:\/\//i.test(v.trim());
+}
+
+function formatWhenLong(date: Date): string {
+  return date.toLocaleString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
+}
+
+function icsStamp(d: Date): string {
+  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+/** Build a minimal RFC-5545 calendar event so candidates can add it in one click. */
+function buildInterviewIcs(info: CandidateInterviewInfo, canceled: boolean): string {
+  const end = new Date(info.start.getTime() + info.durationMinutes * 60000);
+  const esc = (s: string) =>
+    s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  const summary = `Interview${info.jobTitle ? ` — ${info.jobTitle}` : ''}`;
+  const description = [
+    `Interview for ${info.jobTitle ?? 'the role'}.`,
+    `Format: ${MODE_LABEL[info.mode] ?? info.mode}.`,
+    info.location ? `Details: ${info.location}` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Linkage ScreenAI//Interview//EN',
+    `METHOD:${canceled ? 'CANCEL' : 'REQUEST'}`,
+    'BEGIN:VEVENT',
+    `UID:interview-${info.interviewId}@linkage-screenai`,
+    `DTSTAMP:${icsStamp(new Date())}`,
+    `DTSTART:${icsStamp(info.start)}`,
+    `DTEND:${icsStamp(end)}`,
+    `SUMMARY:${esc(summary)}`,
+    `DESCRIPTION:${esc(description)}`,
+    info.location ? `LOCATION:${esc(info.location)}` : '',
+    `STATUS:${canceled ? 'CANCELLED' : 'CONFIRMED'}`,
+    `SEQUENCE:${info.sequence ?? 0}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ]
+    .filter(Boolean)
+    .join('\r\n');
+}
+
+function candidateInterviewEmail(kind: CandidateInterviewKind, info: CandidateInterviewInfo) {
+  const when = formatWhenLong(info.start);
+  const modeLabel = MODE_LABEL[info.mode] ?? info.mode;
+  const role = info.jobTitle ?? 'the role';
+  const linkIsUrl = info.location ? isUrl(info.location) : false;
+
+  const heading =
+    kind === 'invite'
+      ? `You're invited to interview for ${escapeHtml(role)}`
+      : kind === 'updated'
+        ? 'Your interview has been rescheduled'
+        : 'Your interview has been canceled';
+  const subject =
+    kind === 'invite'
+      ? `Interview invitation — ${role}`
+      : kind === 'updated'
+        ? `Updated interview details — ${role}`
+        : `Interview canceled — ${role}`;
+  const tone = kind === 'canceled' ? 'negative' : 'positive';
+
+  if (kind === 'canceled') {
+    const html = layout({
+      heading,
+      tone,
+      bodyHtml: `Hi ${escapeHtml(info.candidateName)},<br/><br/>
+        Your interview for the <b>${escapeHtml(role)}</b> position, previously scheduled for
+        <b>${escapeHtml(when)}</b>, has been canceled. We'll be in touch about next steps.`,
+    });
+    const text = `Hi ${info.candidateName},\n\nYour interview for ${role} (previously ${when}) has been canceled. We'll be in touch about next steps.\n\n— ${BRAND} Careers`;
+    return { subject, html, text };
+  }
+
+  const detailRows = [
+    `<b>Role:</b> ${escapeHtml(role)}`,
+    `<b>When:</b> ${escapeHtml(when)}`,
+    `<b>Duration:</b> ${info.durationMinutes} minutes`,
+    `<b>Format:</b> ${escapeHtml(modeLabel)}`,
+    info.location && !linkIsUrl ? `<b>Where:</b> ${escapeHtml(info.location)}` : '',
+  ]
+    .filter(Boolean)
+    .join('<br/>');
+
+  const intro =
+    kind === 'invite'
+      ? `Hi ${escapeHtml(info.candidateName)},<br/><br/>
+         We'd like to invite you to an interview for the <b>${escapeHtml(role)}</b> position. Here are the details:`
+      : `Hi ${escapeHtml(info.candidateName)},<br/><br/>
+         Your interview for the <b>${escapeHtml(role)}</b> position has been updated. Here are the new details:`;
+
+  const html = layout({
+    heading,
+    tone,
+    bodyHtml: `${intro}<br/><br/>${detailRows}<br/><br/>
+      A calendar invitation is attached — open it to add this to your calendar.`,
+    ctaLabel: linkIsUrl ? 'Join the meeting' : undefined,
+    ctaUrl: linkIsUrl ? info.location! : undefined,
+  });
+  const text = [
+    `Hi ${info.candidateName},`,
+    '',
+    kind === 'invite'
+      ? `We'd like to invite you to an interview for ${role}.`
+      : `Your interview for ${role} has been updated.`,
+    '',
+    `Role: ${role}`,
+    `When: ${when}`,
+    `Duration: ${info.durationMinutes} minutes`,
+    `Format: ${modeLabel}`,
+    info.location ? `${linkIsUrl ? 'Join link' : 'Where'}: ${info.location}` : '',
+    '',
+    'A calendar invitation is attached.',
+    `— ${BRAND} Careers`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return { subject, html, text };
+}
+
+/** Render the candidate interview email + .ics without sending (for preview/testing). */
+export function renderCandidateInterviewEmail(
+  kind: CandidateInterviewKind,
+  info: CandidateInterviewInfo,
+) {
+  return { ...candidateInterviewEmail(kind, info), ics: buildInterviewIcs(info, kind === 'canceled') };
+}
+
+/**
+ * Email a candidate about an interview (invitation, reschedule, or cancellation),
+ * including a calendar (.ics) attachment. Never throws.
+ */
+export async function sendCandidateInterviewEmail(
+  to: string,
+  kind: CandidateInterviewKind,
+  info: CandidateInterviewInfo,
+): Promise<SendResult> {
+  const tx = getTransporter();
+  const { subject, html, text } = candidateInterviewEmail(kind, info);
+  if (!tx) {
+    logger.info({ to, subject }, `[email] interview ${kind} skipped (SMTP not configured)`);
+    return { sent: false, skipped: true };
+  }
+  try {
+    const ics = buildInterviewIcs(info, kind === 'canceled');
+    await tx.sendMail({
+      from: env.EMAIL_FROM,
+      to,
+      subject,
+      html,
+      text,
+      attachments: [
+        {
+          filename: 'interview.ics',
+          content: ics,
+          contentType: `text/calendar; method=${kind === 'canceled' ? 'CANCEL' : 'REQUEST'}`,
+        },
+      ],
+    });
+    logger.info({ to, subject }, `[email] interview ${kind} sent`);
+    return { sent: true };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    logger.error({ err, to }, `[email] interview ${kind} failed`);
+    return { sent: false, error };
+  }
+}

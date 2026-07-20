@@ -264,23 +264,40 @@ export interface InterviewInput {
   location?: string | null;
   notes?: string | null;
   reminderMinutes?: number;
+  /** Email the candidate an invitation with the details (default true). */
+  notifyCandidate?: boolean;
 }
-export function fetchInterviews(params: { from?: string; to?: string; status?: string } = {}) {
+/** Outcome of a candidate-facing email send. */
+export interface EmailResult {
+  sent: boolean;
+  skipped?: boolean;
+  error?: string;
+}
+export function fetchInterviews(
+  params: { from?: string; to?: string; status?: string; candidateId?: string } = {},
+) {
   const q = new URLSearchParams();
   if (params.from) q.set('from', params.from);
   if (params.to) q.set('to', params.to);
   if (params.status) q.set('status', params.status);
+  if (params.candidateId) q.set('candidateId', params.candidateId);
   const qs = q.toString();
   return apiRequest<{ interviews: Interview[] }>(`/interviews${qs ? `?${qs}` : ''}`);
 }
 export function createInterview(input: InterviewInput) {
-  return apiRequest<{ interview: Interview }>('/interviews', { method: 'POST', body: input });
+  return apiRequest<{ interview: Interview; email?: EmailResult }>('/interviews', {
+    method: 'POST',
+    body: input,
+  });
 }
 export function updateInterview(
   id: string,
   input: Partial<InterviewInput> & { status?: InterviewStatus },
 ) {
-  return apiRequest<{ interview: Interview }>(`/interviews/${id}`, { method: 'PATCH', body: input });
+  return apiRequest<{ interview: Interview; email?: EmailResult }>(`/interviews/${id}`, {
+    method: 'PATCH',
+    body: input,
+  });
 }
 export function deleteInterview(id: string) {
   return apiRequest<{ ok: true }>(`/interviews/${id}`, { method: 'DELETE' });

@@ -6,6 +6,8 @@ import { createInterviewSchema, updateInterviewSchema } from '../lib/validation.
 import { notFound } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
 import { recordAudit } from '../services/audit.js';
+import { sendCandidateInterviewEmail, type CandidateInterviewKind } from '../services/email.js';
+import { logger } from '../lib/logger.js';
 
 export const interviewsRouter = Router();
 
@@ -46,6 +48,28 @@ async function findOne(id: string) {
   return row;
 }
 
+type JoinedInterview = NonNullable<Awaited<ReturnType<typeof findOne>>>;
+
+/** Email the candidate about their interview (invite / reschedule / cancel). Never throws. */
+async function emailCandidate(row: JoinedInterview, kind: CandidateInterviewKind) {
+  if (!row.candidateEmail) return undefined;
+  try {
+    return await sendCandidateInterviewEmail(row.candidateEmail, kind, {
+      interviewId: row.id,
+      candidateName: row.candidateName ?? 'Candidate',
+      jobTitle: row.jobTitle,
+      start: new Date(row.scheduledAt),
+      durationMinutes: row.durationMinutes,
+      mode: row.mode,
+      location: row.location,
+      sequence: kind === 'invite' ? 0 : 1,
+    });
+  } catch (err) {
+    logger.error({ err }, 'candidate interview email failed');
+    return { sent: false, error: 'send failed' };
+  }
+}
+
 // List interviews, optionally within a [from, to] date range.
 interviewsRouter.get('/', async (req, res) => {
   const filters = [];
@@ -59,6 +83,9 @@ interviewsRouter.get('/', async (req, res) => {
   }
   if (typeof req.query.status === 'string') {
     filters.push(eq(interviews.status, req.query.status));
+  }
+  if (typeof req.query.candidateId === 'string') {
+    filters.push(eq(interviews.candidateId, req.query.candidateId));
   }
 
   const rows = await withJoins()
@@ -103,14 +130,23 @@ interviewsRouter.post('/', async (req, res) => {
     ip: req.ip ?? null,
   });
 
-  res.status(201).json({ interview: await findOne(created.id) });
+  const row = await findOne(created.id);
+  const email = input.notifyCandidate !== false && row ? await emailCandidate(row, 'invite') : undefined;
+
+  res.status(201).json({ interview: row, email });
 });
 
 interviewsRouter.patch('/:id', async (req, res) => {
   const input = updateInterviewSchema.parse(req.body);
+  // notifyCandidate is a control flag, not a column — keep it out of the DB update.
+  const { notifyCandidate, ...updateFields } = input;
 
   const [existing] = await db
-    .select({ id: interviews.id, scheduledAt: interviews.scheduledAt })
+    .select({
+      id: interviews.id,
+      scheduledAt: interviews.scheduledAt,
+      status: interviews.status,
+    })
     .from(interviews)
     .where(eq(interviews.id, req.params.id))
     .limit(1);
@@ -123,7 +159,7 @@ interviewsRouter.patch('/:id', async (req, res) => {
   const [updated] = await db
     .update(interviews)
     .set({
-      ...input,
+      ...updateFields,
       ...(rescheduled ? { reminderSent: false } : {}),
       updatedAt: new Date(),
     })
@@ -131,7 +167,17 @@ interviewsRouter.patch('/:id', async (req, res) => {
     .returning({ id: interviews.id });
   if (!updated) throw notFound('Interview not found');
 
-  res.json({ interview: await findOne(updated.id) });
+  const row = await findOne(updated.id);
+
+  // Notify the candidate on a reschedule or a cancellation (not on minor edits).
+  let kind: CandidateInterviewKind | null = null;
+  if (input.status === 'canceled' && existing.status !== 'canceled') kind = 'canceled';
+  else if (rescheduled) kind = 'updated';
+
+  const email =
+    notifyCandidate !== false && kind && row ? await emailCandidate(row, kind) : undefined;
+
+  res.json({ interview: row, email });
 });
 
 interviewsRouter.delete('/:id', async (req, res) => {

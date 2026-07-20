@@ -161,6 +161,13 @@ candidatesRouter.get('/', async (req, res) => {
       stage: candidates.stage,
       analysisStatus: candidates.analysisStatus,
       createdAt: candidates.createdAt,
+      // Earliest upcoming scheduled interview for this candidate (null if none).
+      nextInterviewAt: sql<string | null>`(
+        SELECT min(i.scheduled_at) FROM interviews i
+        WHERE i.candidate_id = ${candidates.id}
+          AND i.status = 'scheduled'
+          AND i.scheduled_at >= now()
+      )`,
     })
     .from(candidates)
     .leftJoin(jobs, eq(jobs.id, candidates.jobId))

@@ -5,6 +5,7 @@ import {
   deleteInterview,
   fetchCandidates,
   updateInterview,
+  type EmailResult,
   type InterviewInput,
 } from '../api/endpoints';
 import { ApiError } from '../api/client';
@@ -55,7 +56,7 @@ export default function ScheduleInterviewDialog({
   /** Pre-selected calendar day (YYYY-MM-DD) when creating from the calendar. */
   defaultDate?: string;
   onClose: () => void;
-  onSaved: (interview: Interview) => void;
+  onSaved: (interview: Interview, email?: EmailResult) => void;
   onDeleted?: (id: string) => void;
 }) {
   const presetCandidate =
@@ -76,6 +77,7 @@ export default function ScheduleInterviewDialog({
   const [reminder, setReminder] = useState(existing?.reminderMinutes ?? 30);
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [status, setStatus] = useState<InterviewStatus>(existing?.status ?? 'scheduled');
+  const [notifyCandidate, setNotifyCandidate] = useState(true);
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -120,6 +122,7 @@ export default function ScheduleInterviewDialog({
       location: location.trim() || null,
       reminderMinutes: reminder,
       notes: notes.trim() || null,
+      notifyCandidate,
     };
 
     setSaving(true);
@@ -127,7 +130,7 @@ export default function ScheduleInterviewDialog({
       const res = existing
         ? await updateInterview(existing.id, { ...payload, status })
         : await createInterview(payload);
-      onSaved(res.interview);
+      onSaved(res.interview, res.email);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to save the interview.');
     } finally {
@@ -254,15 +257,32 @@ export default function ScheduleInterviewDialog({
               </Field>
             )}
 
-            <Field label="Notes (optional)">
+            <Field label="Notes (optional, internal)">
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 className={inputCls}
-                placeholder="Panel, focus areas, prep…"
+                placeholder="Panel, focus areas, prep… (not shared with the candidate)"
               />
             </Field>
+
+            <label className="flex items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+              <input
+                type="checkbox"
+                checked={notifyCandidate}
+                onChange={(e) => setNotifyCandidate(e.target.checked)}
+                className="mt-0.5 h-4 w-4 cursor-pointer rounded border-slate-300 text-brand-500 accent-brand-500"
+              />
+              <span className="text-sm text-slate-700">
+                Email the candidate
+                <span className="block text-xs font-normal text-slate-500">
+                  {existing
+                    ? 'Send an updated invite if you reschedule, or a notice if you cancel — with the meeting link and a calendar file.'
+                    : 'Sends an invitation with the date, time, meeting link, and a calendar (.ics) attachment.'}
+                </span>
+              </span>
+            </label>
 
             {error && <Alert kind="error">{error}</Alert>}
           </div>
