@@ -11,6 +11,7 @@ import {
 } from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
 import InterviewReminders from '../components/InterviewReminders';
+import NotificationBell from '../components/NotificationBell';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import {
   Tooltip,
@@ -156,17 +157,17 @@ export default function HrLayout() {
 
       {/* Content */}
       <div className="lg:pl-64">
-        {/* Mobile top bar */}
-        <div className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200/70 bg-white/85 px-4 backdrop-blur-md lg:hidden">
+        {/* Top header — mobile shows the menu button + brand; the bell shows on all sizes */}
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200/70 bg-white/85 px-4 backdrop-blur-md lg:px-6">
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100"
+            className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100 lg:hidden"
             aria-label="Open menu"
           >
             <LuMenu className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 lg:hidden">
             <img
               src="/Favicon_Linkage.png"
               alt="Linkage ScreenAI"
@@ -174,7 +175,11 @@ export default function HrLayout() {
             />
             <span className="font-display text-base font-semibold text-slate-800">Linkage ScreenAI</span>
           </div>
-        </div>
+
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationBell />
+          </div>
+        </header>
 
         <main className="mx-auto max-w-7xl px-6 py-8">
           <Outlet />
