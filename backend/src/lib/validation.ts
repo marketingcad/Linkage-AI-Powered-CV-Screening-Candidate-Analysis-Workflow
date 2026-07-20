@@ -144,6 +144,17 @@ export const updateStageSchema = z.object({
   stage: z.enum(['new', 'shortlisted', 'rejected', 'interviewing', 'hired']),
 });
 
+// --- Candidate notes & scorecards -------------------------------------------
+
+export const createNoteSchema = z
+  .object({
+    body: z.string().trim().max(5000).optional(),
+    rating: z.number().int().min(1).max(5).nullable().optional(),
+  })
+  .refine((v) => (v.body && v.body.length > 0) || v.rating != null, {
+    message: 'Add a note, a rating, or both.',
+  });
+
 // --- Interviews / scheduler -------------------------------------------------
 
 export const createInterviewSchema = z.object({

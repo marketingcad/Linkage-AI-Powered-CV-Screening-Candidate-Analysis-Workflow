@@ -10,6 +10,7 @@ import {
   LuEllipsisVertical,
   LuFileJson,
   LuFileText,
+  LuClipboardCheck,
   LuLoaderCircle,
   LuMessagesSquare,
   LuQuote,
@@ -20,15 +21,20 @@ import {
   LuTriangleAlert,
 } from 'react-icons/lu';
 import {
+  addCandidateNote,
   deleteCandidate,
+  deleteCandidateNote,
   fetchCandidate,
   fetchCandidateEmails,
+  fetchCandidateNotes,
   fetchInterviews,
   generateInterviewQuestions,
   reanalyzeCandidate,
   resendCandidateEmail,
   updateCandidateStage,
 } from '../api/endpoints';
+import { useAuth } from '../auth/AuthContext';
+import StarRating from '../components/StarRating';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +45,7 @@ import {
 import { API_BASE, getToken } from '../api/client';
 import type {
   Candidate,
+  CandidateNote,
   CandidateStage,
   DuplicateApplication,
   EmailLog,
@@ -57,6 +64,7 @@ import {
   RecommendationBadge,
   ScoreRing,
   scoreBg,
+  scoreColor,
   SourceBadge,
   Spinner,
   StageBadge,
@@ -84,6 +92,13 @@ export default function CandidateDetailPage() {
   const [scheduledNote, setScheduledNote] = useState<string | null>(null);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
+  const { user } = useAuth();
+  const [notes, setNotes] = useState<CandidateNote[]>([]);
+  const [humanScore, setHumanScore] = useState<number | null>(null);
+  const [ratingCount, setRatingCount] = useState(0);
+  const [ratingInput, setRatingInput] = useState(0);
+  const [noteBody, setNoteBody] = useState('');
+  const [postingNote, setPostingNote] = useState(false);
 
   function loadEmails() {
     if (!id) return;
@@ -103,6 +118,49 @@ export default function CandidateDetailPage() {
       });
   }
 
+  function loadNotes() {
+    if (!id) return;
+    fetchCandidateNotes(id)
+      .then((res) => {
+        setNotes(res.notes);
+        setHumanScore(res.humanScore);
+        setRatingCount(res.ratingCount);
+      })
+      .catch(() => {
+        /* non-critical */
+      });
+  }
+
+  async function postNote() {
+    if (!id) return;
+    const body = noteBody.trim();
+    if (!body && !ratingInput) return;
+    setPostingNote(true);
+    try {
+      await addCandidateNote(id, {
+        body: body || undefined,
+        rating: ratingInput || undefined,
+      });
+      setNoteBody('');
+      setRatingInput(0);
+      loadNotes();
+    } catch {
+      /* surfaced by disabled state; keep it simple */
+    } finally {
+      setPostingNote(false);
+    }
+  }
+
+  async function removeNote(noteId: string) {
+    if (!id) return;
+    try {
+      await deleteCandidateNote(id, noteId);
+      loadNotes();
+    } catch {
+      /* ignore */
+    }
+  }
+
   function load() {
     if (!id) return;
     setLoading(true);
@@ -116,6 +174,7 @@ export default function CandidateDetailPage() {
       .finally(() => setLoading(false));
     loadEmails();
     loadInterviews();
+    loadNotes();
   }
 
   useEffect(load, [id]);
@@ -383,6 +442,124 @@ export default function CandidateDetailPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: AI evaluation */}
         <div className="space-y-6 lg:col-span-2">
+          {/* Team review — AI score vs human scorecard, notes, and ratings */}
+          <Card className="p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+                <LuClipboardCheck className="h-3.5 w-3.5" />
+              </span>
+              <h2 className="text-sm font-semibold text-slate-700">Team review</h2>
+            </div>
+
+            {/* AI vs Human, side by side */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 text-center">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">AI score</p>
+                <p className="mt-1 flex items-baseline justify-center gap-1">
+                  <span className={`text-2xl font-bold ${scoreColor(c.overallScore ?? c.qualificationScore)}`}>
+                    {c.overallScore ?? c.qualificationScore ?? '—'}
+                  </span>
+                  <span className="text-xs text-slate-400">/ 100</span>
+                </p>
+                <p className="mt-1 text-[11px] text-slate-400">Gemini evaluation</p>
+              </div>
+              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 text-center">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Human score</p>
+                <p className="mt-1 flex items-baseline justify-center gap-1">
+                  <span className="text-2xl font-bold text-slate-800">
+                    {humanScore != null ? humanScore.toFixed(1) : '—'}
+                  </span>
+                  <span className="text-xs text-slate-400">/ 5</span>
+                </p>
+                <div className="mt-1 flex items-center justify-center gap-1.5">
+                  <StarRating value={humanScore} size="sm" />
+                  <span className="text-[11px] text-slate-400">
+                    {ratingCount > 0 ? `${ratingCount} rating${ratingCount === 1 ? '' : 's'}` : 'not rated'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Composer */}
+            <div className="mt-4 rounded-xl border border-slate-200 p-3">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-slate-600">Your rating:</span>
+                <StarRating value={ratingInput} onChange={setRatingInput} />
+                {ratingInput > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setRatingInput(0)}
+                    className="text-xs text-slate-400 hover:text-slate-600"
+                  >
+                    clear
+                  </button>
+                )}
+              </div>
+              <textarea
+                value={noteBody}
+                onChange={(e) => setNoteBody(e.target.value)}
+                rows={2}
+                placeholder="Add an internal note about this candidate…"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+              />
+              <div className="mt-2 flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={postNote}
+                  disabled={postingNote || (!noteBody.trim() && !ratingInput)}
+                >
+                  {postingNote ? <LuLoaderCircle className="h-4 w-4 animate-spin" /> : 'Post review'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Notes list */}
+            {notes.length > 0 && (
+              <ul className="mt-4 space-y-3">
+                {notes.map((n) => {
+                  const canDelete =
+                    !!n.authorId &&
+                    (n.authorId === (user?.id ?? user?.sub) || user?.role === 'admin');
+                  return (
+                    <li key={n.id} className="rounded-lg border border-slate-100 bg-slate-50/50 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-700">
+                            {n.authorName ?? 'Recruiter'}
+                          </span>
+                          {n.rating != null && <StarRating value={n.rating} size="sm" />}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-slate-400">
+                            {new Date(n.createdAt).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {canDelete && (
+                            <button
+                              type="button"
+                              onClick={() => removeNote(n.id)}
+                              aria-label="Delete note"
+                              className="rounded p-1 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                            >
+                              <LuTrash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {n.body && (
+                        <p className="mt-1.5 whitespace-pre-wrap text-sm text-slate-600">{n.body}</p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+
           {c.summary && (
             <Card className="p-5">
               <h2 className="mb-2 text-sm font-semibold text-slate-700">AI summary</h2>

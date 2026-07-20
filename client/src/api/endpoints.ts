@@ -3,6 +3,7 @@ import type {
   ApplicationStatus,
   AuditLog,
   Candidate,
+  CandidateNote,
   CandidateStage,
   CandidateSummary,
   DuplicateApplication,
@@ -237,6 +238,23 @@ export function reanalyzeCandidate(id: string) {
 export function generateInterviewQuestions(id: string) {
   return apiRequest<{ candidate: Candidate }>(`/candidates/${id}/interview-questions`, {
     method: 'POST',
+  });
+}
+// --- Candidate notes & human scorecards ---
+export function fetchCandidateNotes(id: string) {
+  return apiRequest<{ notes: CandidateNote[]; humanScore: number | null; ratingCount: number }>(
+    `/candidates/${id}/notes`,
+  );
+}
+export function addCandidateNote(id: string, input: { body?: string; rating?: number | null }) {
+  return apiRequest<{ note: CandidateNote }>(`/candidates/${id}/notes`, {
+    method: 'POST',
+    body: input,
+  });
+}
+export function deleteCandidateNote(candidateId: string, noteId: string) {
+  return apiRequest<{ ok: true }>(`/candidates/${candidateId}/notes/${noteId}`, {
+    method: 'DELETE',
   });
 }
 export function fetchCandidateEmails(id: string) {

@@ -310,6 +310,23 @@ export const interviews = pgTable('interviews', {
 });
 
 // ---------------------------------------------------------------------------
+// Candidate notes & human scorecards — recruiter judgment alongside the AI score
+// ---------------------------------------------------------------------------
+
+export const candidateNotes = pgTable('candidate_notes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  candidateId: uuid('candidate_id')
+    .references(() => candidates.id, { onDelete: 'cascade' })
+    .notNull(),
+  authorId: uuid('author_id').references(() => hrUsers.id, { onDelete: 'set null' }),
+  // Snapshot of the author so notes stay attributed even if the user is removed.
+  authorName: varchar('author_name', { length: 255 }),
+  rating: integer('rating'), // 1-5 scorecard rating; null for a plain note
+  body: text('body'), // the note / review comment
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ---------------------------------------------------------------------------
 // Audit log — record of HR actions for compliance/accountability
 // ---------------------------------------------------------------------------
 
@@ -332,6 +349,7 @@ export type EmailLog = typeof emailLogs.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type Interview = typeof interviews.$inferSelect;
 export type NewInterview = typeof interviews.$inferInsert;
+export type CandidateNote = typeof candidateNotes.$inferSelect;
 export type HrUser = typeof hrUsers.$inferSelect;
 export type NewHrUser = typeof hrUsers.$inferInsert;
 export type Job = typeof jobs.$inferSelect;

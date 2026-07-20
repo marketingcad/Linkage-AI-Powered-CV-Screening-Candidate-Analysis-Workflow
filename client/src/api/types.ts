@@ -243,6 +243,10 @@ export interface CandidateSummary {
   createdAt: string;
   /** Earliest upcoming scheduled interview (ISO), or null if none is booked. */
   nextInterviewAt?: string | null;
+  /** Average recruiter scorecard rating (1–5), or null if no one has rated. */
+  humanScore?: number | null;
+  /** How many recruiter ratings the human score is based on. */
+  ratingCount?: number;
 }
 
 export interface Candidate extends CandidateSummary {
@@ -294,6 +298,17 @@ export interface EmailLog {
   subject: string;
   status: 'sent' | 'skipped' | 'failed';
   error: string | null;
+  createdAt: string;
+}
+
+/** An internal recruiter note and/or 1–5 scorecard rating on a candidate. */
+export interface CandidateNote {
+  id: string;
+  candidateId: string;
+  authorId: string | null;
+  authorName: string | null;
+  rating: number | null;
+  body: string | null;
   createdAt: string;
 }
 

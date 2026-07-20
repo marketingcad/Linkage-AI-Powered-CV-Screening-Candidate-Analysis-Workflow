@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
+import StarRating from './StarRating';
 
 export default function CandidateTable({
   candidates,
@@ -66,6 +67,7 @@ export default function CandidateTable({
             <TableHead className={headCls}>Quiz</TableHead>
             <TableHead className={headCls}>CV origin</TableHead>
             <TableHead className={headCls}>Recommendation</TableHead>
+            <TableHead className={headCls}>Human</TableHead>
             <TableHead className={headCls}>Exp.</TableHead>
             <TableHead className={headCls}>Stage</TableHead>
             <TableHead className={headCls}>Status</TableHead>
@@ -127,6 +129,18 @@ export default function CandidateTable({
               </TableCell>
               <TableCell className="px-4 py-3">
                 <RecommendationBadge value={c.recommendation} />
+              </TableCell>
+              <TableCell className="px-4 py-3">
+                {c.humanScore != null ? (
+                  <div className="flex items-center gap-1.5">
+                    <StarRating value={c.humanScore} size="sm" />
+                    <span className="text-xs font-medium text-slate-500">
+                      {c.humanScore.toFixed(1)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-slate-300">—</span>
+                )}
               </TableCell>
               <TableCell className="px-4 py-3 text-slate-600">
                 {c.totalYearsExperience != null ? `${c.totalYearsExperience} yr` : '—'}

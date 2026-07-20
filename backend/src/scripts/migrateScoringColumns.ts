@@ -44,8 +44,22 @@ async function main() {
   await client`CREATE INDEX IF NOT EXISTS interviews_scheduled_at_idx ON interviews (scheduled_at)`;
   await client`CREATE INDEX IF NOT EXISTS interviews_candidate_id_idx ON interviews (candidate_id)`;
 
+  // Candidate notes & human scorecards.
+  await client`
+    CREATE TABLE IF NOT EXISTS candidate_notes (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      candidate_id uuid NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+      author_id uuid REFERENCES hr_users(id) ON DELETE SET NULL,
+      author_name varchar(255),
+      rating integer,
+      body text,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await client`CREATE INDEX IF NOT EXISTS candidate_notes_candidate_id_idx ON candidate_notes (candidate_id)`;
+
   // eslint-disable-next-line no-console
-  console.log('[migrate] scoring columns ensured + interviews table ensured');
+  console.log('[migrate] scoring columns + interviews + candidate_notes tables ensured');
 }
 
 main()

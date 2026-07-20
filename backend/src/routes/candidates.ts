@@ -3,9 +3,9 @@ import { randomUUID } from 'node:crypto';
 import multer from 'multer';
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { candidates, jobs, emailLogs } from '../db/schema.js';
-import { rankCandidatesSchema, updateStageSchema } from '../lib/validation.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { candidates, candidateNotes, jobs, emailLogs } from '../db/schema.js';
+import { createNoteSchema, rankCandidatesSchema, updateStageSchema } from '../lib/validation.js';
+import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import { env } from '../config/env.js';
 import { requireAuth } from '../middleware/auth.js';
 import { deleteCvFile, getCvSource, saveCvFile } from '../services/storage.js';
@@ -168,6 +168,15 @@ candidatesRouter.get('/', async (req, res) => {
           AND i.status = 'scheduled'
           AND i.scheduled_at >= now()
       )`,
+      // Human scorecard: average recruiter rating (1-5) + how many ratings.
+      humanScore: sql<number | null>`(
+        SELECT round(avg(n.rating)::numeric, 1)::float8 FROM candidate_notes n
+        WHERE n.candidate_id = ${candidates.id} AND n.rating IS NOT NULL
+      )`,
+      ratingCount: sql<number>`(
+        SELECT count(*)::int FROM candidate_notes n
+        WHERE n.candidate_id = ${candidates.id} AND n.rating IS NOT NULL
+      )`,
     })
     .from(candidates)
     .leftJoin(jobs, eq(jobs.id, candidates.jobId))
@@ -265,6 +274,74 @@ candidatesRouter.patch('/:id/stage', async (req, res) => {
   }
 
   res.json({ candidate });
+});
+
+// --- Candidate notes & human scorecards ------------------------------------
+
+/** List a candidate's notes + the aggregated human score (avg 1-5 rating). */
+candidatesRouter.get('/:id/notes', async (req, res) => {
+  const notes = await db
+    .select()
+    .from(candidateNotes)
+    .where(eq(candidateNotes.candidateId, req.params.id))
+    .orderBy(desc(candidateNotes.createdAt));
+
+  const ratings = notes.map((n) => n.rating).filter((r): r is number => r != null);
+  const humanScore = ratings.length
+    ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
+    : null;
+
+  res.json({ notes, humanScore, ratingCount: ratings.length });
+});
+
+/** Add a note and/or a 1-5 scorecard rating for a candidate. */
+candidatesRouter.post('/:id/notes', async (req, res) => {
+  const input = createNoteSchema.parse(req.body);
+
+  const [candidate] = await db
+    .select({ id: candidates.id, fullName: candidates.fullName })
+    .from(candidates)
+    .where(eq(candidates.id, req.params.id))
+    .limit(1);
+  if (!candidate) throw notFound('Candidate not found');
+
+  const [note] = await db
+    .insert(candidateNotes)
+    .values({
+      candidateId: candidate.id,
+      authorId: req.user!.sub,
+      authorName: req.user!.name ?? req.user!.email ?? null,
+      rating: input.rating ?? null,
+      body: input.body?.trim() || null,
+    })
+    .returning();
+
+  void recordAudit({
+    actorEmail: req.user?.email ?? null,
+    action: 'candidate.note_add',
+    targetType: 'candidate',
+    targetId: candidate.id,
+    detail: `${input.rating ? `Rated ${input.rating}/5` : 'Added a note'} for ${candidate.fullName}`,
+    ip: req.ip ?? null,
+  });
+
+  res.status(201).json({ note });
+});
+
+/** Delete a note — allowed for its author or an admin. */
+candidatesRouter.delete('/:id/notes/:noteId', async (req, res) => {
+  const [note] = await db
+    .select()
+    .from(candidateNotes)
+    .where(eq(candidateNotes.id, req.params.noteId))
+    .limit(1);
+  if (!note || note.candidateId !== req.params.id) throw notFound('Note not found');
+  if (note.authorId !== req.user!.sub && req.user!.role !== 'admin') {
+    throw forbidden('You can only delete your own notes.');
+  }
+
+  await db.delete(candidateNotes).where(eq(candidateNotes.id, note.id));
+  res.json({ ok: true });
 });
 
 // GDPR: return everything held about a candidate (feeds the readable data-export page;
