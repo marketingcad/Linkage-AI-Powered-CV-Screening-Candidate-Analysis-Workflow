@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import InterviewReminders from '../components/InterviewReminders';
 import NotificationBell from '../components/NotificationBell';
+import ThemeToggle from '../components/ThemeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import {
   Tooltip,
@@ -142,7 +143,7 @@ export default function HrLayout() {
       {/* Mobile drawer */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
@@ -158,7 +159,7 @@ export default function HrLayout() {
       {/* Content */}
       <div className="lg:pl-64">
         {/* Top header — mobile shows the menu button + brand; the bell shows on all sizes */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200/70 bg-white/85 px-4 backdrop-blur-md lg:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200/70 bg-white/85 px-4 backdrop-blur-md lg:px-6 dark:bg-[#0a0f1c]/85">
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -177,6 +178,7 @@ export default function HrLayout() {
           </div>
 
           <div className="ml-auto flex items-center gap-1">
+            <ThemeToggle />
             <NotificationBell />
           </div>
         </header>

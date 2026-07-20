@@ -144,7 +144,7 @@ export default function LoginPage() {
           </p>
           <ul className="mt-8 space-y-3 text-sm text-brand-50">
             {[
-              'AI qualification & skills-match scoring2468',
+              'AI qualification & skills-match scoring',
               'Auto-generated screening exams',
               'CV authenticity (AI-written) detection',
               'Applicant status tracking & email updates',
@@ -193,7 +193,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 w-full max-w-sm animate-rise">
-          <div className="rounded-3xl border border-white/60 bg-white/80 p-8 shadow-[0_24px_60px_-24px_rgba(28,45,110,0.35)] backdrop-blur-md">
+          <div className="rounded-3xl border border-white/60 bg-white/80 p-8 shadow-[0_24px_60px_-24px_rgba(28,45,110,0.35)] backdrop-blur-md dark:border-white/10 dark:bg-[#0e1424]/85">
             {/* Logo + heading */}
             <div className="mb-7">
               <div className="mb-5 flex items-center gap-2.5">

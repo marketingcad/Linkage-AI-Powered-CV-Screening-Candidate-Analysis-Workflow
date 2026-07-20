@@ -6,6 +6,16 @@
     <link rel="apple-touch-icon" href="/Favicon_Linkage.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Linkage ScreenAI — AI-Powered CV Screening</title>
+    <!-- Apply the saved (or system) theme before paint to avoid a flash of the wrong theme -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

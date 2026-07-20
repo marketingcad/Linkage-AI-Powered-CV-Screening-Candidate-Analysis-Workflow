@@ -74,33 +74,77 @@
   --sidebar-ring: #5b83ff;
 }
 
+/* ---------------------------------------------------------------------------
+   Dark theme — a modern, cool "midnight navy" palette tuned to the brand blue.
+   Neutral (slate) + brand + accent scales are remapped so the hundreds of
+   existing utility classes adapt automatically; white text stays white.
+--------------------------------------------------------------------------- */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  color-scheme: dark;
+
+  /* shadcn/ui tokens — recolored to match the custom navy surfaces */
+  --background: #080b14;
+  --foreground: #e6eaf4;
+  --card: #131a29;
+  --card-foreground: #e6eaf4;
+  --popover: #131a29;
+  --popover-foreground: #e6eaf4;
   --primary: #5b83ff;
   --primary-foreground: #0b1020;
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --secondary: #1b2436;
+  --secondary-foreground: #e6eaf4;
+  --muted: #1b2436;
+  --muted-foreground: #99a3c0;
+  --accent: #1c2b52;
+  --accent-foreground: #cdd8ff;
+  --destructive: #f43f6a;
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --input: oklch(1 0 0 / 14%);
   --ring: #5b83ff;
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar: #0d1322;
+  --sidebar-foreground: #e6eaf4;
   --sidebar-primary: #5b83ff;
   --sidebar-primary-foreground: #0b1020;
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-accent: #1c2b52;
+  --sidebar-accent-foreground: #cdd8ff;
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: #5b83ff;
+
+  /* Neutral scale — inverted to a cool-navy ramp (low = dark surface, high = light text) */
+  --color-slate-50: #0e1626;
+  --color-slate-100: #172036;
+  --color-slate-200: #232d45;
+  --color-slate-300: #313d5a;
+  --color-slate-400: #808bab;
+  --color-slate-500: #97a1c0;
+  --color-slate-600: #b1bad4;
+  --color-slate-700: #cad1e3;
+  --color-slate-800: #e6eaf4;
+  --color-slate-900: #f3f6fc;
+  --color-slate-950: #f8fafc;
+
+  /* Brand — chip/surface shades go dark; text + hover shades go lighter for dark bg */
+  --color-brand-50: #15203f;
+  --color-brand-100: #1c2b52;
+  --color-brand-200: #26386b;
+  --color-brand-300: #38508f;
+  --color-brand-400: #6f93ff;
+  --color-brand-500: #4f77ff;
+  --color-brand-600: #6f93ff;
+  --color-brand-700: #9fb8ff;
+  --color-brand-800: #bcccff;
+  --color-brand-900: #d6e0ff;
+
+  /* Accent families — dark tinted chip backgrounds (50/100/200) + light text (600/700) */
+  --color-emerald-50: #0d2a20; --color-emerald-100: #123a2b; --color-emerald-200: #1c5240; --color-emerald-600: #34d399; --color-emerald-700: #6ee7b7;
+  --color-amber-50: #2a1e06; --color-amber-100: #3a2a08; --color-amber-200: #533c0c; --color-amber-600: #fbbf24; --color-amber-700: #fcd34d;
+  --color-rose-50: #2c1016; --color-rose-100: #3d151d; --color-rose-200: #5a1f2b; --color-rose-600: #fb7185; --color-rose-700: #fda4af;
+  --color-violet-50: #1d1636; --color-violet-100: #291d49; --color-violet-200: #3b2b6b; --color-violet-600: #a78bfa; --color-violet-700: #c4b5fd;
+  --color-blue-50: #0e1e3a; --color-blue-100: #13294d; --color-blue-200: #1c3a6b; --color-blue-600: #60a5fa; --color-blue-700: #93c5fd;
+  --color-sky-50: #082033; --color-sky-100: #0b2d47; --color-sky-200: #124066; --color-sky-600: #38bdf8; --color-sky-700: #7dd3fc;
+  --color-orange-50: #2a1608; --color-orange-100: #3a1f0b; --color-orange-200: #542e10; --color-orange-600: #fb923c; --color-orange-700: #fdba74;
+  --color-indigo-50: #171a3a; --color-indigo-100: #1f2450; --color-indigo-200: #2b3270; --color-indigo-600: #818cf8; --color-indigo-700: #a5b4fc;
+  --color-teal-50: #072b28; --color-teal-100: #0b3b37; --color-teal-200: #125450; --color-teal-600: #2dd4bf; --color-teal-700: #5eead4;
 }
 
 @theme inline {
@@ -170,6 +214,80 @@ body {
     radial-gradient(1100px 460px at 8% -8%, rgba(51, 88, 240, 0.06), transparent 60%),
     radial-gradient(900px 420px at 108% 0%, rgba(51, 88, 240, 0.05), transparent 55%);
   background-attachment: fixed;
+}
+
+/* ---------------------------------------------------------------------------
+   Dark theme surface overrides
+--------------------------------------------------------------------------- */
+.dark body {
+  color: var(--color-slate-700);
+  background-color: #070a12;
+  background-image:
+    radial-gradient(1100px 480px at 6% -10%, rgba(91, 131, 255, 0.14), transparent 60%),
+    radial-gradient(900px 460px at 112% 2%, rgba(91, 131, 255, 0.1), transparent 55%),
+    radial-gradient(700px 500px at 50% 120%, rgba(124, 92, 246, 0.08), transparent 60%);
+}
+
+/* White surfaces (cards, sidebar, drawers, inputs) → dark card surface.
+   Scoped to bg-white only, so `text-white` on colored buttons stays white. */
+.dark .bg-white {
+  background-color: var(--card);
+}
+
+/* Card shadows are invisible on dark; lift with a subtle ring instead. */
+.dark .shadow-\(--shadow-card\),
+.dark .shadow-\(--shadow-raised\) {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.dark ::selection {
+  background: rgba(91, 131, 255, 0.28);
+}
+
+/* ---------------------------------------------------------------------------
+   Smooth theme switching
+   - View Transitions: the new theme reveals in a circular wipe (we drive the
+     clip-path from the toggle in JS); disable the default cross-fade here.
+   - Fallback: a brief global colour cross-fade via the .theme-transition class.
+--------------------------------------------------------------------------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition:
+    background-color 0.5s ease,
+    border-color 0.5s ease,
+    color 0.5s ease,
+    fill 0.5s ease,
+    stroke 0.5s ease,
+    box-shadow 0.5s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition,
+  .theme-transition * {
+    transition: none !important;
+  }
+}
+
+.dark * {
+  scrollbar-color: #2b3550 transparent;
+}
+.dark *::-webkit-scrollbar-thumb {
+  background: #2b3550;
+  background-clip: content-box;
+}
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: #3a4767;
+  background-clip: content-box;
 }
 
 h1,
