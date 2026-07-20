@@ -10,7 +10,7 @@ import {
 } from 'react-icons/lu';
 import { fetchCandidates, updateCandidateStage } from '../api/endpoints';
 import type { CandidateStage, CandidateSummary } from '../api/types';
-import { Alert, Button, Spinner, STAGES, STAGE_ICONS } from '../components/ui';
+import { Alert, Button, Card, Spinner, STAGES, STAGE_ICONS } from '../components/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -201,11 +201,9 @@ export default function CandidatesPage() {
 
       {loading ? (
         <Spinner label="Loading candidates…" />
-      ) : view === 'board' ? (
-        <CandidateBoard candidates={candidates} onMove={handleMove} />
       ) : (
         <div className="space-y-4">
-          {/* Filters */}
+          {/* Filters — shared by the board and table views */}
           <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-(--shadow-card)">
             <div className="flex flex-wrap gap-2">
               {STAGE_FILTERS.map((f) => (
@@ -276,6 +274,26 @@ export default function CandidatesPage() {
             </div>
           </div>
 
+          {filtersActive && filtered.length === 0 ? (
+            <Card className="p-10 text-center">
+              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-xl">
+                🔍
+              </div>
+              <p className="text-sm font-medium text-slate-600">No candidates match your filters</p>
+              <p className="mx-auto mt-1 max-w-sm text-xs text-slate-400">
+                {skill.trim()
+                  ? `No candidate lists a “${skill.trim()}” skill — try a different term or clear the filters.`
+                  : 'Try adjusting or clearing your filters.'}
+              </p>
+              <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
+                <LuX className="h-4 w-4" />
+                Clear filters
+              </Button>
+            </Card>
+          ) : view === 'board' ? (
+            <CandidateBoard candidates={filtered} onMove={handleMove} />
+          ) : (
+            <>
           {/* Bulk action bar */}
           {selected.size > 0 && (
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/60 px-3 py-2">
@@ -332,10 +350,12 @@ export default function CandidatesPage() {
             duplicateEmails={duplicateEmails}
           />
 
-          <p className="text-xs text-slate-400">
-            Showing {filtered.length} of {candidates.length} candidate
-            {candidates.length === 1 ? '' : 's'}
-          </p>
+              <p className="text-xs text-slate-400">
+                Showing {filtered.length} of {candidates.length} candidate
+                {candidates.length === 1 ? '' : 's'}
+              </p>
+            </>
+          )}
         </div>
       )}
 
