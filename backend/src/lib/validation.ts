@@ -138,6 +138,8 @@ export const applicationSchema = z.object({
   quizAnswers: z.array(quizAnswerSchema).max(30).optional(),
   // Candidate's up-to-3 preferred initial-interview slots (accepts ISO date strings).
   availabilitySlots: z.array(z.coerce.date()).max(3).optional(),
+  // Candidate's IANA timezone (e.g. "America/New_York") — the slots above are in it.
+  timezone: z.string().max(64).optional(),
 });
 
 export const updateStageSchema = z.object({
@@ -179,7 +181,7 @@ export const updateInterviewSchema = z
     location: z.string().max(1000).nullable().optional(),
     notes: z.string().max(5000).nullable().optional(),
     reminderMinutes: z.number().int().min(0).max(10080).optional(),
-    status: z.enum(['scheduled', 'completed', 'canceled']).optional(),
+    status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(),
     notifyCandidate: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, 'Provide at least one field to update');

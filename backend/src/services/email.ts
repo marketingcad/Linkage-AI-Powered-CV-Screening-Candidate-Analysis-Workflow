@@ -368,6 +368,7 @@ export type CandidateInterviewInfo = {
   mode: string; // video | onsite | phone
   location?: string | null;
   sequence?: number; // bump on updates so calendars replace the event
+  timezone?: string | null; // candidate's IANA zone — the "When" line is shown in it
 };
 
 const MODE_LABEL: Record<string, string> = {
@@ -380,16 +381,22 @@ function isUrl(v: string): boolean {
   return /^https?:\/\//i.test(v.trim());
 }
 
-function formatWhenLong(date: Date): string {
-  return date.toLocaleString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  });
+function formatWhenLong(date: Date, timeZone?: string): string {
+  try {
+    return date.toLocaleString('en-US', {
+      timeZone,
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    });
+  } catch {
+    // Invalid/unknown IANA zone — fall back to the server's local time.
+    return formatWhenLong(date);
+  }
 }
 
 function icsStamp(d: Date): string {
@@ -432,7 +439,7 @@ function buildInterviewIcs(info: CandidateInterviewInfo, canceled: boolean): str
 }
 
 function candidateInterviewEmail(kind: CandidateInterviewKind, info: CandidateInterviewInfo) {
-  const when = formatWhenLong(info.start);
+  const when = formatWhenLong(info.start, info.timezone ?? undefined);
   const modeLabel = MODE_LABEL[info.mode] ?? info.mode;
   const role = info.jobTitle ?? 'the role';
   const linkIsUrl = info.location ? isUrl(info.location) : false;

@@ -165,6 +165,14 @@ export default function ApplyJobPage() {
       .map((s) => new Date(s).toISOString());
     if (availabilitySlots.length) {
       form.append('availabilitySlots', JSON.stringify(availabilitySlots));
+      // Capture the applicant's timezone so recruiters can read the slots in the
+      // candidate's own local time rather than guessing.
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (tz) form.append('timezone', tz);
+      } catch {
+        /* timezone is best-effort */
+      }
     }
     form.append('source', source);
     form.append('quizAnswers', JSON.stringify(quizAnswers));

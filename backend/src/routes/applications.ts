@@ -127,6 +127,7 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res) => {
       availabilitySlots: input.availabilitySlots?.length
         ? input.availabilitySlots.map((d) => d.toISOString())
         : null,
+      timezone: input.timezone ?? null,
       source: normalizeSource(input.source),
       cvFilename: filename,
       cvStoragePath: storagePath,

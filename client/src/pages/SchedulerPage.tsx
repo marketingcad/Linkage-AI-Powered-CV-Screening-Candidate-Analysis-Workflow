@@ -1,18 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  LuBan,
   LuCalendarClock,
   LuCalendarPlus,
+  LuCheck,
   LuChevronLeft,
   LuChevronRight,
+  LuClipboardCheck,
   LuMapPin,
   LuMonitor,
   LuPhone,
+  LuStar,
   LuVideo,
 } from 'react-icons/lu';
 import type { IconType } from 'react-icons';
-import { fetchInterviews } from '../api/endpoints';
-import type { Interview, InterviewMode } from '../api/types';
+import { fetchInterviews, updateInterview } from '../api/endpoints';
+import type { Interview, InterviewMode, InterviewStatus } from '../api/types';
 import { Alert, Button, Card, Spinner } from '../components/ui';
 import ScheduleInterviewDialog from '../components/ScheduleInterviewDialog';
 
@@ -95,12 +99,37 @@ export default function SchedulerPage() {
       .slice(0, 8);
   }, [interviews]);
 
+  // Interviews whose time has passed but are still marked "scheduled" — they need an outcome.
+  const awaitingOutcome = useMemo(() => {
+    const now = Date.now();
+    return interviews
+      .filter(
+        (iv) =>
+          iv.status === 'scheduled' &&
+          new Date(iv.scheduledAt).getTime() + iv.durationMinutes * 60000 < now,
+      )
+      .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+  }, [interviews]);
+
   const days = calendarDays(viewMonth);
   const today = new Date();
 
   function afterChange() {
     setDialog(null);
     load();
+  }
+
+  // Record an interview outcome inline (Completed / No-show), then refresh.
+  async function markOutcome(iv: Interview, status: InterviewStatus) {
+    setError(null);
+    const prev = interviews;
+    setInterviews((list) => list.map((x) => (x.id === iv.id ? { ...x, status } : x)));
+    try {
+      await updateInterview(iv.id, { status, notifyCandidate: false });
+    } catch {
+      setInterviews(prev);
+      setError('Could not update the interview. Please try again.');
+    }
   }
 
   return (
@@ -124,6 +153,72 @@ export default function SchedulerPage() {
       </div>
 
       {error && <Alert kind="error">{error}</Alert>}
+
+      {awaitingOutcome.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/60 p-4">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-100 text-amber-600">
+              <LuClipboardCheck className="h-3.5 w-3.5" />
+            </span>
+            <h2 className="text-sm font-semibold text-slate-800">Awaiting outcome</h2>
+            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-700">
+              {awaitingOutcome.length}
+            </span>
+          </div>
+          <p className="mb-3 text-xs text-slate-500">
+            These interviews have passed — record how they went, then add a scorecard.
+          </p>
+          <ul className="space-y-2">
+            {awaitingOutcome.map((iv) => (
+              <li
+                key={iv.id}
+                className="flex flex-wrap items-center gap-3 rounded-lg border border-amber-100 bg-white p-2.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-800">
+                    {iv.candidateName ?? 'Candidate'}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    {new Date(iv.scheduledAt).toLocaleString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                    {iv.jobTitle ? ` · ${iv.jobTitle}` : ''}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => void markOutcome(iv, 'completed')}
+                    className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-200"
+                  >
+                    <LuCheck className="h-3.5 w-3.5" />
+                    Completed
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void markOutcome(iv, 'no_show')}
+                    className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-200"
+                  >
+                    <LuBan className="h-3.5 w-3.5" />
+                    No-show
+                  </button>
+                  <Link
+                    to={`/hr/candidates/${iv.candidateId}`}
+                    className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-brand-600 transition hover:bg-brand-50"
+                  >
+                    <LuStar className="h-3.5 w-3.5" />
+                    Add rating
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Calendar */}
@@ -320,5 +415,10 @@ export default function SchedulerPage() {
 function pillCls(iv: Interview): string {
   if (iv.status === 'canceled') return 'bg-slate-100 text-slate-400 line-through';
   if (iv.status === 'completed') return 'bg-emerald-100 text-emerald-700';
+  if (iv.status === 'no_show') return 'bg-rose-100 text-rose-700';
+  // Still scheduled but the time has passed → needs an outcome.
+  if (new Date(iv.scheduledAt).getTime() + iv.durationMinutes * 60000 < Date.now()) {
+    return 'bg-amber-100 text-amber-700 hover:bg-amber-200';
+  }
   return 'bg-brand-100 text-brand-700 hover:bg-brand-200';
 }

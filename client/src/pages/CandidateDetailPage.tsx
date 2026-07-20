@@ -32,6 +32,7 @@ import {
   reanalyzeCandidate,
   resendCandidateEmail,
   updateCandidateStage,
+  updateInterview,
 } from '../api/endpoints';
 import { useAuth } from '../auth/AuthContext';
 import StarRating from '../components/StarRating';
@@ -43,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import { API_BASE, getToken } from '../api/client';
+import { fmtInTz, tzAbbrev, viewerTz } from '@/lib/utils';
 import type {
   Candidate,
   CandidateNote,
@@ -156,6 +158,15 @@ export default function CandidateDetailPage() {
     try {
       await deleteCandidateNote(id, noteId);
       loadNotes();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function markInterviewOutcome(interviewId: string, status: 'completed' | 'no_show') {
+    try {
+      await updateInterview(interviewId, { status, notifyCandidate: false });
+      loadInterviews();
     } catch {
       /* ignore */
     }
@@ -795,30 +806,43 @@ export default function CandidateDetailPage() {
                 Schedule
               </button>
             </div>
-            {c.availabilitySlots && c.availabilitySlots.length > 0 && (
-              <div className="mb-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                <p className="mb-1.5 text-xs font-medium text-slate-500">
-                  Candidate&apos;s preferred times
-                </p>
-                <ul className="space-y-1">
-                  {c.availabilitySlots.map((iso, i) => (
-                    <li key={i} className="flex items-center gap-1.5 text-sm text-slate-700">
-                      <LuCalendarClock className="h-3.5 w-3.5 text-slate-400" />
-                      {new Date(iso).toLocaleString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-1.5 text-[11px] text-slate-400">
-                  Shown in your timezone. Use “Schedule” to pick one.
-                </p>
-              </div>
-            )}
+            {c.availabilitySlots && c.availabilitySlots.length > 0 && (() => {
+              const me = viewerTz();
+              // Slots were submitted in the candidate's zone; fall back to the
+              // viewer's zone for older applications that predate timezone capture.
+              const candTz = c.timezone || me;
+              const differs = Boolean(c.timezone && me && c.timezone !== me);
+              return (
+                <div className="mb-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+                  <p className="mb-1.5 text-xs font-medium text-slate-500">
+                    Candidate&apos;s preferred times
+                  </p>
+                  <ul className="space-y-1.5">
+                    {c.availabilitySlots.map((iso, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-sm text-slate-700">
+                        <LuCalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                        <span>
+                          {fmtInTz(iso, candTz)}{' '}
+                          <span className="text-slate-400">
+                            {tzAbbrev(new Date(iso), candTz)}
+                          </span>
+                          {differs && (
+                            <span className="block text-[11px] text-slate-400">
+                              = {fmtInTz(iso, me)} {tzAbbrev(new Date(iso), me)} your time
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-1.5 text-[11px] text-slate-400">
+                    {c.timezone
+                      ? `Candidate's local time (${c.timezone}). Use “Schedule” to pick one.`
+                      : 'Shown in your timezone. Use “Schedule” to pick one.'}
+                  </p>
+                </div>
+              );
+            })()}
 
             {interviews.length === 0 ? (
               <p className="text-sm text-slate-400">No interviews scheduled yet.</p>
@@ -827,6 +851,9 @@ export default function CandidateDetailPage() {
                 {interviews.map((iv) => {
                   const d = new Date(iv.scheduledAt);
                   const upcoming = iv.status === 'scheduled' && d.getTime() >= Date.now();
+                  const needsOutcome =
+                    iv.status === 'scheduled' &&
+                    d.getTime() + iv.durationMinutes * 60000 < Date.now();
                   return (
                     <li key={iv.id}>
                       <button
@@ -845,6 +872,7 @@ export default function CandidateDetailPage() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-slate-700">
                             {d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                            <span className="ml-1 font-normal text-slate-400">{tzAbbrev(d)}</span>
                             <span className="ml-1.5 font-normal capitalize text-slate-400">
                               · {iv.mode}
                             </span>
@@ -863,9 +891,31 @@ export default function CandidateDetailPage() {
                             iv.status,
                           )}`}
                         >
-                          {iv.status}
+                          {interviewStatusLabel(iv.status)}
                         </span>
                       </button>
+                      {needsOutcome && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50/60 px-2.5 py-1.5">
+                          <span className="mr-auto text-[11px] font-medium text-amber-700">
+                            How did it go?
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void markInterviewOutcome(iv.id, 'completed')}
+                            className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 transition hover:bg-emerald-200"
+                          >
+                            <LuCheck className="h-3 w-3" />
+                            Completed
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void markInterviewOutcome(iv.id, 'no_show')}
+                            className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-200"
+                          >
+                            No-show
+                          </button>
+                        </div>
+                      )}
                     </li>
                   );
                 })}
@@ -1056,8 +1106,13 @@ export default function CandidateDetailPage() {
 
 function interviewStatusCls(status: string): string {
   if (status === 'completed') return 'bg-emerald-100 text-emerald-700';
+  if (status === 'no_show') return 'bg-rose-100 text-rose-700';
   if (status === 'canceled') return 'bg-slate-100 text-slate-500';
   return 'bg-violet-100 text-violet-700';
+}
+
+function interviewStatusLabel(status: string): string {
+  return status === 'no_show' ? 'no-show' : status;
 }
 
 // Colour + label per interview-question focus.

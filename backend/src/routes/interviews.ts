@@ -32,6 +32,7 @@ const selection = {
   candidateName: candidates.fullName,
   candidateEmail: candidates.email,
   candidateStage: candidates.stage,
+  candidateTimezone: candidates.timezone,
   jobTitle: jobs.title,
 };
 
@@ -62,6 +63,7 @@ async function emailCandidate(row: JoinedInterview, kind: CandidateInterviewKind
       durationMinutes: row.durationMinutes,
       mode: row.mode,
       location: row.location,
+      timezone: row.candidateTimezone,
       sequence: kind === 'invite' ? 0 : 1,
     });
   } catch (err) {

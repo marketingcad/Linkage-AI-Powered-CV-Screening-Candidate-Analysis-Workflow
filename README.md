@@ -19,26 +19,16 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## Recent updates
 
-- Scheduler — pin candidates to a calendar and get an in-app + email reminder before each interview.
-- Candidate interview invitations — candidates are automatically emailed the date, time, meeting link, and a calendar (.ics) invite when you schedule (and a notice if you reschedule or cancel).
-- New-application alerts — recruiters are emailed the moment a candidate applies, with the source, AI score, recommendation, and a one-click link to review.
-- Notification bell — a header bell shows newly-applied candidates in a dropdown with unread dots that clear as you open each one.
-- Dark mode — a polished “midnight navy” dark theme with a header toggle; your choice is remembered.
-- Team review — record internal notes and a 1–5 scorecard per candidate, and see the human score next to the AI score when making a decision.
-- Quick job actions — a per-job ⋮ menu on the Jobs page to set a position Available / Unavailable (or Draft), duplicate it as a draft, or delete it; plus filter by status and sort the list.
-- Friendly closed/expired apply pages — a closed role shows a branded “applications are closed” message (with the role name), and a bad link shows a clear “position not found”, instead of a raw error.
-- Candidate availability — applicants can propose up to 3 preferred interview times on the apply form, shown to recruiters as one-tap options when scheduling.
-- AI interview questions — a tailored interview kit for any candidate in one click.
-- Explainable scoring — a clear “why this score”, with the exact quotes from the CV.
-- Custom ranking weights — set what matters most per role and re-rank instantly.
-- Candidate comparison + PDF report — compare a shortlist and export a clean report.
-- Bulk CV upload — screen a whole batch of CVs at once.
-- Talent-pool matching — resurface strong past applicants for a new role.
-- Duplicate detection — automatically flag people who applied more than once.
-- Smart filters & search — find the right candidates in seconds.
-- Recruitment analytics — pipeline, sources, and score insights on the dashboard.
-- Two-factor sign-in — optional authenticator-app security for recruiters.
-- Fresh look — new Linkage ScreenAI branding and a polished, responsive interface.
+- Interview scheduling — book interviews on a calendar, auto-email candidates their invite, and get a reminder before each one. Warns you about double-bookings.
+- Email alerts & notifications — recruiters are emailed when someone applies, plus a header bell that flags new candidates.
+- Team reviews — add private notes and a 1–5 rating per candidate, shown next to the AI score.
+- Interview outcomes — mark interviews Completed or No-show and leave a quick scorecard.
+- Smarter hiring tools — tailored interview questions, a clear "why this score", adjustable ranking priorities, side-by-side comparison, and exportable PDF reports.
+- Faster screening — upload CVs in bulk, resurface strong past applicants, auto-flag duplicate applications, and filter or search candidates instantly.
+- Easier job management — quick per-job actions (available, unavailable, duplicate, delete) and friendly pages when a role is closed or a link is broken.
+- Candidate availability — applicants can suggest preferred interview times right on the application form, captured in their own timezone and shown to recruiters in both zones (invites, too).
+- Analytics dashboard — see your pipeline, application sources, and score trends at a glance.
+- Security & polish — optional two-factor sign-in, a new dark mode, and refreshed Linkage ScreenAI branding.
 
 ## Tech stack
 

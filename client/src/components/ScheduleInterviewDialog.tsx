@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LuCalendarClock, LuSearch, LuTrash2, LuUser } from 'react-icons/lu';
+import { LuCalendarClock, LuSearch, LuTrash2, LuTriangleAlert, LuUser } from 'react-icons/lu';
 import {
   createInterview,
   deleteInterview,
   fetchCandidates,
+  fetchInterviews,
   updateInterview,
   type EmailResult,
   type InterviewInput,
@@ -85,6 +86,28 @@ export default function ScheduleInterviewDialog({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Existing scheduled interviews, to warn about double-booking (non-blocking).
+  const [allInterviews, setAllInterviews] = useState<Interview[]>([]);
+  useEffect(() => {
+    fetchInterviews({ status: 'scheduled' })
+      .then((r) => setAllInterviews(r.interviews))
+      .catch(() => {
+        /* conflict check is best-effort */
+      });
+  }, []);
+
+  const conflicts = useMemo(() => {
+    if (!date || !time) return [];
+    const start = new Date(`${date}T${time}`).getTime();
+    if (Number.isNaN(start)) return [];
+    const end = start + duration * 60000;
+    return allInterviews.filter((iv) => {
+      if (existing && iv.id === existing.id) return false; // don't clash with itself
+      const s = new Date(iv.scheduledAt).getTime();
+      return s < end && s + iv.durationMinutes * 60000 > start; // time windows overlap
+    });
+  }, [allInterviews, date, time, duration, existing]);
 
   async function handleDelete() {
     if (!existing) return;
@@ -292,6 +315,7 @@ export default function ScheduleInterviewDialog({
                 >
                   <option value="scheduled">Scheduled</option>
                   <option value="completed">Completed</option>
+                  <option value="no_show">No-show</option>
                   <option value="canceled">Canceled</option>
                 </select>
               </Field>
@@ -323,6 +347,33 @@ export default function ScheduleInterviewDialog({
                 </span>
               </span>
             </label>
+
+            {conflicts.length > 0 && (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-500/40 dark:bg-amber-500/10">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-800 dark:text-amber-300">
+                  <LuTriangleAlert className="h-4 w-4" />
+                  Possible scheduling conflict
+                </p>
+                <ul className="mt-1.5 space-y-1 text-xs text-amber-700 dark:text-amber-200/90">
+                  {conflicts.map((iv) => (
+                    <li key={iv.id}>
+                      Overlaps with <b>{iv.candidateName ?? 'another interview'}</b> at{' '}
+                      {new Date(iv.scheduledAt).toLocaleString('en-US', {
+                        weekday: 'short',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                      {selected && iv.candidateId === selected.id
+                        ? ' — this candidate is already booked then'
+                        : ''}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-300/70">
+                  You can still schedule if this is intentional.
+                </p>
+              </div>
+            )}
 
             {error && <Alert kind="error">{error}</Alert>}
           </div>

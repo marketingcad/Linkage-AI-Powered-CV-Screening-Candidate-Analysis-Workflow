@@ -204,6 +204,8 @@ export const candidates = pgTable('candidates', {
   coverNote: text('cover_note'),
   // Candidate-proposed slots for an initial interview (ISO timestamps, up to 3).
   availabilitySlots: jsonb('availability_slots').$type<string[]>(),
+  // The candidate's IANA timezone (e.g. "America/New_York") — proposed slots are in it.
+  timezone: varchar('timezone', { length: 64 }),
 
   // Which platform / channel the applicant came from (indeed, linkedin, jobstreet, direct, …)
   source: varchar('source', { length: 100 }).notNull().default('direct'),

@@ -274,6 +274,8 @@ export interface Candidate extends CandidateSummary {
   coverNote: string | null;
   /** Candidate-proposed interview slots (ISO timestamps, up to 3). */
   availabilitySlots: string[] | null;
+  /** Candidate's IANA timezone (e.g. "America/New_York") — the slots above are in it. */
+  timezone: string | null;
   cvFilename: string | null;
   cvStoragePath: string | null;
   cvText: string | null;
@@ -327,7 +329,7 @@ export interface CandidateNote {
 }
 
 export type InterviewMode = 'video' | 'onsite' | 'phone';
-export type InterviewStatus = 'scheduled' | 'completed' | 'canceled';
+export type InterviewStatus = 'scheduled' | 'completed' | 'canceled' | 'no_show';
 
 /** A scheduled interview pinned to the calendar (with candidate + job info joined). */
 export interface Interview {
