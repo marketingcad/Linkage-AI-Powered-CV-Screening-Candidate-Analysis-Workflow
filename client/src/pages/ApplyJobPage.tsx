@@ -26,6 +26,8 @@ export default function ApplyJobPage() {
   const [noticePeriod, setNoticePeriod] = useState('');
   const [expectedSalary, setExpectedSalary] = useState('');
   const [coverNote, setCoverNote] = useState('');
+  // Up to 3 candidate-proposed initial-interview slots (datetime-local strings).
+  const [slots, setSlots] = useState<string[]>(['', '', '']);
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [prefilling, setPrefilling] = useState(false);
@@ -54,6 +56,12 @@ export default function ApplyJobPage() {
 
   const quiz = job?.quiz ?? [];
   const totalPoints = useMemo(() => quiz.reduce((s, q) => s + q.points, 0), [quiz]);
+  // Earliest selectable slot (now), formatted for a datetime-local input.
+  const minLocal = useMemo(() => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }, []);
 
   function pickFile(f: File | null) {
     setError(null);
@@ -145,6 +153,13 @@ export default function ApplyJobPage() {
     if (noticePeriod) form.append('noticePeriod', noticePeriod);
     if (expectedSalary) form.append('expectedSalary', expectedSalary);
     if (coverNote) form.append('coverNote', coverNote);
+    // Convert filled datetime-local slots (local time) to ISO, keep order, drop blanks.
+    const availabilitySlots = slots
+      .filter((s) => s.trim())
+      .map((s) => new Date(s).toISOString());
+    if (availabilitySlots.length) {
+      form.append('availabilitySlots', JSON.stringify(availabilitySlots));
+    }
     form.append('source', source);
     form.append('quizAnswers', JSON.stringify(quizAnswers));
     form.append('cv', file);
@@ -317,6 +332,32 @@ export default function ApplyJobPage() {
               <p className="text-xs text-slate-400">
                 Only name, email, and CV are required — the rest help us evaluate you faster.
               </p>
+            </Card>
+
+            {/* Preferred interview times */}
+            <Card className="space-y-4 p-6">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-800">Preferred interview times</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Suggest up to 3 date &amp; time options that work for an initial interview. Optional —
+                  it helps us schedule faster. Use your own local timezone.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {slots.map((val, i) => (
+                  <Field key={i} label={`Option ${i + 1}`}>
+                    <input
+                      type="datetime-local"
+                      value={val}
+                      min={minLocal}
+                      onChange={(e) =>
+                        setSlots((prev) => prev.map((s, idx) => (idx === i ? e.target.value : s)))
+                      }
+                      className={inputCls}
+                    />
+                  </Field>
+                ))}
+              </div>
             </Card>
 
             {/* Quiz / exam */}

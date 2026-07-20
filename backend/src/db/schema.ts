@@ -202,6 +202,8 @@ export const candidates = pgTable('candidates', {
   noticePeriod: varchar('notice_period', { length: 100 }),
   expectedSalary: varchar('expected_salary', { length: 100 }),
   coverNote: text('cover_note'),
+  // Candidate-proposed slots for an initial interview (ISO timestamps, up to 3).
+  availabilitySlots: jsonb('availability_slots').$type<string[]>(),
 
   // Which platform / channel the applicant came from (indeed, linkedin, jobstreet, direct, …)
   source: varchar('source', { length: 100 }).notNull().default('direct'),

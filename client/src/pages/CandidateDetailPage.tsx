@@ -618,6 +618,31 @@ export default function CandidateDetailPage() {
                 Schedule
               </button>
             </div>
+            {c.availabilitySlots && c.availabilitySlots.length > 0 && (
+              <div className="mb-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+                <p className="mb-1.5 text-xs font-medium text-slate-500">
+                  Candidate&apos;s preferred times
+                </p>
+                <ul className="space-y-1">
+                  {c.availabilitySlots.map((iso, i) => (
+                    <li key={i} className="flex items-center gap-1.5 text-sm text-slate-700">
+                      <LuCalendarClock className="h-3.5 w-3.5 text-slate-400" />
+                      {new Date(iso).toLocaleString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 text-[11px] text-slate-400">
+                  Shown in your timezone. Use “Schedule” to pick one.
+                </p>
+              </div>
+            )}
+
             {interviews.length === 0 ? (
               <p className="text-sm text-slate-400">No interviews scheduled yet.</p>
             ) : (
@@ -816,6 +841,7 @@ export default function CandidateDetailPage() {
       {scheduling && (
         <ScheduleInterviewDialog
           candidate={{ id: c.id, fullName: c.fullName }}
+          suggestedSlots={c.availabilitySlots ?? []}
           onClose={() => setScheduling(false)}
           onSaved={(iv, email) => {
             setScheduling(false);

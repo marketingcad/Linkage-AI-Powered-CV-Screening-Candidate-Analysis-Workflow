@@ -254,6 +254,8 @@ export interface Candidate extends CandidateSummary {
   noticePeriod: string | null;
   expectedSalary: string | null;
   coverNote: string | null;
+  /** Candidate-proposed interview slots (ISO timestamps, up to 3). */
+  availabilitySlots: string[] | null;
   cvFilename: string | null;
   cvStoragePath: string | null;
   cvText: string | null;

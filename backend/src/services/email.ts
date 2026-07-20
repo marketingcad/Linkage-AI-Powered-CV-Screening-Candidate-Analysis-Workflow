@@ -4,6 +4,18 @@ import { logger } from '../lib/logger.js';
 import { statusFor, type StageKey } from '../lib/applicantStatus.js';
 import { db } from '../db/client.js';
 import { emailLogs } from '../db/schema.js';
+import { LOGO_PNG_BASE64 } from './logoAsset.js';
+
+// Inline logo shared by every template (referenced as <img src="cid:...">).
+const LOGO_CID = 'linkagelogo';
+function logoAttachment() {
+  return {
+    filename: 'linkage.png',
+    content: Buffer.from(LOGO_PNG_BASE64, 'base64'),
+    cid: LOGO_CID,
+    contentDisposition: 'inline' as const,
+  };
+}
 
 export type EmailType = 'application_received' | 'status_update';
 
@@ -57,7 +69,7 @@ async function sendEmail(opts: {
     return { sent: false, skipped: true };
   }
   try {
-    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text });
+    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text, attachments: [logoAttachment()] });
     logger.info({ to, subject }, '[email] sent');
     await recordLog(candidateId, type, to, subject, 'sent');
     return { sent: true };
@@ -77,7 +89,7 @@ export function trackingUrl(token: string): string {
 // Templates
 // ---------------------------------------------------------------------------
 
-const BRAND = 'ScreenAI';
+const BRAND = 'Linkage ScreenAI';
 const ACCENT = '#3366f0';
 
 function layout(opts: {
@@ -107,8 +119,8 @@ function layout(opts: {
         <tr><td style="padding:24px 32px 8px;">
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="width:36px;height:36px;background:${ACCENT};border-radius:9px;color:#fff;font-weight:700;font-size:14px;text-align:center;vertical-align:middle;">CV</td>
-              <td style="padding-left:10px;font-weight:700;color:#0f172a;font-size:16px;">${BRAND} Careers</td>
+              <td style="width:36px;vertical-align:middle;"><img src="cid:${LOGO_CID}" width="36" height="36" alt="Linkage ScreenAI" style="display:block;border-radius:9px;" /></td>
+              <td style="padding-left:10px;font-weight:700;color:#0f172a;font-size:16px;">${BRAND}</td>
             </tr>
           </table>
         </td></tr>
@@ -122,7 +134,7 @@ function layout(opts: {
           </table>
         </td></tr>
         <tr><td style="padding:16px 32px 26px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.5;">
-          This is an automated message from ${BRAND} Careers. Please do not reply to this email.
+          This is an automated message from ${BRAND}. Please do not reply to this email.
         </td></tr>
       </table>
     </td></tr>
@@ -144,7 +156,7 @@ export function applicationReceivedEmail(name: string, jobTitle: string, token: 
     ctaLabel: 'Track your application',
     ctaUrl: url,
   });
-  const text = `Hi ${name},\n\nThank you for applying for the ${jobTitle} position. We've received your application and our team is reviewing it.\n\nTrack your application: ${url}\n\n— ${BRAND} Careers`;
+  const text = `Hi ${name},\n\nThank you for applying for the ${jobTitle} position. We've received your application and our team is reviewing it.\n\nTrack your application: ${url}\n\n— ${BRAND}`;
   return { subject, html, text };
 }
 
@@ -161,7 +173,7 @@ export function statusUpdateEmail(name: string, jobTitle: string, stage: StageKe
     ctaLabel: 'View application status',
     ctaUrl: url,
   });
-  const text = `Hi ${name},\n\nUpdate on your application for ${jobTitle}: ${status.label}.\n${status.message}\n\nView status: ${url}\n\n— ${BRAND} Careers`;
+  const text = `Hi ${name},\n\nUpdate on your application for ${jobTitle}: ${status.label}.\n${status.message}\n\nView status: ${url}\n\n— ${BRAND}`;
   return { subject, html, text };
 }
 
@@ -253,7 +265,7 @@ export async function sendInterviewReminder(
     return { sent: false, skipped: true };
   }
   try {
-    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text });
+    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text, attachments: [logoAttachment()] });
     logger.info({ to, subject }, '[email] interview reminder sent');
     return { sent: true };
   } catch (err) {
@@ -331,7 +343,7 @@ export async function sendNewApplicationAlert(
     return { sent: false, skipped: true };
   }
   try {
-    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text });
+    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text, attachments: [logoAttachment()] });
     logger.info({ to, subject }, '[email] new-application alert sent');
     return { sent: true };
   } catch (err) {
@@ -447,7 +459,7 @@ function candidateInterviewEmail(kind: CandidateInterviewKind, info: CandidateIn
         Your interview for the <b>${escapeHtml(role)}</b> position, previously scheduled for
         <b>${escapeHtml(when)}</b>, has been canceled. We'll be in touch about next steps.`,
     });
-    const text = `Hi ${info.candidateName},\n\nYour interview for ${role} (previously ${when}) has been canceled. We'll be in touch about next steps.\n\n— ${BRAND} Careers`;
+    const text = `Hi ${info.candidateName},\n\nYour interview for ${role} (previously ${when}) has been canceled. We'll be in touch about next steps.\n\n— ${BRAND}`;
     return { subject, html, text };
   }
 
@@ -490,7 +502,7 @@ function candidateInterviewEmail(kind: CandidateInterviewKind, info: CandidateIn
     info.location ? `${linkIsUrl ? 'Join link' : 'Where'}: ${info.location}` : '',
     '',
     'A calendar invitation is attached.',
-    `— ${BRAND} Careers`,
+    `— ${BRAND}`,
   ]
     .filter(Boolean)
     .join('\n');
@@ -530,6 +542,7 @@ export async function sendCandidateInterviewEmail(
       html,
       text,
       attachments: [
+        logoAttachment(),
         {
           filename: 'interview.ics',
           content: ics,

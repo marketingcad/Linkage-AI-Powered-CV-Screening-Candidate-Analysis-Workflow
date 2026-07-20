@@ -68,13 +68,20 @@ applicationsRouter.post('/prefill', upload.single('cv'), async (req, res) => {
 applicationsRouter.post('/', upload.single('cv'), async (req, res) => {
   if (!req.file) throw badRequest('A CV file (field name "cv") is required.');
 
-  // quizAnswers arrives as a JSON string over multipart/form-data.
+  // quizAnswers and availabilitySlots arrive as JSON strings over multipart/form-data.
   const body: Record<string, unknown> = { ...req.body };
   if (typeof body.quizAnswers === 'string') {
     try {
       body.quizAnswers = JSON.parse(body.quizAnswers);
     } catch {
       throw badRequest('quizAnswers must be valid JSON.');
+    }
+  }
+  if (typeof body.availabilitySlots === 'string') {
+    try {
+      body.availabilitySlots = JSON.parse(body.availabilitySlots);
+    } catch {
+      throw badRequest('availabilitySlots must be valid JSON.');
     }
   }
   // Drop empty optional fields so they validate as "omitted" rather than "".
@@ -117,6 +124,9 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res) => {
       noticePeriod: input.noticePeriod ?? null,
       expectedSalary: input.expectedSalary ?? null,
       coverNote: input.coverNote ?? null,
+      availabilitySlots: input.availabilitySlots?.length
+        ? input.availabilitySlots.map((d) => d.toISOString())
+        : null,
       source: normalizeSource(input.source),
       cvFilename: filename,
       cvStoragePath: storagePath,

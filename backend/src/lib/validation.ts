@@ -136,6 +136,8 @@ export const applicationSchema = z.object({
   coverNote: z.string().max(5000).optional(),
   source: z.string().max(100).optional(),
   quizAnswers: z.array(quizAnswerSchema).max(30).optional(),
+  // Candidate's up-to-3 preferred initial-interview slots (accepts ISO date strings).
+  availabilitySlots: z.array(z.coerce.date()).max(3).optional(),
 });
 
 export const updateStageSchema = z.object({

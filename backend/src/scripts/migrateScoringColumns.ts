@@ -19,6 +19,7 @@ async function main() {
   await client`ALTER TABLE candidates ADD COLUMN IF NOT EXISTS education_score integer`;
   await client`ALTER TABLE candidates ADD COLUMN IF NOT EXISTS score_explanations jsonb`;
   await client`ALTER TABLE candidates ADD COLUMN IF NOT EXISTS interview_questions jsonb`;
+  await client`ALTER TABLE candidates ADD COLUMN IF NOT EXISTS availability_slots jsonb`;
 
   // Scheduler: interviews pinned to the calendar (with reminders).
   await client`

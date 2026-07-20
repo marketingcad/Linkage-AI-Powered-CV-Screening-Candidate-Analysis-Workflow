@@ -45,6 +45,7 @@ export default function ScheduleInterviewDialog({
   candidate,
   existing,
   defaultDate,
+  suggestedSlots,
   onClose,
   onSaved,
   onDeleted,
@@ -55,6 +56,8 @@ export default function ScheduleInterviewDialog({
   existing?: Interview;
   /** Pre-selected calendar day (YYYY-MM-DD) when creating from the calendar. */
   defaultDate?: string;
+  /** Candidate-proposed interview slots (ISO) offered as one-tap quick-picks. */
+  suggestedSlots?: string[];
   onClose: () => void;
   onSaved: (interview: Interview, email?: EmailResult) => void;
   onDeleted?: (id: string) => void;
@@ -192,6 +195,43 @@ export default function ScheduleInterviewDialog({
                 />
               </Field>
             </div>
+
+            {suggestedSlots && suggestedSlots.length > 0 && (
+              <div className="rounded-lg border border-brand-100 bg-brand-50/50 p-3">
+                <p className="mb-1.5 text-xs font-medium text-slate-600">
+                  Candidate suggested these times — tap to use one:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestedSlots.map((iso, i) => {
+                    const p = toLocalParts(iso);
+                    const active = date === p.date && time === p.time;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setDate(p.date);
+                          setTime(p.time);
+                        }}
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                          active
+                            ? 'bg-brand-500 text-white'
+                            : 'bg-white text-brand-700 ring-1 ring-brand-200 hover:bg-brand-100'
+                        }`}
+                      >
+                        {new Date(iso).toLocaleString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Duration">
