@@ -25,6 +25,8 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 - Notification bell — a header bell shows newly-applied candidates in a dropdown with unread dots that clear as you open each one.
 - Dark mode — a polished “midnight navy” dark theme with a header toggle; your choice is remembered.
 - Team review — record internal notes and a 1–5 scorecard per candidate, and see the human score next to the AI score when making a decision.
+- Quick job actions — a per-job ⋮ menu on the Jobs page to set a position Available / Unavailable (or Draft), duplicate it as a draft, or delete it; plus filter by status and sort the list.
+- Friendly closed/expired apply pages — a closed role shows a branded “applications are closed” message (with the role name), and a bad link shows a clear “position not found”, instead of a raw error.
 - Candidate availability — applicants can propose up to 3 preferred interview times on the apply form, shown to recruiters as one-tap options when scheduling.
 - AI interview questions — a tailored interview kit for any candidate in one click.
 - Explainable scoring — a clear “why this score”, with the exact quotes from the CV.

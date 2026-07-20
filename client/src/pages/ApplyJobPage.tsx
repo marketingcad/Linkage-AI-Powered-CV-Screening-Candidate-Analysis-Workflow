@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { LuCircleHelp, LuLockKeyhole } from 'react-icons/lu';
 import { fetchPublicJob, prefillFromCv, submitApplication } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import type { PublicJob, QuizAnswer } from '../api/types';
@@ -14,6 +15,8 @@ export default function ApplyJobPage() {
   const [job, setJob] = useState<PublicJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // A real role that isn't open ('closed'), or a bad/expired link ('notfound').
+  const [unavailable, setUnavailable] = useState<{ kind: 'closed' | 'notfound'; title?: string } | null>(null);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -43,14 +46,17 @@ export default function ApplyJobPage() {
   useEffect(() => {
     if (!jobId) return;
     fetchPublicJob(jobId)
-      .then((res) => setJob(res.job))
-      .catch((err) =>
-        setLoadError(
-          err instanceof ApiError && err.status === 404
-            ? 'This position is no longer accepting applications.'
-            : 'Could not load this position. Is the API running?',
-        ),
-      )
+      .then((res) => {
+        if (res.accepting) setJob(res.job);
+        else setUnavailable({ kind: 'closed', title: res.job.title });
+      })
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 404) {
+          setUnavailable({ kind: 'notfound' });
+        } else {
+          setLoadError('Could not load this position. Is the API running?');
+        }
+      })
       .finally(() => setLoading(false));
   }, [jobId]);
 
@@ -183,6 +189,50 @@ export default function ApplyJobPage() {
       <div className="mx-auto max-w-4xl px-6 py-10">
         {loading ? (
           <Spinner label="Loading position…" />
+        ) : unavailable ? (
+          <Card className="mx-auto max-w-lg p-10 text-center">
+            <div
+              className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${
+                unavailable.kind === 'closed'
+                  ? 'bg-amber-100 text-amber-600'
+                  : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              {unavailable.kind === 'closed' ? (
+                <LuLockKeyhole className="h-6 w-6" />
+              ) : (
+                <LuCircleHelp className="h-6 w-6" />
+              )}
+            </div>
+            {unavailable.kind === 'closed' ? (
+              <>
+                <h1 className="font-display text-xl font-semibold text-slate-900">
+                  Applications are closed
+                </h1>
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                  {unavailable.title ? (
+                    <>
+                      The <span className="font-medium text-slate-700">{unavailable.title}</span>{' '}
+                      position is no longer accepting applications.
+                    </>
+                  ) : (
+                    'This position is no longer accepting applications.'
+                  )}{' '}
+                  Thank you for your interest — please check back for future openings.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="font-display text-xl font-semibold text-slate-900">
+                  Position not found
+                </h1>
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                  This application link may be invalid or has expired. Please double-check the link
+                  from the job posting.
+                </p>
+              </>
+            )}
+          </Card>
         ) : loadError ? (
           <Alert kind="error">{loadError}</Alert>
         ) : done ? (

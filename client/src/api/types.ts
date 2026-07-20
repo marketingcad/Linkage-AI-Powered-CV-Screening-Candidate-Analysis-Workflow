@@ -75,6 +75,20 @@ export interface PublicJobListItem {
   quizCount: number;
 }
 
+/** Minimal public info for a role that isn't accepting applications. */
+export interface ClosedPublicJob {
+  id: string;
+  title: string;
+  department: string | null;
+  location: string | null;
+  employmentType: string | null;
+}
+
+/** Response from the public job endpoint — either open (full) or not accepting. */
+export type PublicJobResponse =
+  | { accepting: true; job: PublicJob }
+  | { accepting: false; job: ClosedPublicJob };
+
 /** Full public job (single) shown on the application page — includes the sanitized quiz. */
 export interface PublicJob {
   id: string;

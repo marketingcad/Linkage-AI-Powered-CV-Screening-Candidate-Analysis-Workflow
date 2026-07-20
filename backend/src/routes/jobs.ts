@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { client, db } from '../db/client.js';
 import { candidates, jobs, type QuizQuestion } from '../db/schema.js';
 import { createJobSchema, generateQuizSchema, updateJobSchema } from '../lib/validation.js';
@@ -50,15 +50,28 @@ jobsRouter.get('/public', async (_req, res) => {
 });
 
 jobsRouter.get('/public/:id', async (req, res) => {
-  const [job] = await db
-    .select()
-    .from(jobs)
-    .where(and(eq(jobs.id, req.params.id), eq(jobs.status, 'open')))
-    .limit(1);
-  if (!job) throw notFound('Job not found or not open');
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, req.params.id)).limit(1);
+  if (!job) throw notFound('Job not found');
+
+  // A real position that isn't open → tell the applicant it's closed (with context)
+  // rather than a bare 404. Only minimal, non-sensitive fields are exposed.
+  if (job.status !== 'open') {
+    res.json({
+      accepting: false,
+      job: {
+        id: job.id,
+        title: job.title,
+        department: job.department,
+        location: job.location,
+        employmentType: job.employmentType,
+      },
+    });
+    return;
+  }
+
   // Never expose correct answers/rubrics to applicants.
   const { quiz, ...rest } = job;
-  res.json({ job: { ...rest, quiz: sanitizeQuizForApplicant(quiz) } });
+  res.json({ accepting: true, job: { ...rest, quiz: sanitizeQuizForApplicant(quiz) } });
 });
 
 // --- Everything below requires HR authentication ----------------------------
@@ -198,6 +211,43 @@ jobsRouter.put('/:id', async (req, res) => {
   }
 
   res.json({ job });
+});
+
+// Clone a job (requirements, skills, quiz, weights) as a new draft.
+jobsRouter.post('/:id/duplicate', async (req, res) => {
+  const [orig] = await db.select().from(jobs).where(eq(jobs.id, req.params.id)).limit(1);
+  if (!orig) throw notFound('Job not found');
+
+  const [copy] = await db
+    .insert(jobs)
+    .values({
+      title: `${orig.title} (Copy)`,
+      department: orig.department,
+      location: orig.location,
+      employmentType: orig.employmentType,
+      description: orig.description,
+      requiredSkills: orig.requiredSkills,
+      niceToHaveSkills: orig.niceToHaveSkills,
+      minYearsExperience: orig.minYearsExperience,
+      educationRequirement: orig.educationRequirement,
+      quiz: orig.quiz,
+      scoringWeights: orig.scoringWeights,
+      status: 'draft', // start hidden until the recruiter reviews it
+      createdBy: req.user!.sub,
+    })
+    .returning();
+  if (!copy) throw new Error('Failed to duplicate job');
+
+  void recordAudit({
+    actorEmail: req.user?.email ?? null,
+    action: 'job.duplicate',
+    targetType: 'job',
+    targetId: copy.id,
+    detail: `Duplicated "${orig.title}"`,
+    ip: req.ip ?? null,
+  });
+
+  res.status(201).json({ job: copy });
 });
 
 jobsRouter.delete('/:id', async (req, res) => {

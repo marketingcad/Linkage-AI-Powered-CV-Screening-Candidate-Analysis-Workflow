@@ -12,7 +12,7 @@ import type {
   Job,
   JobStatus,
   JobSummary,
-  PublicJob,
+  PublicJobResponse,
   PublicJobListItem,
   Interview,
   InterviewMode,
@@ -88,7 +88,7 @@ export function fetchPublicJobs() {
   return apiRequest<{ jobs: PublicJobListItem[] }>('/jobs/public', { auth: false });
 }
 export function fetchPublicJob(id: string) {
-  return apiRequest<{ job: PublicJob }>(`/jobs/public/${id}`, { auth: false });
+  return apiRequest<PublicJobResponse>(`/jobs/public/${id}`, { auth: false });
 }
 export interface CvDetails {
   fullName: string | null;
@@ -194,6 +194,10 @@ export function updateJob(id: string, input: Partial<JobInput>) {
 }
 export function deleteJob(id: string) {
   return apiRequest<void>(`/jobs/${id}`, { method: 'DELETE' });
+}
+/** Clone a job (its requirements, skills, quiz, weights) as a new draft. */
+export function duplicateJob(id: string) {
+  return apiRequest<{ job: Job }>(`/jobs/${id}/duplicate`, { method: 'POST' });
 }
 
 // --- HR: candidates ---------------------------------------------------------

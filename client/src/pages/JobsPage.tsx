@@ -1,9 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LuArrowRight, LuBriefcase, LuBuilding2, LuMapPin, LuPlus, LuUsers } from 'react-icons/lu';
-import { fetchJobs } from '../api/endpoints';
-import type { Job, JobSummary } from '../api/types';
+import type { IconType } from 'react-icons';
+import {
+  LuArrowRight,
+  LuBan,
+  LuBriefcase,
+  LuBuilding2,
+  LuCheck,
+  LuCircleCheck,
+  LuCopy,
+  LuEllipsisVertical,
+  LuMapPin,
+  LuPencilLine,
+  LuPlus,
+  LuTrash2,
+  LuUsers,
+} from 'react-icons/lu';
+import { deleteJob, duplicateJob, fetchJobs, updateJob } from '../api/endpoints';
+import type { Job, JobStatus, JobSummary } from '../api/types';
 import { Alert, Button, Card, Skeleton } from '../components/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 import JobForm from '../components/JobForm';
 
 const STATUS_META: Record<string, { label: string; cls: string; dot: string }> = {
@@ -12,11 +35,28 @@ const STATUS_META: Record<string, { label: string; cls: string; dot: string }> =
   closed: { label: 'Closed', cls: 'bg-rose-50 text-rose-700', dot: 'bg-rose-500' },
 };
 
+// Availability options offered in the per-job actions menu.
+const STATUS_OPTIONS: { value: JobStatus; label: string; hint: string; Icon: IconType; cls: string }[] = [
+  { value: 'open', label: 'Available', hint: 'accepting applications', Icon: LuCircleCheck, cls: 'text-emerald-600' },
+  { value: 'closed', label: 'Unavailable', hint: 'not accepting', Icon: LuBan, cls: 'text-rose-600' },
+  { value: 'draft', label: 'Draft', hint: 'hidden from applicants', Icon: LuPencilLine, cls: 'text-slate-500' },
+];
+
+type SortKey = 'recent' | 'candidates' | 'title';
+const STATUS_TABS: { value: '' | JobStatus; label: string }[] = [
+  { value: '', label: 'All' },
+  { value: 'open', label: 'Open' },
+  { value: 'closed', label: 'Closed' },
+  { value: 'draft', label: 'Draft' },
+];
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState<JobSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'' | JobStatus>('');
+  const [sort, setSort] = useState<SortKey>('recent');
   const navigate = useNavigate();
 
   function load() {
@@ -33,6 +73,60 @@ export default function JobsPage() {
     setShowForm(false);
     load();
   }
+
+  // Flip a position's availability (open/closed/draft) inline — optimistic update.
+  async function changeStatus(job: JobSummary, status: JobStatus) {
+    if (job.status === status) return;
+    const prev = jobs;
+    setError(null);
+    setJobs((js) => js.map((j) => (j.id === job.id ? { ...j, status } : j)));
+    try {
+      await updateJob(job.id, { status });
+    } catch {
+      setJobs(prev);
+      setError('Could not update the job status. Please try again.');
+    }
+  }
+
+  async function handleDelete(job: JobSummary) {
+    if (!confirm(`Delete "${job.title}" and all its candidates? This cannot be undone.`)) return;
+    const prev = jobs;
+    setError(null);
+    setJobs((js) => js.filter((j) => j.id !== job.id));
+    try {
+      await deleteJob(job.id);
+    } catch {
+      setJobs(prev);
+      setError('Could not delete the job. Please try again.');
+    }
+  }
+
+  async function handleDuplicate(job: JobSummary) {
+    setError(null);
+    try {
+      await duplicateJob(job.id);
+      load(); // the clone lands as a Draft
+      setStatusFilter('draft');
+    } catch {
+      setError('Could not duplicate the job. Please try again.');
+    }
+  }
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { '': jobs.length, open: 0, closed: 0, draft: 0 };
+    for (const j of jobs) c[j.status] = (c[j.status] ?? 0) + 1;
+    return c;
+  }, [jobs]);
+
+  const visibleJobs = useMemo(() => {
+    const list = statusFilter ? jobs.filter((j) => j.status === statusFilter) : [...jobs];
+    list.sort((a, b) => {
+      if (sort === 'candidates') return b.candidateCount - a.candidateCount;
+      if (sort === 'title') return a.title.localeCompare(b.title);
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    return list;
+  }, [jobs, statusFilter, sort]);
 
   return (
     <div className="animate-rise space-y-6">
@@ -68,24 +162,125 @@ export default function JobsPage() {
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {jobs.map((job) => {
+        <>
+          {/* Filter + sort toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab.value || 'all'}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.value)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                    statusFilter === tab.value
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {tab.label}
+                  <span
+                    className={`rounded-full px-1.5 text-xs ${
+                      statusFilter === tab.value ? 'bg-white/20' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {counts[tab.value] ?? 0}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-brand-400 focus:outline-none"
+            >
+              <option value="recent">Newest</option>
+              <option value="candidates">Most candidates</option>
+              <option value="title">A–Z</option>
+            </select>
+          </div>
+
+          {visibleJobs.length === 0 ? (
+            <Card className="px-6 py-12 text-center">
+              <p className="text-sm font-medium text-slate-600">No {statusFilter} jobs</p>
+              <p className="mt-1 text-xs text-slate-400">Try a different filter.</p>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleJobs.map((job) => {
             const status = STATUS_META[job.status] ?? STATUS_META.draft;
             return (
-              <button
+              <div
                 key={job.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => navigate(`/hr/jobs/${job.id}`)}
-                className="group flex flex-col rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-(--shadow-card) transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-(--shadow-raised)"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/hr/jobs/${job.id}`);
+                  }
+                }}
+                className="group flex cursor-pointer flex-col rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-(--shadow-card) transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-(--shadow-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
               >
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-semibold text-slate-900">{job.title}</h3>
-                  <span
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${status.cls}`}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                    {status.label}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${status.cls}`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+                      {status.label}
+                    </span>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Job actions"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 data-[state=open]:bg-slate-100 data-[state=open]:text-slate-700"
+                        >
+                          <LuEllipsisVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-52"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DropdownMenuLabel>Availability</DropdownMenuLabel>
+                        {STATUS_OPTIONS.map((opt) => {
+                          const current = job.status === opt.value;
+                          return (
+                            <DropdownMenuItem
+                              key={opt.value}
+                              onSelect={() => void changeStatus(job, opt.value)}
+                              className="gap-2"
+                            >
+                              <opt.Icon className={opt.cls} />
+                              <span className="flex-1">
+                                {opt.label}
+                                <span className="block text-[11px] text-slate-400">{opt.hint}</span>
+                              </span>
+                              {current && <LuCheck className="h-4 w-4 text-brand-600" />}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => navigate(`/hr/jobs/${job.id}`)}>
+                          <LuArrowRight className="text-slate-500" />
+                          Open & edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => void handleDuplicate(job)}>
+                          <LuCopy className="text-slate-500" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem variant="destructive" onSelect={() => void handleDelete(job)}>
+                          <LuTrash2 />
+                          Delete job
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
 
                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
@@ -134,10 +329,12 @@ export default function JobsPage() {
                     <LuArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                   </span>
                 </div>
-              </button>
+              </div>
             );
-          })}
-        </div>
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {showForm && <JobForm onClose={() => setShowForm(false)} onSaved={handleSaved} />}
