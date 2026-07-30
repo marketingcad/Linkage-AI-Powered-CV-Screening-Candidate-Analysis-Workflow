@@ -6,16 +6,17 @@
   "scripts": {
     "dev": "tsx src/index.ts dev",
     "start": "tsx src/index.ts start",
+    "build": "echo \"no build step — the agent runs via tsx\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@livekit/agents": "^1.4.0",
     "@livekit/agents-plugin-google": "^1.4.0",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "tsx": "^4.23.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "tsx": "^4.23.1",
     "typescript": "^5.6.0"
   }
 }
