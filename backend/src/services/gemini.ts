@@ -845,3 +845,75 @@ export async function generateInterviewQuestions(
     throw serverError('AI interview-question generation failed', err instanceof Error ? err.message : String(err));
   }
 }
+
+// ---------------------------------------------------------------------------
+// AI voice interview: summarize the transcript into a structured evaluation
+// ---------------------------------------------------------------------------
+
+export type InterviewSummary = {
+  overview: string;
+  strengths: string[];
+  concerns: string[];
+  recommendation: 'advance' | 'hold' | 'reject';
+  score: number; // 0–100, how well the interview answers fit the role
+};
+
+const interviewSummarySchema = {
+  type: Type.OBJECT,
+  properties: {
+    overview: { type: Type.STRING },
+    strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+    concerns: { type: Type.ARRAY, items: { type: Type.STRING } },
+    recommendation: { type: Type.STRING, enum: ['advance', 'hold', 'reject'] },
+    score: { type: Type.INTEGER },
+  },
+  required: ['overview', 'strengths', 'concerns', 'recommendation', 'score'],
+};
+
+/**
+ * Summarize an AI voice interview transcript into a structured evaluation for the recruiter's
+ * review card / scorecard. Single structured Gemini call. Score is clamped to 0–100.
+ */
+export async function summarizeInterviewTranscript(input: {
+  jobTitle: string | null;
+  candidateName: string;
+  transcript: { role: string; text: string }[];
+}): Promise<InterviewSummary> {
+  const convo = input.transcript
+    .map((t) => `${t.role === 'agent' ? 'Interviewer' : 'Candidate'}: ${t.text}`)
+    .join('\n');
+
+  const prompt = [
+    `You are reviewing a recorded voice interview for the ${input.jobTitle ?? 'role'} position with ${input.candidateName}.`,
+    'Based ONLY on the transcript below, write a concise, fair evaluation for the hiring team:',
+    '- "overview": 2–3 sentences on how the candidate came across.',
+    '- "strengths" and "concerns": specific, grounded in what they actually said.',
+    '- "recommendation": advance | hold | reject.',
+    '- "score": 0–100 for how well their answers fit the role.',
+    'Do not invent facts not present in the transcript. This assists a human; it is not a final decision.',
+    '',
+    '=== TRANSCRIPT ===',
+    convo || '(no transcript captured)',
+  ].join('\n');
+
+  try {
+    const response = await ai.models.generateContent({
+      model: env.GEMINI_MODEL,
+      contents: prompt,
+      config: { responseMimeType: 'application/json', responseSchema: interviewSummarySchema, temperature: 0.2 },
+    });
+    const text = response.text;
+    if (!text) throw new Error('Empty response from Gemini');
+    const parsed = JSON.parse(text) as InterviewSummary;
+    return {
+      overview: parsed.overview ?? '',
+      strengths: parsed.strengths ?? [],
+      concerns: parsed.concerns ?? [],
+      recommendation: parsed.recommendation ?? 'hold',
+      score: Math.max(0, Math.min(100, Math.round(parsed.score ?? 0))),
+    };
+  } catch (err) {
+    logger.error({ err }, 'Interview summary generation failed');
+    throw serverError('AI interview summary failed', err instanceof Error ? err.message : String(err));
+  }
+}

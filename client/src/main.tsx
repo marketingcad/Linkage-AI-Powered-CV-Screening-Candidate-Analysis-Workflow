@@ -17,6 +17,7 @@ import SchedulerPage from './pages/SchedulerPage';
 import CandidateReportPage from './pages/CandidateReportPage';
 import CandidateDataExportPage from './pages/CandidateDataExportPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
+import AiInterviewPage from './pages/AiInterviewPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 const router = createBrowserRouter([
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
   { path: '/', element: <LoginPage /> },
   { path: '/apply/:jobId', element: <ApplyJobPage /> },
   { path: '/status/:token', element: <StatusPage /> },
+  { path: '/interview', element: <AiInterviewPage /> },
   { path: '/login', element: <LoginPage /> },
   // Full-page, print-optimized candidate report (no dashboard chrome).
   {

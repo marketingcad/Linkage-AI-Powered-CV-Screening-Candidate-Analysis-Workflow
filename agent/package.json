@@ -1,0 +1,21 @@
+{
+  "name": "screenai-interview-agent",
+  "private": true,
+  "type": "module",
+  "description": "AI voice interviewer worker — joins LiveKit interview rooms and runs a Gemini Live interview.",
+  "scripts": {
+    "dev": "tsx src/index.ts dev",
+    "start": "tsx src/index.ts start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@livekit/agents": "^1.4.0",
+    "@livekit/agents-plugin-google": "^1.4.0",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.23.1",
+    "typescript": "^5.6.0"
+  }
+}

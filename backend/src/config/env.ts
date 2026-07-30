@@ -53,6 +53,25 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_CV_BUCKET: z.string().default('cvs'),
 
+  // AI voice interviews (LiveKit + Gemini Live). All optional — the feature is disabled
+  // unless the three LiveKit values are present, so the app runs fine without them.
+  LIVEKIT_URL: z.string().optional(), // wss://<project>.livekit.cloud
+  LIVEKIT_API_KEY: z.string().optional(),
+  LIVEKIT_API_SECRET: z.string().optional(),
+  // How many minutes before the scheduled time a candidate may join the AI interview.
+  AI_INTERVIEW_LEAD_MINUTES: z.coerce.number().int().min(0).default(15),
+  // Shared secret the agent worker uses to POST the finished transcript back. Optional —
+  // if unset, the completion callback is rejected (recording still works).
+  AGENT_SHARED_SECRET: z.string().optional(),
+
+  // Interview recording storage (S3-compatible; Supabase Storage works). All optional —
+  // recording is skipped unless the bucket + credentials are present.
+  AI_RECORDING_S3_BUCKET: z.string().optional(),
+  AI_RECORDING_S3_REGION: z.string().default('us-east-1'),
+  AI_RECORDING_S3_ENDPOINT: z.string().optional(),
+  AI_RECORDING_S3_ACCESS_KEY: z.string().optional(),
+  AI_RECORDING_S3_SECRET_KEY: z.string().optional(),
+
   // Used only by the seed script
   SEED_HR_EMAIL: z.string().email().optional(),
   SEED_HR_PASSWORD: z.string().optional(),
@@ -105,6 +124,20 @@ export const appPublicUrl = (
 
 // Whether real email sending is configured.
 export const emailEnabled = Boolean(env.SMTP_HOST);
+
+// AI voice interviews are enabled only when all three LiveKit values are present.
+export const liveKitEnabled = Boolean(
+  env.LIVEKIT_URL && env.LIVEKIT_API_KEY && env.LIVEKIT_API_SECRET,
+);
+// The https API URL for the server SDK (rooms/egress), derived from the wss URL.
+export const liveKitHttpUrl = (env.LIVEKIT_URL ?? '')
+  .replace(/^wss:/, 'https:')
+  .replace(/^ws:/, 'http:');
+
+// Interview recording is enabled only when a bucket + credentials are present.
+export const aiRecordingEnabled = Boolean(
+  env.AI_RECORDING_S3_BUCKET && env.AI_RECORDING_S3_ACCESS_KEY && env.AI_RECORDING_S3_SECRET_KEY,
+);
 
 // Optional override for where new-application alerts are sent (a shared recruiting inbox).
 // When empty, the app notifies all HR users instead.

@@ -324,3 +324,53 @@ export function updateInterview(
 export function deleteInterview(id: string) {
   return apiRequest<{ ok: true }>(`/interviews/${id}`, { method: 'DELETE' });
 }
+/** Generate the candidate join link for an ai_voice interview. */
+export function fetchAiInterviewLink(interviewId: string) {
+  return apiRequest<{ link: string; token: string }>(
+    `/ai-interview/interviews/${interviewId}/link`,
+    { method: 'POST' },
+  );
+}
+
+export type AiInterviewContext = {
+  candidateName: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  leadMinutes: number;
+  state: 'too_early' | 'open' | 'expired';
+};
+/** Public: candidate page reads the scheduled time + window state from a signed link token. */
+export function fetchAiInterviewContext(token: string) {
+  return apiRequest<AiInterviewContext>(`/ai-interview/context?t=${encodeURIComponent(token)}`);
+}
+/** Public: candidate joins — returns a LiveKit url + access token. */
+export function startAiInterviewSession(token: string) {
+  return apiRequest<{ url: string; token: string }>(`/ai-interview/session`, {
+    method: 'POST',
+    body: { token, consent: true },
+  });
+}
+
+export type AiInterviewSummary = {
+  overview: string;
+  strengths: string[];
+  concerns: string[];
+  recommendation: 'advance' | 'hold' | 'reject';
+  score: number;
+};
+export type AiInterviewSession = {
+  id: string;
+  status: 'pending' | 'live' | 'recording' | 'processing' | 'ready' | 'failed';
+  recordingUrl: string | null;
+  transcript: { role: 'agent' | 'candidate'; text: string; at?: number }[] | null;
+  aiSummary: AiInterviewSummary | null;
+  durationSeconds: number | null;
+  startedAt: string | null;
+  endedAt: string | null;
+};
+/** Authed: HR review of an AI voice interview (transcript, summary, signed recording URL). */
+export function fetchAiInterviewSession(interviewId: string) {
+  return apiRequest<{ session: AiInterviewSession | null }>(
+    `/ai-interview/interviews/${interviewId}/session`,
+  );
+}

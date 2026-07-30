@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LuBan,
+  LuBot,
   LuCalendarClock,
   LuCalendarPlus,
   LuCheck,
@@ -25,6 +26,7 @@ const MODE_ICON: Record<InterviewMode, IconType> = {
   video: LuVideo,
   onsite: LuMapPin,
   phone: LuPhone,
+  ai_voice: LuBot,
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');

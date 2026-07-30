@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Schedule AI Interview — Spike</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+      h1 { font-size: 1.4rem; }
+      label { display: block; margin: 1rem 0 .25rem; font-weight: 600; font-size: .9rem; }
+      input { width: 100%; padding: .55rem .6rem; border-radius: 8px; border: 1px solid #8888; box-sizing: border-box; }
+      button { margin-top: 1.25rem; padding: .6rem 1.1rem; border-radius: 8px; border: 0; background: #4f46e5; color: #fff; font-weight: 600; cursor: pointer; }
+      #out { margin-top: 1.5rem; padding: 1rem; border: 1px solid #4f46e544; border-radius: 10px; display: none; }
+      #link { width: 100%; margin-top: .5rem; font-family: ui-monospace, monospace; font-size: .8rem; }
+      a { color: #6366f1; }
+      .muted { opacity: .7; font-size: .85rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Schedule an AI interview <small>(spike)</small></h1>
+    <p class="muted">Generates a signed, time-gated link. The candidate can only join within the
+      window around the scheduled time. In production this is your Scheduler + invite email.</p>
+
+    <label for="name">Candidate name</label>
+    <input type="text" id="name" value="Alex Candidate" />
+
+    <label for="when">Interview time</label>
+    <input type="datetime-local" id="when" />
+
+    <label for="dur">Duration (minutes)</label>
+    <input type="number" id="dur" value="15" min="5" max="60" />
+
+    <button id="make">Create join link</button>
+
+    <div id="out">
+      <strong>Join link</strong> <span id="window" class="muted"></span>
+      <input type="text" id="link" readonly />
+      <p><a id="open" href="#" target="_blank">Open candidate link ↗</a></p>
+    </div>
+
+    <p style="margin-top:2rem"><a href="/">← candidate page</a> · <a href="/review.html">review page →</a></p>
+    <script type="module" src="/schedule.ts"></script>
+  </body>
+</html>

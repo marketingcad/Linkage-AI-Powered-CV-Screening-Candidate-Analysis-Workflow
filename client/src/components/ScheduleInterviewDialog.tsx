@@ -3,6 +3,7 @@ import { LuCalendarClock, LuSearch, LuTrash2, LuTriangleAlert, LuUser } from 're
 import {
   createInterview,
   deleteInterview,
+  fetchAiInterviewLink,
   fetchCandidates,
   fetchInterviews,
   updateInterview,
@@ -279,18 +280,23 @@ export default function ScheduleInterviewDialog({
                   <option value="video">Video call</option>
                   <option value="onsite">On-site</option>
                   <option value="phone">Phone</option>
+                  <option value="ai_voice">AI voice interview</option>
                 </select>
               </Field>
             </div>
 
-            <Field label={mode === 'onsite' ? 'Location / address' : 'Meeting link / details'}>
-              <input
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className={inputCls}
-                placeholder={mode === 'onsite' ? 'Office address, room…' : 'https://meet…'}
-              />
-            </Field>
+            {mode === 'ai_voice' ? (
+              <AiVoicePanel interviewId={existing?.id ?? null} />
+            ) : (
+              <Field label={mode === 'onsite' ? 'Location / address' : 'Meeting link / details'}>
+                <input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className={inputCls}
+                  placeholder={mode === 'onsite' ? 'Office address, room…' : 'https://meet…'}
+                />
+              </Field>
+            )}
 
             <Field label="Reminder">
               <select
@@ -516,5 +522,71 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
       {children}
     </label>
+  );
+}
+
+/**
+ * Shown when mode = "AI voice". For an existing interview it fetches the candidate join link;
+ * for a not-yet-saved one it explains the link is generated + emailed on save.
+ */
+function AiVoicePanel({ interviewId }: { interviewId: string | null }) {
+  const [link, setLink] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!interviewId) return;
+    let active = true;
+    fetchAiInterviewLink(interviewId)
+      .then((r) => active && setLink(r.link))
+      .catch((e) =>
+        active &&
+        setError(
+          e?.message?.includes('not_configured')
+            ? 'AI interviews are not configured on the server (set LIVEKIT_* env vars).'
+            : 'Could not generate the join link.',
+        ),
+      );
+    return () => {
+      active = false;
+    };
+  }, [interviewId]);
+
+  return (
+    <div className="rounded-lg border border-violet-200 bg-violet-50/60 p-3 text-sm dark:border-violet-900/50 dark:bg-violet-950/20">
+      <p className="font-medium text-violet-800 dark:text-violet-300">AI voice interview</p>
+      <p className="mt-0.5 text-xs text-violet-700/80 dark:text-violet-300/70">
+        An AI interviewer runs the call and records it. The candidate is emailed a private link
+        that only opens around the scheduled time.
+      </p>
+
+      {!interviewId && (
+        <p className="mt-2 text-xs text-slate-500">
+          Save the interview to generate the candidate’s join link (it’s included in their invite
+          email automatically).
+        </p>
+      )}
+
+      {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
+
+      {link && (
+        <div className="mt-2">
+          <div className="flex items-center gap-2">
+            <input readOnly value={link} className={inputCls} onFocus={(e) => e.target.select()} />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void navigator.clipboard.writeText(link);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

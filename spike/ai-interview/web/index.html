@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Interview — Spike</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+      h1 { font-size: 1.4rem; }
+      video { width: 100%; max-width: 480px; border-radius: 12px; background: #111; aspect-ratio: 4/3; }
+      .row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin: 1rem 0; }
+      input[type="text"] { padding: .5rem .6rem; border-radius: 8px; border: 1px solid #8888; }
+      button { padding: .55rem 1rem; border-radius: 8px; border: 0; background: #4f46e5; color: #fff; font-weight: 600; cursor: pointer; }
+      button:disabled { opacity: .5; cursor: not-allowed; }
+      #status { font-size: .9rem; opacity: .8; }
+      .consent { font-size: .85rem; opacity: .85; }
+      a { color: #6366f1; }
+    </style>
+  </head>
+  <body>
+    <h1>AI Voice Interview <small>(spike)</small></h1>
+    <div id="sched" style="margin:.5rem 0;font-weight:600"></div>
+    <p class="consent">
+      <label><input type="checkbox" id="consent" /> I understand this interview is conducted by an
+      AI and is <strong>recorded</strong> for the hiring team.</label>
+      <br /><em>(Placeholder consent — replace with a real, logged consent gate before real candidates.)</em>
+    </p>
+    <div class="row">
+      <input type="text" id="name" placeholder="Your name" value="Alex Candidate" />
+      <button id="join">Join interview</button>
+      <button id="leave" disabled>Leave</button>
+    </div>
+    <div id="status">Idle.</div>
+    <video id="local" autoplay muted playsinline></video>
+    <p><a href="/schedule.html">→ HR: schedule an interview</a> · <a href="/review.html">→ HR review page</a></p>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

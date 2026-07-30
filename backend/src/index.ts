@@ -12,6 +12,7 @@ import { candidatesRouter } from './routes/candidates.js';
 import { statsRouter } from './routes/stats.js';
 import { auditRouter } from './routes/audit.js';
 import { interviewsRouter } from './routes/interviews.js';
+import { aiInterviewRouter } from './routes/aiInterview.js';
 import { startRetentionSweeper } from './services/retention.js';
 import { startInterviewReminderSweeper } from './services/interviewReminder.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
@@ -44,6 +45,7 @@ app.use('/api/candidates', candidatesRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/audit', auditRouter);
 app.use('/api/interviews', interviewsRouter);
+app.use('/api/ai-interview', aiInterviewRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

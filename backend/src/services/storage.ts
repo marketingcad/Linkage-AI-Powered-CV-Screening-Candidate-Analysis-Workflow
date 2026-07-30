@@ -14,6 +14,35 @@ const supabase = supabaseStorageEnabled
     })
   : null;
 
+/**
+ * Sign a GET URL for an object in any Supabase Storage bucket (used for interview recordings,
+ * which egress writes to the AI_RECORDING bucket). `key` may be a bare object key or the full
+ * location returned by LiveKit egress — we strip protocol/host/bucket to recover the key.
+ * Returns null when Supabase Storage isn't configured or signing fails.
+ */
+export async function signStorageObject(
+  bucketName: string,
+  key: string,
+  ttlSeconds = 3600,
+): Promise<string | null> {
+  if (!supabase || !key) return null;
+  // Reduce a possible full location to the bucket-relative object key. Handles a bare key,
+  // s3://bucket/key, and https://host/[storage/v1/(object|s3)/]bucket/key.
+  let objectKey = key
+    .replace(/^s3:\/\//, '')
+    .replace(/^https?:\/\/[^/]+\//, '')
+    .replace(/^storage\/v1\/(object|s3)\//, '');
+  const bucketPrefix = `${bucketName}/`;
+  if (objectKey.startsWith(bucketPrefix)) objectKey = objectKey.slice(bucketPrefix.length);
+  try {
+    const { data, error } = await supabase.storage.from(bucketName).createSignedUrl(objectKey, ttlSeconds);
+    if (error || !data) return null;
+    return data.signedUrl;
+  } catch {
+    return null;
+  }
+}
+
 let bucketReady = false;
 async function ensureBucket(): Promise<void> {
   if (!supabase || bucketReady) return;

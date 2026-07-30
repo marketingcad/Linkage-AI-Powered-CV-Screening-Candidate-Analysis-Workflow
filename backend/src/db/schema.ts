@@ -283,8 +283,17 @@ export const emailLogs = pgTable('email_logs', {
 // Interviews — scheduled interviews pinned to the calendar (with reminders)
 // ---------------------------------------------------------------------------
 
-export type InterviewMode = 'video' | 'onsite' | 'phone';
+export type InterviewMode = 'video' | 'onsite' | 'phone' | 'ai_voice';
 export type InterviewStatus = 'scheduled' | 'completed' | 'canceled';
+
+// Status of an AI voice interview session (see interviewSessions below).
+export type InterviewSessionStatus =
+  | 'pending' // scheduled, room not yet created
+  | 'live' // candidate + agent connected
+  | 'recording'
+  | 'processing' // call ended, recording/summary being finalized
+  | 'ready' // recording + summary available
+  | 'failed';
 
 export const interviews = pgTable('interviews', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -297,7 +306,7 @@ export const interviews = pgTable('interviews', {
   title: varchar('title', { length: 255 }),
   scheduledAt: timestamp('scheduled_at', { withTimezone: true }).notNull(),
   durationMinutes: integer('duration_minutes').notNull().default(45),
-  mode: varchar('mode', { length: 20 }).notNull().default('video'), // video | onsite | phone
+  mode: varchar('mode', { length: 20 }).notNull().default('video'), // video | onsite | phone | ai_voice
   location: text('location'), // meeting link or address
   notes: text('notes'),
 
@@ -309,6 +318,40 @@ export const interviews = pgTable('interviews', {
 
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ---------------------------------------------------------------------------
+// AI voice interview sessions — one row per interviews.mode = 'ai_voice' call.
+// Holds the live-call plumbing (room/egress) plus the reviewable artifacts.
+// ---------------------------------------------------------------------------
+
+export type InterviewTranscriptTurn = { role: 'agent' | 'candidate'; text: string; at?: number };
+
+export const interviewSessions = pgTable('interview_sessions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  interviewId: uuid('interview_id')
+    .references(() => interviews.id, { onDelete: 'cascade' })
+    .notNull()
+    .unique(), // one AI session per interview
+  candidateId: uuid('candidate_id')
+    .references(() => candidates.id, { onDelete: 'cascade' })
+    .notNull(),
+
+  roomName: varchar('room_name', { length: 128 }),
+  provider: varchar('provider', { length: 32 }).notNull().default('livekit'),
+  egressId: varchar('egress_id', { length: 128 }),
+  status: varchar('status', { length: 24 }).notNull().default('pending'),
+
+  recordingPath: text('recording_path'), // object-storage key; served via signed URL
+  transcript: jsonb('transcript').$type<InterviewTranscriptTurn[]>(),
+  aiSummary: jsonb('ai_summary').$type<Record<string, unknown>>(), // feeds the scorecard
+
+  consentAt: timestamp('consent_at', { withTimezone: true }),
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  endedAt: timestamp('ended_at', { withTimezone: true }),
+  durationSeconds: integer('duration_seconds'),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ---------------------------------------------------------------------------

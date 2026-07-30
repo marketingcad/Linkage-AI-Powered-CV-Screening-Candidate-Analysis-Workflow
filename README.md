@@ -19,6 +19,7 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## Recent updates
 
+- AI voice interviews — schedule an interview in "AI voice" mode and an AI interviewer (Gemini Live) conducts a recorded video call with the candidate; recruiters review the recording, transcript, and an AI summary that feeds the scorecard. Requires LiveKit + the `agent/` worker (see `agent/README.md`).
 - Interview scheduling — book interviews on a calendar, auto-email candidates their invite, and get a reminder before each one. Warns you about double-bookings.
 - Email alerts & notifications — recruiters are emailed when someone applies, plus a header bell that flags new candidates.
 - Team reviews — add private notes and a 1–5 rating per candidate, shown next to the AI score.

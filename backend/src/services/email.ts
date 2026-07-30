@@ -375,6 +375,7 @@ const MODE_LABEL: Record<string, string> = {
   video: 'Video call',
   onsite: 'On-site',
   phone: 'Phone call',
+  ai_voice: 'AI voice interview',
 };
 
 function isUrl(v: string): boolean {
@@ -487,12 +488,19 @@ function candidateInterviewEmail(kind: CandidateInterviewKind, info: CandidateIn
       : `Hi ${escapeHtml(info.candidateName)},<br/><br/>
          Your interview for the <b>${escapeHtml(role)}</b> position has been updated. Here are the new details:`;
 
+  const isAi = info.mode === 'ai_voice';
+  const aiNoteHtml = isAi
+    ? `<br/><br/>This interview is conducted by an <b>AI interviewer</b> and is <b>recorded</b> for
+       our hiring team. Please use the button below on a device with a <b>camera and microphone</b>;
+       your private link opens shortly before the start time.`
+    : '';
+
   const html = layout({
     heading,
     tone,
-    bodyHtml: `${intro}<br/><br/>${detailRows}<br/><br/>
+    bodyHtml: `${intro}<br/><br/>${detailRows}${aiNoteHtml}<br/><br/>
       A calendar invitation is attached — open it to add this to your calendar.`,
-    ctaLabel: linkIsUrl ? 'Join the meeting' : undefined,
+    ctaLabel: linkIsUrl ? (isAi ? 'Join the AI interview' : 'Join the meeting') : undefined,
     ctaUrl: linkIsUrl ? info.location! : undefined,
   });
   const text = [
@@ -506,6 +514,9 @@ function candidateInterviewEmail(kind: CandidateInterviewKind, info: CandidateIn
     `When: ${when}`,
     `Duration: ${info.durationMinutes} minutes`,
     `Format: ${modeLabel}`,
+    isAi
+      ? 'This interview is conducted by an AI interviewer and is recorded. Join on a device with a camera and microphone; your private link opens shortly before the start time.'
+      : '',
     info.location ? `${linkIsUrl ? 'Join link' : 'Where'}: ${info.location}` : '',
     '',
     'A calendar invitation is attached.',

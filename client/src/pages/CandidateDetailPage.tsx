@@ -36,6 +36,7 @@ import {
 } from '../api/endpoints';
 import { useAuth } from '../auth/AuthContext';
 import StarRating from '../components/StarRating';
+import AiInterviewResult from '../components/AiInterviewResult';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -916,6 +917,7 @@ export default function CandidateDetailPage() {
                           </button>
                         </div>
                       )}
+                      {iv.mode === 'ai_voice' && <AiInterviewResult interviewId={iv.id} />}
                     </li>
                   );
                 })}

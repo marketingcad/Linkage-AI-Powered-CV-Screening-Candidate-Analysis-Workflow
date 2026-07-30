@@ -7,6 +7,8 @@ import { notFound } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
 import { recordAudit } from '../services/audit.js';
 import { sendCandidateInterviewEmail, type CandidateInterviewKind } from '../services/email.js';
+import { liveKitEnabled } from '../config/env.js';
+import { buildJoinLink, signJoinToken } from '../services/aiInterview.js';
 import { logger } from '../lib/logger.js';
 
 export const interviewsRouter = Router();
@@ -50,6 +52,39 @@ async function findOne(id: string) {
 }
 
 type JoinedInterview = NonNullable<Awaited<ReturnType<typeof findOne>>>;
+
+/**
+ * For ai_voice interviews, store the candidate join link in `location` so the invite email +
+ * calendar carry it. The token encodes the time window, so this must run again on reschedule.
+ */
+async function refreshAiVoiceLink(interviewId: string): Promise<void> {
+  if (!liveKitEnabled) return;
+  const [row] = await db
+    .select({
+      id: interviews.id,
+      mode: interviews.mode,
+      candidateId: interviews.candidateId,
+      candidateName: candidates.fullName,
+      scheduledAt: interviews.scheduledAt,
+      durationMinutes: interviews.durationMinutes,
+    })
+    .from(interviews)
+    .leftJoin(candidates, eq(candidates.id, interviews.candidateId))
+    .where(eq(interviews.id, interviewId))
+    .limit(1);
+  if (!row || row.mode !== 'ai_voice') return;
+
+  const link = buildJoinLink(
+    signJoinToken({
+      interviewId: row.id,
+      candidateId: row.candidateId,
+      candidateName: row.candidateName ?? 'Candidate',
+      scheduledAt: row.scheduledAt.toISOString(),
+      durationMinutes: row.durationMinutes,
+    }),
+  );
+  await db.update(interviews).set({ location: link }).where(eq(interviews.id, interviewId));
+}
 
 /** Email the candidate about their interview (invite / reschedule / cancel). Never throws. */
 async function emailCandidate(row: JoinedInterview, kind: CandidateInterviewKind) {
@@ -132,6 +167,9 @@ interviewsRouter.post('/', async (req, res) => {
     ip: req.ip ?? null,
   });
 
+  // ai_voice: generate the candidate join link into `location` before the invite goes out.
+  if (input.mode === 'ai_voice') await refreshAiVoiceLink(created.id);
+
   const row = await findOne(created.id);
   const email = input.notifyCandidate !== false && row ? await emailCandidate(row, 'invite') : undefined;
 
@@ -168,6 +206,11 @@ interviewsRouter.patch('/:id', async (req, res) => {
     .where(eq(interviews.id, req.params.id))
     .returning({ id: interviews.id });
   if (!updated) throw notFound('Interview not found');
+
+  // Reschedule / duration change / switch to ai_voice → regenerate the time-gated join link.
+  if (rescheduled || input.durationMinutes != null || input.mode === 'ai_voice') {
+    await refreshAiVoiceLink(updated.id);
+  }
 
   const row = await findOne(updated.id);
 

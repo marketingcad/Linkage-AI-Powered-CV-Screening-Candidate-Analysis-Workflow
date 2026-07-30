@@ -328,7 +328,7 @@ export interface CandidateNote {
   createdAt: string;
 }
 
-export type InterviewMode = 'video' | 'onsite' | 'phone';
+export type InterviewMode = 'video' | 'onsite' | 'phone' | 'ai_voice';
 export type InterviewStatus = 'scheduled' | 'completed' | 'canceled' | 'no_show';
 
 /** A scheduled interview pinned to the calendar (with candidate + job info joined). */
