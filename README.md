@@ -19,17 +19,14 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## Recent updates
 
-- AI voice interviews — schedule an interview in "AI voice" mode and an AI interviewer (Gemini Live) conducts a recorded video call with the candidate; recruiters review the recording, transcript, and an AI summary that feeds the scorecard. Requires LiveKit + the `agent/` worker (see `agent/README.md`).
+- AI voice interviews (work in progress) — schedule an interview that an AI interviewer runs as a recorded video call, then review the recording, transcript, and an AI summary next to your own rating.
 - Interview scheduling — book interviews on a calendar, auto-email candidates their invite, and get a reminder before each one. Warns you about double-bookings.
 - Email alerts & notifications — recruiters are emailed when someone applies, plus a header bell that flags new candidates.
-- Team reviews — add private notes and a 1–5 rating per candidate, shown next to the AI score.
 - Interview outcomes — mark interviews Completed or No-show and leave a quick scorecard.
-- Smarter hiring tools — tailored interview questions, a clear "why this score", adjustable ranking priorities, side-by-side comparison, and exportable PDF reports.
 - Faster screening — upload CVs in bulk, resurface strong past applicants, auto-flag duplicate applications, and filter or search candidates instantly.
 - Easier job management — quick per-job actions (available, unavailable, duplicate, delete) and friendly pages when a role is closed or a link is broken.
 - Candidate availability — applicants can suggest preferred interview times right on the application form, captured in their own timezone and shown to recruiters in both zones (invites, too).
 - Analytics dashboard — see your pipeline, application sources, and score trends at a glance.
-- Security & polish — optional two-factor sign-in, a new dark mode, and refreshed Linkage ScreenAI branding.
 
 ## Tech stack
 
@@ -42,12 +39,15 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 | Parsing   | `pdf-parse` (PDF) + `mammoth` (DOCX)               |
 | Auth      | JWT + bcrypt                                        |
 | Storage   | Supabase Storage for CVs (local-disk fallback)     |
+| Voice AI *(WIP)* | LiveKit Cloud (WebRTC) + Google Gemini Live + a Node agent worker (`agent/`) |
 
 ## Project layout
 
 ```
 backend/    Express API, Drizzle schema, Gemini + CV-parsing services
 client/     React SPA (candidate application + HR dashboard)
+agent/      AI voice interviewer worker — LiveKit + Gemini Live (work in progress)
+spike/      Standalone prototype for trying the AI interview locally
 ```
 
 ## Prerequisites
@@ -238,6 +238,89 @@ and **redeploy the backend**. To also allow Vercel preview deployments, comma-se
 > application after idle is slow. Use a paid instance (or an uptime pinger) for a
 > production feel.
 
+### 5. AI voice interviews (optional, work in progress)
+
+Adds two hosted pieces on top of the base app: **LiveKit Cloud** (the video/audio call) and
+a separate **agent worker** (the AI interviewer, powered by Gemini Live). It stays completely
+dormant until `LIVEKIT_*` is set on the backend, so you can ship the rest of the app without it.
+
+**Deployment topology**
+
+| Piece            | Host                      | Role                                                        |
+| ---------------- | ------------------------- | ---------------------------------------------------------- |
+| Frontend         | Vercel                    | "AI voice" scheduling option + the candidate `/interview` page |
+| Backend API      | Render (Web Service)      | Creates the call room, issues the time-gated join link, receives the transcript + recording webhook, generates the AI summary |
+| **Agent worker** | Render (Background Worker) | Joins each call and conducts the interview with Gemini Live |
+| Media            | LiveKit Cloud             | The WebRTC room (like Zoom/Meet)                            |
+| AI voice         | Google Gemini Live        | Real-time speech-to-speech interviewer                     |
+| Storage          | Supabase                  | `interview_sessions` table + (optional) recording bucket   |
+
+**How the flow works**
+
+```
+Recruiter schedules an "AI voice" interview
+        │  backend signs a time-gated join link (JWT) → emailed to the candidate
+        ▼
+Candidate opens the link near the start time
+        │  backend creates a LiveKit room (with the job + CV context) and starts recording
+        ▼
+Candidate joins the call (camera + mic)  ──► LiveKit dispatches the agent worker into the room
+        │                                          the agent runs the Gemini Live interview
+        ▼
+Call ends
+        │  agent POSTs the transcript back to the backend → backend generates an AI summary
+        ▼
+Recruiter reviews the recording, transcript, and AI summary on the candidate page
+```
+
+**Backend env** (add to the Render backend service, then redeploy):
+
+```env
+LIVEKIT_URL=wss://<project>.livekit.cloud
+LIVEKIT_API_KEY=...
+LIVEKIT_API_SECRET=...
+AGENT_SHARED_SECRET=<long random secret>     # must match the agent worker below
+APP_PUBLIC_URL=https://<your-frontend>       # so emailed join links point to prod
+# Recording (optional; S3-compatible, e.g. Supabase Storage):
+AI_RECORDING_S3_BUCKET=interviews
+AI_RECORDING_S3_REGION=<project region>
+AI_RECORDING_S3_ENDPOINT=https://<ref>.storage.supabase.co/storage/v1/s3
+AI_RECORDING_S3_ACCESS_KEY=...
+AI_RECORDING_S3_SECRET_KEY=...
+```
+
+Run the migration once against the production DB (idempotent — creates `interview_sessions`):
+`cd backend && DATABASE_URL="<prod url>" npx tsx src/scripts/migrateScoringColumns.ts`.
+
+**Agent worker → Render** (**Background Worker**, not a Web Service — it has no inbound port):
+
+| Setting        | Value                                            |
+| -------------- | ------------------------------------------------ |
+| Root Directory | `agent`                                          |
+| Build Command  | `npm install`                                    |
+| Start Command  | `npm start`                                      |
+| Instance type  | **≥ 1 vCPU / ~2 GB RAM** (realtime audio + the turn-detection model OOM on 512 MB) |
+
+Agent env (`LIVEKIT_*` must be the **same project** as the backend; `AGENT_SHARED_SECRET`
+must **match** the backend; `BACKEND_URL` is the backend's root URL with **no** `/api`):
+
+```env
+LIVEKIT_URL=wss://<project>.livekit.cloud
+LIVEKIT_API_KEY=...
+LIVEKIT_API_SECRET=...
+GOOGLE_API_KEY=<Gemini key with Live API access>
+GEMINI_LIVE_MODEL=gemini-2.5-flash-native-audio-preview-12-2025
+BACKEND_URL=https://<your-backend>.onrender.com
+AGENT_SHARED_SECRET=<same as backend>
+```
+
+**LiveKit webhook** (LiveKit Cloud → Settings → Webhooks) so recording status reaches the
+backend: `https://<your-backend>.onrender.com/api/ai-interview/webhook`.
+
+> Off unless `LIVEKIT_*` is present on the backend. A self-contained prototype lives under
+> `spike/ai-interview/` for testing the conversation locally; full worker details are in
+> [`agent/README.md`](agent/README.md).
+
 ## API overview
 
 | Method | Route                          | Auth | Purpose                                  |
@@ -256,6 +339,12 @@ and **redeploy the backend**. To also allow Vercel preview deployments, comma-se
 | POST   | `/api/candidates/:id/reanalyze`| ✔    | Re-run AI analysis                       |
 | GET    | `/api/candidates/:id/cv`       | ✔    | Download original CV                     |
 | GET    | `/api/stats`                   | ✔    | Dashboard totals                         |
+| POST   | `/api/interviews`              | ✔    | Schedule an interview (mode `ai_voice` for AI) |
+| POST   | `/api/ai-interview/session`    | –    | Candidate joins → creates the call room + token |
+| GET    | `/api/ai-interview/interviews/:id/session` | ✔ | Review: transcript, AI summary, recording URL |
+
+> The `/api/ai-interview/*` routes return **503** unless `LIVEKIT_*` is configured — the
+> AI voice interview feature is off by default.
 
 ## How the AI scoring works
 

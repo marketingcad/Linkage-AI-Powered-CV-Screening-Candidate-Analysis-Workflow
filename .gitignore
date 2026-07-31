@@ -6,3 +6,5 @@ dist/
 
 # typecheck-gate hook marker
 .claude/hooks/.last-typecheck
+
+.vercel
