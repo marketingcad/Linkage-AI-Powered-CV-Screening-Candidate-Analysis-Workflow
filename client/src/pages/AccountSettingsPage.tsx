@@ -36,6 +36,11 @@ const ACTION_LABELS: Record<string, string> = {
   'candidate.delete': 'Deleted candidate',
   'candidate.export': 'Exported candidate data',
   'job.delete': 'Deleted job',
+  'interview.create': 'Scheduled interview',
+  'interview.delete': 'Removed interview',
+  'team.create': 'Added teammate',
+  'team.update': 'Changed teammate',
+  'team.delete': 'Removed teammate',
   'retention.purge': 'Data retention purge',
 };
 
@@ -638,6 +643,9 @@ export default function AccountSettingsPage() {
                 An audit trail of recent recruiter and system actions.
               </span>
             </span>
+            {showActivity && activity.length > 0 && (
+              <span className="shrink-0 text-xs text-slate-400">{activity.length} entries</span>
+            )}
             <span className="shrink-0 text-xs font-medium text-brand-600">
               {showActivity ? 'Hide' : 'Show'}
             </span>
@@ -656,8 +664,10 @@ export default function AccountSettingsPage() {
               ) : activity.length === 0 ? (
                 <p className="mt-4 text-sm text-slate-400">No activity recorded yet.</p>
               ) : (
-                <ul className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
-                  {activity.slice(0, 12).map((e) => (
+                // Caps at ~10 rows (640px) then scrolls, so the page stays short without
+                // hiding older history behind an arbitrary cut-off.
+                <ul className="mt-4 max-h-160 divide-y divide-slate-100 overflow-y-auto pr-1 dark:divide-slate-800">
+                  {activity.map((e) => (
                     <li key={e.id} className="flex items-start justify-between gap-3 py-2.5">
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-slate-700">
