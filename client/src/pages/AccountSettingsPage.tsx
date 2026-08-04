@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import {
+  LuChevronDown,
   LuHistory,
   LuLogOut,
   LuShieldCheck,
@@ -90,15 +91,21 @@ export default function AccountSettingsPage() {
   const { user, applyAuth, updateUser, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Recent activity (audit log)
+  // Recent activity (audit log). Admin-only, and collapsed by default so it doesn't
+  // stretch the page — the entries are only fetched once it's actually opened.
+  const isAdmin = user?.role === 'admin';
   const [activity, setActivity] = useState<AuditLog[]>([]);
+  const [showActivity, setShowActivity] = useState(false);
+  const [activityLoaded, setActivityLoaded] = useState(false);
   useEffect(() => {
+    if (!showActivity || activityLoaded || !isAdmin) return;
+    setActivityLoaded(true);
     fetchAuditLog()
       .then((r) => setActivity(r.entries))
       .catch(() => {
         /* non-critical */
       });
-  }, []);
+  }, [showActivity, activityLoaded, isAdmin]);
 
   // --- Two-factor (TOTP) ---
   const [setupData, setSetupData] = useState<{ secret: string; otpauthUrl: string } | null>(null);
@@ -614,36 +621,62 @@ export default function AccountSettingsPage() {
         )}
       </Card>
 
-      {/* Recent activity */}
-      <Card className="p-6">
-        <div className="flex items-center gap-2">
-          <LuHistory className="h-4 w-4 text-slate-500" />
-          <h2 className="text-sm font-semibold text-slate-700">Recent activity</h2>
-        </div>
-        <p className="mt-1 text-sm text-slate-500">
-          An audit trail of recent recruiter and system actions.
-        </p>
-        {activity.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-400">No activity recorded yet.</p>
-        ) : (
-          <ul className="mt-4 divide-y divide-slate-100">
-            {activity.slice(0, 12).map((e) => (
-              <li key={e.id} className="flex items-start justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-700">
-                    {ACTION_LABELS[e.action] ?? e.action}
-                  </p>
-                  {e.detail && <p className="truncate text-xs text-slate-500">{e.detail}</p>}
-                  <p className="text-xs text-slate-400">{e.actorEmail ?? 'system'}</p>
-                </div>
-                <span className="shrink-0 text-xs text-slate-400">
-                  {new Date(e.createdAt).toLocaleString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      {/* Recent activity — admin-only (the audit endpoint rejects members). */}
+      {isAdmin && (
+        <Card className="p-6">
+          <button
+            type="button"
+            onClick={() => setShowActivity((s) => !s)}
+            aria-expanded={showActivity}
+            aria-controls="recent-activity-panel"
+            className="flex w-full items-center gap-2 text-left"
+          >
+            <LuHistory className="h-4 w-4 shrink-0 text-slate-500" />
+            <span className="flex-1">
+              <span className="block text-sm font-semibold text-slate-700">Recent activity</span>
+              <span className="mt-1 block text-sm text-slate-500">
+                An audit trail of recent recruiter and system actions.
+              </span>
+            </span>
+            <span className="shrink-0 text-xs font-medium text-brand-600">
+              {showActivity ? 'Hide' : 'Show'}
+            </span>
+            <LuChevronDown
+              aria-hidden="true"
+              className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${
+                showActivity ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+
+          {showActivity && (
+            <div id="recent-activity-panel">
+              {!activityLoaded ? (
+                <p className="mt-4 text-sm text-slate-400">Loading…</p>
+              ) : activity.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-400">No activity recorded yet.</p>
+              ) : (
+                <ul className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
+                  {activity.slice(0, 12).map((e) => (
+                    <li key={e.id} className="flex items-start justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-700">
+                          {ACTION_LABELS[e.action] ?? e.action}
+                        </p>
+                        {e.detail && <p className="truncate text-xs text-slate-500">{e.detail}</p>}
+                        <p className="text-xs text-slate-400">{e.actorEmail ?? 'system'}</p>
+                      </div>
+                      <span className="shrink-0 text-xs text-slate-400">
+                        {new Date(e.createdAt).toLocaleString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Session */}
       <Card className="p-6">
