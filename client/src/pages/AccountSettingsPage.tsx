@@ -24,6 +24,9 @@ import { Alert, Button, Card, Spinner } from '../components/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import FieldError from '../components/FieldError';
+import { useFormErrors } from '../lib/useFormErrors';
+import * as v from '../lib/validators';
 import avatarPlaceholder from '../assets/avatar-placeholder.png';
 
 const ACTION_LABELS: Record<string, string> = {
@@ -34,6 +37,19 @@ const ACTION_LABELS: Record<string, string> = {
   'job.delete': 'Deleted job',
   'retention.purge': 'Data retention purge',
 };
+
+/**
+ * Avatar types we accept. Kept in step with the file input's `accept` attribute, which is
+ * only a picker hint — a drag-and-drop (or a manual "all files" pick) bypasses it, so an
+ * SVG or GIF would otherwise reach the canvas and get base64'd into the profile.
+ */
+const AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const AVATAR_MAX_MB = 5;
+const PASSWORD_MIN = 8;
+
+/** The submit buttons gate on 6 digits already; this also covers a bare Enter keypress. */
+const codeRule = (code: string) =>
+  /^\d{6}$/.test(code.trim()) ? undefined : 'Enter the 6-digit code from your authenticator app.';
 
 function initials(name?: string): string {
   if (!name) return 'HR';
@@ -91,14 +107,16 @@ export default function AccountSettingsPage() {
   const [twoFABusy, setTwoFABusy] = useState(false);
   const [twoFAErr, setTwoFAErr] = useState<string | null>(null);
   const [twoFAMsg, setTwoFAMsg] = useState<string | null>(null);
+  const twoFAFields = useFormErrors<'code'>('twofa');
 
   // --- Profile form ---
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [avatar, setAvatar] = useState<string | null>(user?.avatarUrl ?? null);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [profileErr, setProfileErr] = useState<string | null>(null);
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
+  // Each form keeps its own error state; `formError` is this form's banner-level message.
+  const profileFields = useFormErrors<'name' | 'email' | 'avatar'>('profile');
   const fileRef = useRef<HTMLInputElement>(null);
 
   // --- Password form ---
@@ -106,38 +124,44 @@ export default function AccountSettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [savingPw, setSavingPw] = useState(false);
-  const [pwErr, setPwErr] = useState<string | null>(null);
   const [pwMsg, setPwMsg] = useState<string | null>(null);
+  const pwFields = useFormErrors<'oldPassword' | 'newPassword' | 'confirmPassword'>('pw');
 
   async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = ''; // allow re-selecting the same file
     if (!file) return;
     setProfileMsg(null);
-    if (!file.type.startsWith('image/')) {
-      setProfileErr('Please choose an image file (PNG or JPG).');
+    if (!AVATAR_TYPES.includes(file.type)) {
+      profileFields.validate({ avatar: 'Photo must be a PNG, JPG, or WebP image.' });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setProfileErr('Image must be under 5 MB.');
+    if (file.size > AVATAR_MAX_MB * 1024 * 1024) {
+      profileFields.validate({
+        avatar: `Photo is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is ${AVATAR_MAX_MB} MB.`,
+      });
       return;
     }
     try {
       setAvatar(await resizeImage(file));
-      setProfileErr(null);
+      profileFields.clearError('avatar');
+      profileFields.setFormError(null);
     } catch {
-      setProfileErr('Could not read that image. Try another file.');
+      profileFields.validate({ avatar: 'Could not read that image. Try another file.' });
     }
   }
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
-    setProfileErr(null);
     setProfileMsg(null);
-    if (name.trim().length < 2) {
-      setProfileErr('Please enter your full name.');
-      return;
-    }
+    const ok = profileFields.validate({
+      name:
+        v.required(name, 'Full name') ??
+        v.minLen(name, 2, 'Full name') ??
+        v.maxLen(name, v.LIMITS.fullName, 'Full name'),
+      email: v.email(email),
+    });
+    if (!ok) return;
     setSavingProfile(true);
     try {
       const res = await updateProfile({
@@ -148,7 +172,7 @@ export default function AccountSettingsPage() {
       applyAuth(res.token, res.user);
       setProfileMsg('Profile updated.');
     } catch (err) {
-      setProfileErr(err instanceof ApiError ? err.message : 'Could not update profile.');
+      profileFields.setServerError(err, 'Could not update profile.');
     } finally {
       setSavingProfile(false);
     }
@@ -156,16 +180,23 @@ export default function AccountSettingsPage() {
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
-    setPwErr(null);
     setPwMsg(null);
-    if (newPassword.length < 8) {
-      setPwErr('New password must be at least 8 characters.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPwErr('New password and confirmation do not match.');
-      return;
-    }
+    const ok = pwFields.validate({
+      oldPassword: v.required(oldPassword, 'Old password'),
+      newPassword:
+        v.required(newPassword, 'New password') ??
+        // Length measured untrimmed — spaces are legitimate password characters, and this
+        // has to agree with the server's raw `.min(8)` check.
+        (newPassword.length < PASSWORD_MIN
+          ? `New password must be at least ${PASSWORD_MIN} characters.`
+          : undefined) ??
+        v.maxLen(newPassword, v.LIMITS.password, 'New password'),
+      confirmPassword:
+        newPassword !== confirmPassword
+          ? 'New password and confirmation do not match.'
+          : undefined,
+    });
+    if (!ok) return;
     setSavingPw(true);
     try {
       await changePassword(oldPassword, newPassword);
@@ -174,7 +205,7 @@ export default function AccountSettingsPage() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setPwErr(err instanceof ApiError ? err.message : 'Could not change password.');
+      pwFields.setServerError(err, 'Could not change password.');
     } finally {
       setSavingPw(false);
     }
@@ -184,6 +215,7 @@ export default function AccountSettingsPage() {
     setTwoFAErr(null);
     setTwoFAMsg(null);
     setTwoFACode('');
+    twoFAFields.reset();
     setTwoFABusy(true);
     try {
       setSetupData(await setup2fa());
@@ -197,6 +229,7 @@ export default function AccountSettingsPage() {
   async function confirmEnable(e: React.FormEvent) {
     e.preventDefault();
     setTwoFAErr(null);
+    if (!twoFAFields.validate({ code: codeRule(twoFACode) })) return;
     setTwoFABusy(true);
     try {
       const res = await enable2fa(twoFACode.trim());
@@ -205,7 +238,7 @@ export default function AccountSettingsPage() {
       setTwoFACode('');
       setTwoFAMsg('Two-factor authentication is now on.');
     } catch (err) {
-      setTwoFAErr(err instanceof ApiError ? err.message : 'Could not enable two-factor.');
+      twoFAFields.setServerError(err, 'Could not enable two-factor.');
     } finally {
       setTwoFABusy(false);
     }
@@ -214,6 +247,7 @@ export default function AccountSettingsPage() {
   async function confirmDisable(e: React.FormEvent) {
     e.preventDefault();
     setTwoFAErr(null);
+    if (!twoFAFields.validate({ code: codeRule(twoFACode) })) return;
     setTwoFABusy(true);
     try {
       const res = await disable2fa(twoFACode.trim());
@@ -222,7 +256,7 @@ export default function AccountSettingsPage() {
       setTwoFACode('');
       setTwoFAMsg('Two-factor authentication has been turned off.');
     } catch (err) {
-      setTwoFAErr(err instanceof ApiError ? err.message : 'Could not disable two-factor.');
+      twoFAFields.setServerError(err, 'Could not disable two-factor.');
     } finally {
       setTwoFABusy(false);
     }
@@ -271,7 +305,13 @@ export default function AccountSettingsPage() {
                   </Button>
                 )}
               </div>
-              <p className="mt-2 text-xs text-slate-400">PNG, JPG or WebP · up to 5 MB.</p>
+              <p className="mt-2 text-xs text-slate-400">
+                PNG, JPG or WebP · up to {AVATAR_MAX_MB} MB.
+              </p>
+              <FieldError
+                id={profileFields.errorId('avatar')}
+                message={profileFields.errors.avatar}
+              />
             </div>
             <span className="ml-auto hidden items-center gap-1.5 self-start rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium capitalize text-brand-700 sm:inline-flex">
               <LuShieldCheck className="h-3.5 w-3.5" />
@@ -282,21 +322,39 @@ export default function AccountSettingsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="name">Full name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input
+                id="name"
+                value={name}
+                maxLength={v.LIMITS.fullName}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  profileFields.clearError('name');
+                }}
+                required
+                {...profileFields.fieldProps('name')}
+              />
+              <FieldError id={profileFields.errorId('name')} message={profileFields.errors.name} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                maxLength={v.LIMITS.email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  profileFields.clearError('email');
+                }}
                 required
+                {...profileFields.fieldProps('email')}
               />
+              <FieldError id={profileFields.errorId('email')} message={profileFields.errors.email} />
             </div>
           </div>
 
-          {profileErr && <Alert kind="error">{profileErr}</Alert>}
+          {profileFields.formError && <Alert kind="error">{profileFields.formError}</Alert>}
           {profileMsg && <Alert kind="success">{profileMsg}</Alert>}
 
           <div className="flex justify-end">
@@ -321,10 +379,16 @@ export default function AccountSettingsPage() {
               id="oldPassword"
               type="password"
               autoComplete="current-password"
+              maxLength={v.LIMITS.password}
               value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
+              onChange={(e) => {
+                setOldPassword(e.target.value);
+                pwFields.clearError('oldPassword');
+              }}
               required
+              {...pwFields.fieldProps('oldPassword')}
             />
+            <FieldError id={pwFields.errorId('oldPassword')} message={pwFields.errors.oldPassword} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -333,9 +397,29 @@ export default function AccountSettingsPage() {
                 id="newPassword"
                 type="password"
                 autoComplete="new-password"
+                minLength={PASSWORD_MIN}
+                maxLength={v.LIMITS.password}
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  pwFields.clearError('newPassword');
+                  pwFields.clearError('confirmPassword');
+                }}
                 required
+                aria-invalid={pwFields.errors.newPassword ? true : undefined}
+                // Keep the strength hint announced alongside any error, not replaced by it.
+                aria-describedby={
+                  pwFields.errors.newPassword
+                    ? `newPassword-hint ${pwFields.errorId('newPassword')}`
+                    : 'newPassword-hint'
+                }
+              />
+              <p id="newPassword-hint" className="text-xs text-slate-400 dark:text-slate-500">
+                At least {PASSWORD_MIN} characters — mix letters, numbers, and symbols.
+              </p>
+              <FieldError
+                id={pwFields.errorId('newPassword')}
+                message={pwFields.errors.newPassword}
               />
             </div>
             <div className="space-y-1.5">
@@ -344,14 +428,24 @@ export default function AccountSettingsPage() {
                 id="confirmPassword"
                 type="password"
                 autoComplete="new-password"
+                minLength={PASSWORD_MIN}
+                maxLength={v.LIMITS.password}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  pwFields.clearError('confirmPassword');
+                }}
                 required
+                {...pwFields.fieldProps('confirmPassword')}
+              />
+              <FieldError
+                id={pwFields.errorId('confirmPassword')}
+                message={pwFields.errors.confirmPassword}
               />
             </div>
           </div>
 
-          {pwErr && <Alert kind="error">{pwErr}</Alert>}
+          {pwFields.formError && <Alert kind="error">{pwFields.formError}</Alert>}
           {pwMsg && <Alert kind="success">{pwMsg}</Alert>}
 
           <div className="flex justify-end">
@@ -390,10 +484,15 @@ export default function AccountSettingsPage() {
                   autoComplete="one-time-code"
                   maxLength={6}
                   value={twoFACode}
-                  onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) => {
+                    setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                    twoFAFields.clearError('code');
+                  }}
                   placeholder="123456"
                   className="text-center text-lg tracking-[0.3em]"
+                  {...twoFAFields.fieldProps('code')}
                 />
+                <FieldError id={twoFAFields.errorId('code')} message={twoFAFields.errors.code} />
               </div>
               <div className="flex gap-2">
                 <Button type="submit" variant="destructive" disabled={twoFABusy || twoFACode.length !== 6}>
@@ -406,6 +505,7 @@ export default function AccountSettingsPage() {
                     setDisarming(false);
                     setTwoFACode('');
                     setTwoFAErr(null);
+                    twoFAFields.reset();
                   }}
                 >
                   Cancel
@@ -425,6 +525,7 @@ export default function AccountSettingsPage() {
                   setTwoFAErr(null);
                   setTwoFAMsg(null);
                   setTwoFACode('');
+                  twoFAFields.reset();
                 }}
               >
                 Disable
@@ -458,10 +559,15 @@ export default function AccountSettingsPage() {
                     autoComplete="one-time-code"
                     maxLength={6}
                     value={twoFACode}
-                    onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onChange={(e) => {
+                      setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                      twoFAFields.clearError('code');
+                    }}
                     placeholder="123456"
                     className="max-w-48 text-center text-lg tracking-[0.3em]"
+                    {...twoFAFields.fieldProps('code')}
                   />
+                  <FieldError id={twoFAFields.errorId('code')} message={twoFAFields.errors.code} />
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={twoFABusy || twoFACode.length !== 6}>
@@ -474,6 +580,7 @@ export default function AccountSettingsPage() {
                       setSetupData(null);
                       setTwoFACode('');
                       setTwoFAErr(null);
+                      twoFAFields.reset();
                     }}
                   >
                     Cancel
@@ -495,9 +602,9 @@ export default function AccountSettingsPage() {
           </Button>
         )}
 
-        {twoFAErr && (
+        {(twoFAErr ?? twoFAFields.formError) && (
           <div className="mt-4">
-            <Alert kind="error">{twoFAErr}</Alert>
+            <Alert kind="error">{twoFAErr ?? twoFAFields.formError}</Alert>
           </div>
         )}
         {twoFAMsg && (

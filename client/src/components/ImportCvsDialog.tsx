@@ -8,7 +8,8 @@ import {
 } from 'react-icons/lu';
 import { importCv } from '../api/endpoints';
 import { ApiError } from '../api/client';
-import { Button } from '../components/ui';
+import { Alert, Button } from '../components/ui';
+import * as v from '../lib/validators';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,9 @@ interface Item {
 }
 
 const CONCURRENCY = 3;
+/** Matches the CV upload limit enforced on the applicant form and the API. */
+const MAX_MB = 10;
+const ACCEPT_RE = /\.(pdf|docx)$/i;
 let counter = 0;
 
 /** Run each item through `worker`, at most `concurrency` at a time. */
@@ -55,6 +59,8 @@ export default function ImportCvsDialog({
   const [items, setItems] = useState<Item[]>([]);
   const [processing, setProcessing] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // Files we refused to queue, so a drop of 10 JPGs explains itself instead of doing nothing.
+  const [rejected, setRejected] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const queuedCount = items.filter((i) => i.status === 'queued').length;
@@ -68,7 +74,15 @@ export default function ImportCvsDialog({
 
   function addFiles(files: FileList | null) {
     if (!files) return;
-    const accepted = Array.from(files).filter((f) => /\.(pdf|docx)$/i.test(f.name));
+    const accepted: File[] = [];
+    const refused: string[] = [];
+    for (const file of Array.from(files)) {
+      // Same rules as the applicant form: type by extension, then size.
+      const problem = v.fileRules(file, { maxMb: MAX_MB, accept: ACCEPT_RE, label: 'File' });
+      if (problem) refused.push(`${file.name} — ${problem.replace(/^File /, '')}`);
+      else accepted.push(file);
+    }
+    setRejected(refused);
     if (!accepted.length) return;
     setItems((prev) => [
       ...prev,
@@ -157,8 +171,29 @@ export default function ImportCvsDialog({
             <p className="mt-2 text-sm font-medium text-slate-700">
               Drop CVs here, or click to browse
             </p>
-            <p className="mt-0.5 text-xs text-slate-400">PDF or DOCX · multiple files supported</p>
+            <p className="mt-0.5 text-xs text-slate-400">
+              PDF or DOCX · up to {MAX_MB}&nbsp;MB each · multiple files supported
+            </p>
           </div>
+
+          {/* Files that never made it into the queue */}
+          {rejected.length > 0 && (
+            <Alert kind="error">
+              <p className="font-medium">
+                {rejected.length} file{rejected.length === 1 ? '' : 's'} skipped
+              </p>
+              <ul className="mt-1 space-y-0.5">
+                {rejected.slice(0, 5).map((r, i) => (
+                  <li key={i} className="truncate text-xs">
+                    {r}
+                  </li>
+                ))}
+                {rejected.length > 5 && (
+                  <li className="text-xs">…and {rejected.length - 5} more.</li>
+                )}
+              </ul>
+            </Alert>
+          )}
 
           {/* File list */}
           {items.length > 0 && (

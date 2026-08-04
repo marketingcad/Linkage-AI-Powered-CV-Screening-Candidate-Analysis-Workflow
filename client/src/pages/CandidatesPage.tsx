@@ -20,6 +20,7 @@ import {
 import CandidateTable from '../components/CandidateTable';
 import CandidateBoard from '../components/CandidateBoard';
 import CompareDialog from '../components/CompareDialog';
+import * as v from '../lib/validators';
 
 const STAGE_FILTERS: { value: '' | CandidateStage; label: string }[] = [
   { value: '', label: 'All' },
@@ -41,6 +42,11 @@ const VIEWS: { value: View; label: string; Icon: IconType }[] = [
 const inputCls =
   'rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-brand-400 focus:outline-none';
 
+/** Scores are always 0–100, so the filter can't usefully go outside that. */
+const SCORE_MIN = 0;
+const SCORE_MAX = 100;
+const SEARCH_MAX = 120;
+
 export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<CandidateSummary[]>([]);
   const [view, setView] = useState<View>('board');
@@ -57,6 +63,18 @@ export default function CandidatesPage() {
   const [minScore, setMinScore] = useState('');
   const [aiFilter, setAiFilter] = useState<AiFilter>('');
   const [skill, setSkill] = useState('');
+
+  /**
+   * Kept as a string so the field can be blank, but clamped on the way in — a pasted
+   * "9999" (or a negative) would otherwise become a filter that silently hides everyone.
+   */
+  function changeMinScore(raw: string) {
+    const trimmed = raw.trim();
+    if (!trimmed) return setMinScore('');
+    const n = Math.round(Number(trimmed));
+    if (!Number.isFinite(n)) return;
+    setMinScore(String(Math.min(SCORE_MAX, Math.max(SCORE_MIN, n))));
+  }
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -226,13 +244,20 @@ export default function CandidatesPage() {
               <div className="relative min-w-52 flex-1">
                 <LuSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
+                  aria-label="Search candidates by name, email, or role"
+                  maxLength={SEARCH_MAX}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search name, email, or role…"
                   className={`${inputCls} w-full pl-9`}
                 />
               </div>
-              <select value={source} onChange={(e) => setSource(e.target.value)} className={inputCls}>
+              <select
+                aria-label="Filter by application source"
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                className={inputCls}
+              >
                 <option value="">All sources</option>
                 {sources.map((s) => (
                   <option key={s} value={s}>
@@ -242,14 +267,17 @@ export default function CandidatesPage() {
               </select>
               <input
                 type="number"
-                min={0}
-                max={100}
+                aria-label={`Minimum score (${SCORE_MIN}–${SCORE_MAX})`}
+                min={SCORE_MIN}
+                max={SCORE_MAX}
+                step={1}
                 value={minScore}
-                onChange={(e) => setMinScore(e.target.value)}
+                onChange={(e) => changeMinScore(e.target.value)}
                 placeholder="Min score"
                 className={`${inputCls} w-28`}
               />
               <select
+                aria-label="Filter by AI-written likelihood"
                 value={aiFilter}
                 onChange={(e) => setAiFilter(e.target.value as AiFilter)}
                 className={inputCls}
@@ -260,6 +288,8 @@ export default function CandidatesPage() {
                 <option value="high">AI: High</option>
               </select>
               <input
+                aria-label="Filter by skill"
+                maxLength={v.LIMITS.skill}
                 value={skill}
                 onChange={(e) => setSkill(e.target.value)}
                 placeholder="Skill…"

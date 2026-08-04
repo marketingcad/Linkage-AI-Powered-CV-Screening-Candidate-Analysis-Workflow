@@ -5,6 +5,9 @@ import { fetchPublicJob, prefillFromCv, submitApplication } from '../api/endpoin
 import { ApiError } from '../api/client';
 import type { PublicJob, QuizAnswer } from '../api/types';
 import { Alert, Card, Spinner } from '../components/ui';
+import FieldError from '../components/FieldError';
+import { useFormErrors } from '../lib/useFormErrors';
+import * as v from '../lib/validators';
 import PublicHeader from '../layout/PublicHeader';
 
 export default function ApplyJobPage() {
@@ -39,6 +42,7 @@ export default function ApplyJobPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fieldErrors = useFormErrors('apply');
   const [done, setDone] = useState(false);
   const [trackingToken, setTrackingToken] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -71,10 +75,14 @@ export default function ApplyJobPage() {
 
   function pickFile(f: File | null) {
     setError(null);
+    fieldErrors.clearError('cv');
     setAutofilled(false);
     if (!f) return setFile(null);
-    if (!/\.(pdf|docx)$/i.test(f.name)) {
-      setError('Only PDF or DOCX files are accepted.');
+    // Check type *and* size here (the form advertises a 10 MB limit) so a huge file
+    // fails instantly instead of after a long upload the server then rejects.
+    const problem = v.fileRules(f, { maxMb: 10, accept: /\.(pdf|docx)$/i, label: 'CV' });
+    if (problem) {
+      fieldErrors.validate({ cv: problem });
       return;
     }
     setFile(f);
@@ -139,8 +147,40 @@ export default function ApplyJobPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!file) return setError('Please attach your CV.');
     if (!jobId) return;
+
+    // Validate every field up front so the applicant sees all problems at once,
+    // inline on the offending field, instead of one banner per round-trip.
+    const slotErrors: Record<string, string | undefined> = {};
+    slots.forEach((s, i) => {
+      if (s.trim()) {
+        slotErrors[`slot${i}`] = v.dateTime(s, { label: 'Preferred time', allowPast: false });
+      }
+    });
+    const filledSlots = slots.map((s) => s.trim()).filter(Boolean);
+    if (new Set(filledSlots).size !== filledSlots.length) {
+      slotErrors.slot0 = 'Preferred times must be different from each other.';
+    }
+
+    const ok = fieldErrors.validate({
+      cv: v.fileRules(file, { maxMb: 10, accept: /\.(pdf|docx)$/i, label: 'CV' }),
+      fullName:
+        v.required(fullName, 'Full name') ??
+        v.minLen(fullName, 2, 'Full name') ??
+        v.maxLen(fullName, v.LIMITS.fullName, 'Full name'),
+      email: v.email(email),
+      phone: v.phone(phone),
+      location: v.maxLen(location, v.LIMITS.location, 'Location'),
+      currentTitle: v.maxLen(currentTitle, v.LIMITS.currentTitle, 'Current title'),
+      yearsExperience: v.intInRange(yearsExperience, { min: 0, max: 60, label: 'Years of experience' }),
+      linkedinUrl: v.httpUrl(linkedinUrl, 'LinkedIn URL'),
+      portfolioUrl: v.httpUrl(portfolioUrl, 'Portfolio URL'),
+      noticePeriod: v.maxLen(noticePeriod, v.LIMITS.noticePeriod, 'Notice period'),
+      expectedSalary: v.maxLen(expectedSalary, v.LIMITS.expectedSalary, 'Expected salary'),
+      coverNote: v.maxLen(coverNote, v.LIMITS.coverNote, 'Cover note'),
+      ...slotErrors,
+    });
+    if (!ok || !file) return;
 
     const quizAnswers: QuizAnswer[] = quiz.map(
       (q) => answers[q.id] ?? { questionId: q.id },
@@ -160,9 +200,16 @@ export default function ApplyJobPage() {
     if (expectedSalary) form.append('expectedSalary', expectedSalary);
     if (coverNote) form.append('coverNote', coverNote);
     // Convert filled datetime-local slots (local time) to ISO, keep order, drop blanks.
+    // Guarded: an unparseable value used to throw here — outside the try below — which
+    // left the form permanently stuck with the submit button disabled.
     const availabilitySlots = slots
-      .filter((s) => s.trim())
-      .map((s) => new Date(s).toISOString());
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => {
+        const d = new Date(s);
+        return Number.isNaN(d.getTime()) ? null : d.toISOString();
+      })
+      .filter((s): s is string => s !== null);
     if (availabilitySlots.length) {
       form.append('availabilitySlots', JSON.stringify(availabilitySlots));
       // Capture the applicant's timezone so recruiters can read the slots in the
@@ -184,6 +231,9 @@ export default function ApplyJobPage() {
       setTrackingToken(res.trackingToken);
       setDone(true);
     } catch (err) {
+      // Field-level details from the server land on their fields; anything else
+      // becomes the form-level message.
+      fieldErrors.setServerError(err, 'Submission failed. Please try again.');
       setError(err instanceof ApiError ? err.message : 'Submission failed. Please try again.');
     } finally {
       setSubmitting(false);
@@ -305,7 +355,7 @@ export default function ApplyJobPage() {
               </div>
 
               {/* CV first — attaching it auto-fills the fields below */}
-              <Field label="CV / Resume">
+              <Field label="CV / Resume" required error={fieldErrors.errors.cv} errorId={fieldErrors.errorId('cv')}>
                 <div
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -347,45 +397,133 @@ export default function ApplyJobPage() {
               </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Full name">
-                  <input required value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls} placeholder="Jane Doe" />
+                <Field label="Full name" required error={fieldErrors.errors.fullName} errorId={fieldErrors.errorId('fullName')}>
+                  <input
+                    required
+                    maxLength={v.LIMITS.fullName}
+                    value={fullName}
+                    onChange={(e) => { setFullName(e.target.value); fieldErrors.clearError('fullName'); }}
+                    className={inputCls}
+                    placeholder="Jane Doe"
+                    {...fieldErrors.fieldProps('fullName')}
+                  />
                 </Field>
-                <Field label="Email">
-                  <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="jane@example.com" />
+                <Field label="Email" required error={fieldErrors.errors.email} errorId={fieldErrors.errorId('email')}>
+                  <input
+                    required
+                    type="email"
+                    autoComplete="email"
+                    maxLength={v.LIMITS.email}
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); fieldErrors.clearError('email'); }}
+                    className={inputCls}
+                    placeholder="jane@example.com"
+                    {...fieldErrors.fieldProps('email')}
+                  />
                 </Field>
-                <Field label="Phone">
-                  <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} placeholder="+1 555 123 4567" />
+                <Field label="Phone" error={fieldErrors.errors.phone} errorId={fieldErrors.errorId('phone')}>
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    maxLength={v.LIMITS.phone}
+                    value={phone}
+                    onChange={(e) => { setPhone(e.target.value); fieldErrors.clearError('phone'); }}
+                    className={inputCls}
+                    placeholder="+1 555 123 4567"
+                    {...fieldErrors.fieldProps('phone')}
+                  />
                 </Field>
-                <Field label="Location">
-                  <input value={location} onChange={(e) => setLocation(e.target.value)} className={inputCls} placeholder="City, Country" />
+                <Field label="Location" error={fieldErrors.errors.location} errorId={fieldErrors.errorId('location')}>
+                  <input
+                    maxLength={v.LIMITS.location}
+                    value={location}
+                    onChange={(e) => { setLocation(e.target.value); fieldErrors.clearError('location'); }}
+                    className={inputCls}
+                    placeholder="City, Country"
+                    {...fieldErrors.fieldProps('location')}
+                  />
                 </Field>
-                <Field label="Current / most recent title">
-                  <input value={currentTitle} onChange={(e) => setCurrentTitle(e.target.value)} className={inputCls} placeholder="Senior Frontend Engineer" />
+                <Field label="Current / most recent title" error={fieldErrors.errors.currentTitle} errorId={fieldErrors.errorId('currentTitle')}>
+                  <input
+                    maxLength={v.LIMITS.currentTitle}
+                    value={currentTitle}
+                    onChange={(e) => { setCurrentTitle(e.target.value); fieldErrors.clearError('currentTitle'); }}
+                    className={inputCls}
+                    placeholder="Senior Frontend Engineer"
+                    {...fieldErrors.fieldProps('currentTitle')}
+                  />
                 </Field>
-                <Field label="Years of experience">
-                  <input type="number" min={0} max={60} value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)} className={inputCls} placeholder="5" />
+                <Field label="Years of experience" error={fieldErrors.errors.yearsExperience} errorId={fieldErrors.errorId('yearsExperience')}>
+                  <input
+                    type="number"
+                    min={0}
+                    max={60}
+                    value={yearsExperience}
+                    onChange={(e) => { setYearsExperience(e.target.value); fieldErrors.clearError('yearsExperience'); }}
+                    className={inputCls}
+                    placeholder="5"
+                    {...fieldErrors.fieldProps('yearsExperience')}
+                  />
                 </Field>
-                <Field label="LinkedIn URL">
-                  <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} className={inputCls} placeholder="https://linkedin.com/in/…" />
+                <Field label="LinkedIn URL" error={fieldErrors.errors.linkedinUrl} errorId={fieldErrors.errorId('linkedinUrl')}>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    maxLength={v.LIMITS.url}
+                    value={linkedinUrl}
+                    onChange={(e) => { setLinkedinUrl(e.target.value); fieldErrors.clearError('linkedinUrl'); }}
+                    className={inputCls}
+                    placeholder="https://linkedin.com/in/…"
+                    {...fieldErrors.fieldProps('linkedinUrl')}
+                  />
                 </Field>
-                <Field label="Portfolio / GitHub URL">
-                  <input value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} className={inputCls} placeholder="https://…" />
+                <Field label="Portfolio / GitHub URL" error={fieldErrors.errors.portfolioUrl} errorId={fieldErrors.errorId('portfolioUrl')}>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    maxLength={v.LIMITS.url}
+                    value={portfolioUrl}
+                    onChange={(e) => { setPortfolioUrl(e.target.value); fieldErrors.clearError('portfolioUrl'); }}
+                    className={inputCls}
+                    placeholder="https://…"
+                    {...fieldErrors.fieldProps('portfolioUrl')}
+                  />
                 </Field>
-                <Field label="Notice period / availability">
-                  <input value={noticePeriod} onChange={(e) => setNoticePeriod(e.target.value)} className={inputCls} placeholder="e.g. Immediate, 2 weeks, 1 month" />
+                <Field label="Notice period / availability" error={fieldErrors.errors.noticePeriod} errorId={fieldErrors.errorId('noticePeriod')}>
+                  <input
+                    maxLength={v.LIMITS.noticePeriod}
+                    value={noticePeriod}
+                    onChange={(e) => { setNoticePeriod(e.target.value); fieldErrors.clearError('noticePeriod'); }}
+                    className={inputCls}
+                    placeholder="e.g. Immediate, 2 weeks, 1 month"
+                    {...fieldErrors.fieldProps('noticePeriod')}
+                  />
                 </Field>
-                <Field label="Expected salary">
-                  <input value={expectedSalary} onChange={(e) => setExpectedSalary(e.target.value)} className={inputCls} placeholder="e.g. $90k, negotiable" />
+                <Field label="Expected salary" error={fieldErrors.errors.expectedSalary} errorId={fieldErrors.errorId('expectedSalary')}>
+                  <input
+                    maxLength={v.LIMITS.expectedSalary}
+                    value={expectedSalary}
+                    onChange={(e) => { setExpectedSalary(e.target.value); fieldErrors.clearError('expectedSalary'); }}
+                    className={inputCls}
+                    placeholder="e.g. $90k, negotiable"
+                    {...fieldErrors.fieldProps('expectedSalary')}
+                  />
                 </Field>
               </div>
-              <Field label="Anything else you'd like us to know? (optional)">
+              <Field label="Anything else you'd like us to know? (optional)" error={fieldErrors.errors.coverNote} errorId={fieldErrors.errorId('coverNote')}>
                 <textarea
                   value={coverNote}
-                  onChange={(e) => setCoverNote(e.target.value)}
+                  maxLength={v.LIMITS.coverNote}
+                  onChange={(e) => { setCoverNote(e.target.value); fieldErrors.clearError('coverNote'); }}
                   rows={3}
                   className={inputCls}
                   placeholder="A short note or cover message…"
+                  {...fieldErrors.fieldProps('coverNote')}
                 />
+                <span className="mt-1 block text-right text-xs text-slate-400">
+                  {coverNote.length}/{v.LIMITS.coverNote}
+                </span>
               </Field>
               <p className="text-xs text-slate-400">
                 Only name, email, and CV are required — the rest help us evaluate you faster.
@@ -470,7 +608,9 @@ export default function ApplyJobPage() {
               </Card>
             )}
 
-            {error && <Alert kind="error">{error}</Alert>}
+            {(error || fieldErrors.formError) && (
+              <Alert kind="error">{error ?? fieldErrors.formError}</Alert>
+            )}
 
             <button
               type="submit"
@@ -489,11 +629,36 @@ export default function ApplyJobPage() {
 const inputCls =
   'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * Labelled field with a required marker and an inline error slot. The error is rendered
+ * by FieldError and referenced from the input via aria-describedby (see useFormErrors).
+ */
+function Field({
+  label,
+  children,
+  required,
+  error,
+  errorId,
+}: {
+  label: string;
+  children: React.ReactNode;
+  required?: boolean;
+  error?: string;
+  errorId?: string;
+}) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-slate-700">
+        {label}
+        {required && (
+          <span aria-hidden="true" className="ml-0.5 text-rose-500">
+            *
+          </span>
+        )}
+        {required && <span className="sr-only"> (required)</span>}
+      </span>
       {children}
+      {errorId && <FieldError id={errorId} message={error} />}
     </label>
   );
 }

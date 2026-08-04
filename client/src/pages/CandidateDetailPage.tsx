@@ -75,6 +75,9 @@ import {
   STAGES,
 } from '../components/ui';
 import ScheduleInterviewDialog from '../components/ScheduleInterviewDialog';
+import FieldError from '../components/FieldError';
+import { useFormErrors } from '../lib/useFormErrors';
+import * as v from '../lib/validators';
 
 export default function CandidateDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -102,6 +105,13 @@ export default function CandidateDetailPage() {
   const [ratingInput, setRatingInput] = useState(0);
   const [noteBody, setNoteBody] = useState('');
   const [postingNote, setPostingNote] = useState(false);
+  // Errors from the per-card actions. These are separate from `error`, which means
+  // "the candidate itself failed to load" and replaces the whole page.
+  const review = useFormErrors<'body'>('note');
+  const [stageError, setStageError] = useState<string | null>(null);
+  const [interviewError, setInterviewError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletingCandidate, setDeletingCandidate] = useState(false);
 
   function loadEmails() {
     if (!id) return;
@@ -138,6 +148,7 @@ export default function CandidateDetailPage() {
     if (!id) return;
     const body = noteBody.trim();
     if (!body && !ratingInput) return;
+    if (!review.validate({ body: v.maxLen(body, v.LIMITS.notes, 'Note') })) return;
     setPostingNote(true);
     try {
       await addCandidateNote(id, {
@@ -147,8 +158,9 @@ export default function CandidateDetailPage() {
       setNoteBody('');
       setRatingInput(0);
       loadNotes();
-    } catch {
-      /* surfaced by disabled state; keep it simple */
+    } catch (err) {
+      // Keep what they typed so the review isn't lost when the request fails.
+      review.setServerError(err, 'Could not save your review. Please try again.');
     } finally {
       setPostingNote(false);
     }
@@ -159,17 +171,18 @@ export default function CandidateDetailPage() {
     try {
       await deleteCandidateNote(id, noteId);
       loadNotes();
-    } catch {
-      /* ignore */
+    } catch (err) {
+      review.setServerError(err, 'Could not delete that note. Please try again.');
     }
   }
 
   async function markInterviewOutcome(interviewId: string, status: 'completed' | 'no_show') {
+    setInterviewError(null);
     try {
       await updateInterview(interviewId, { status, notifyCandidate: false });
       loadInterviews();
     } catch {
-      /* ignore */
+      setInterviewError('Could not record the interview outcome. Please try again.');
     }
   }
 
@@ -215,9 +228,14 @@ export default function CandidateDetailPage() {
   async function changeStage(stage: CandidateStage) {
     if (!candidate) return;
     setBusy(true);
+    setStageError(null);
     try {
       const res = await updateCandidateStage(candidate.id, stage);
       setCandidate((c) => (c ? { ...c, stage: res.candidate.stage } : c));
+    } catch {
+      // The stage is only applied after the server confirms, so nothing to revert —
+      // but the buttons would otherwise just snap back with no explanation.
+      setStageError(`Could not move this candidate to “${stage}”. Please try again.`);
     } finally {
       setBusy(false);
     }
@@ -282,15 +300,22 @@ export default function CandidateDetailPage() {
 
   // GDPR: permanently erase this candidate (row + stored CV) on request.
   async function handleDelete() {
-    if (!candidate) return;
+    if (!candidate || deletingCandidate) return; // guard: two clicks = two DELETEs
     if (
       !confirm(
         `Permanently delete ${candidate.fullName}? This removes their record and CV and cannot be undone.`,
       )
     )
       return;
-    await deleteCandidate(candidate.id);
-    navigate('/hr/candidates');
+    setDeletingCandidate(true);
+    setDeleteError(null);
+    try {
+      await deleteCandidate(candidate.id);
+      navigate('/hr/candidates');
+    } catch {
+      setDeleteError('Could not delete this candidate. Please try again.');
+      setDeletingCandidate(false);
+    }
   }
 
   if (loading) return <Spinner label="Loading candidate…" />;
@@ -373,9 +398,13 @@ export default function CandidateDetailPage() {
                 Export personal data
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onSelect={() => void handleDelete()}>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={deletingCandidate}
+                onSelect={() => void handleDelete()}
+              >
                 <LuTrash2 />
-                Delete candidate
+                {deletingCandidate ? 'Deleting…' : 'Delete candidate'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -383,6 +412,7 @@ export default function CandidateDetailPage() {
       </div>
 
       {scheduledNote && <Alert kind="success">{scheduledNote}</Alert>}
+      {deleteError && <Alert kind="error">{deleteError}</Alert>}
 
       {c.analysisStatus === 'failed' && (
         <Alert kind="error">
@@ -449,6 +479,11 @@ export default function CandidateDetailPage() {
             </button>
           );
         })}
+        {stageError && (
+          <div className="w-full">
+            <Alert kind="error">{stageError}</Alert>
+          </div>
+        )}
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -509,11 +544,17 @@ export default function CandidateDetailPage() {
               </div>
               <textarea
                 value={noteBody}
-                onChange={(e) => setNoteBody(e.target.value)}
+                maxLength={v.LIMITS.notes}
+                onChange={(e) => {
+                  setNoteBody(e.target.value);
+                  review.clearError('body');
+                }}
                 rows={2}
                 placeholder="Add an internal note about this candidate…"
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                {...review.fieldProps('body')}
               />
+              <FieldError id={review.errorId('body')} message={review.errors.body} />
               <div className="mt-2 flex justify-end">
                 <Button
                   size="sm"
@@ -524,6 +565,12 @@ export default function CandidateDetailPage() {
                 </Button>
               </div>
             </div>
+
+            {review.formError && (
+              <div className="mt-3">
+                <Alert kind="error">{review.formError}</Alert>
+              </div>
+            )}
 
             {/* Notes list */}
             {notes.length > 0 && (
@@ -844,6 +891,12 @@ export default function CandidateDetailPage() {
                 </div>
               );
             })()}
+
+            {interviewError && (
+              <div className="mb-3">
+                <Alert kind="error">{interviewError}</Alert>
+              </div>
+            )}
 
             {interviews.length === 0 ? (
               <p className="text-sm text-slate-400">No interviews scheduled yet.</p>

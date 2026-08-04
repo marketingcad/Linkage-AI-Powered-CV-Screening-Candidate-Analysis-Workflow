@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import type { QuizQuestion, QuizQuestionType } from '../api/types';
+import FieldError from './FieldError';
+import * as v from '../lib/validators';
 
 function uid() {
   return crypto.randomUUID().slice(0, 8);
@@ -10,8 +13,48 @@ const TYPE_LABELS: Record<QuizQuestionType, string> = {
   short: 'Short answer (AI-graded)',
 };
 
+const POINTS_MIN = 1;
+const POINTS_MAX = 100;
+/** No shared LIMITS entry — the server caps the rubric at 2000 characters. */
+const RUBRIC_MAX = 2000;
+
 const inputCls =
   'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
+
+/** Keep pasted/typed values in the range the server accepts (it rejects anything else). */
+function clampPoints(raw: string) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return POINTS_MIN;
+  return Math.min(POINTS_MAX, Math.max(POINTS_MIN, Math.round(n)));
+}
+
+/**
+ * Problems that would make the saved quiz unusable: a blank prompt or option can't be
+ * answered, and a choice question with no correct option can never be auto-graded.
+ */
+function problemsFor(q: QuizQuestion) {
+  const options: Record<string, string | undefined> = {};
+  let correct: string | undefined;
+  if (q.type !== 'short') {
+    for (const o of q.options ?? []) {
+      options[o.id] =
+        v.required(o.text, 'Option text') ?? v.maxLen(o.text, v.LIMITS.quizOption, 'Option text');
+    }
+    if ((q.correctOptionIds ?? []).length === 0) {
+      correct =
+        q.type === 'single'
+          ? 'Mark the correct option so this question can be graded.'
+          : 'Mark at least one correct option so this question can be graded.';
+    }
+  }
+  return {
+    prompt:
+      v.required(q.prompt, 'Question prompt') ??
+      v.maxLen(q.prompt, v.LIMITS.quizPrompt, 'Question prompt'),
+    correct,
+    options,
+  };
+}
 
 export default function QuizBuilder({
   value,
@@ -20,6 +63,14 @@ export default function QuizBuilder({
   value: QuizQuestion[];
   onChange: (quiz: QuizQuestion[]) => void;
 }) {
+  // Only nag about a question once it has been worked on — a freshly added one is blank
+  // by definition and shouldn't light up red.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  function markTouched(qid: string) {
+    setTouched((prev) => (prev[qid] ? prev : { ...prev, [qid]: true }));
+  }
+
   function addQuestion(type: QuizQuestionType) {
     const base: QuizQuestion = {
       id: uid(),
@@ -40,6 +91,7 @@ export default function QuizBuilder({
   }
 
   function update(id: string, patch: Partial<QuizQuestion>) {
+    markTouched(id);
     onChange(value.map((q) => (q.id === id ? { ...q, ...patch } : q)));
   }
 
@@ -91,7 +143,11 @@ export default function QuizBuilder({
         </p>
       )}
 
-      {value.map((q, i) => (
+      {value.map((q, i) => {
+        const problems = touched[q.id] ? problemsFor(q) : null;
+        const promptErrorId = `quiz-${q.id}-prompt-error`;
+        const correctErrorId = `quiz-${q.id}-correct-error`;
+        return (
         <div key={q.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -108,20 +164,25 @@ export default function QuizBuilder({
 
           <textarea
             value={q.prompt}
+            maxLength={v.LIMITS.quizPrompt}
             onChange={(e) => update(q.id, { prompt: e.target.value })}
+            onBlur={() => markTouched(q.id)}
             rows={2}
             placeholder="Question prompt"
             className={inputCls}
+            aria-invalid={problems?.prompt ? true : undefined}
+            aria-describedby={problems?.prompt ? promptErrorId : undefined}
           />
+          <FieldError id={promptErrorId} message={problems?.prompt} />
 
           <div className="mt-3 flex items-center gap-3">
             <label className="text-xs text-slate-500">Points</label>
             <input
               type="number"
-              min={1}
-              max={100}
+              min={POINTS_MIN}
+              max={POINTS_MAX}
               value={q.points}
-              onChange={(e) => update(q.id, { points: Math.max(1, Number(e.target.value) || 1) })}
+              onChange={(e) => update(q.id, { points: clampPoints(e.target.value) })}
               className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none"
             />
           </div>
@@ -133,6 +194,7 @@ export default function QuizBuilder({
               </label>
               <textarea
                 value={q.rubric ?? ''}
+                maxLength={RUBRIC_MAX}
                 onChange={(e) => update(q.id, { rubric: e.target.value })}
                 rows={2}
                 placeholder="e.g. Full marks if the answer explains X and mentions Y."
@@ -146,31 +208,42 @@ export default function QuizBuilder({
               </p>
               {(q.options ?? []).map((o) => {
                 const checked = (q.correctOptionIds ?? []).includes(o.id);
+                const optionError = problems?.options[o.id];
+                const optionErrorId = `quiz-${q.id}-option-${o.id}-error`;
                 return (
-                  <div key={o.id} className="flex items-center gap-2">
-                    <input
-                      type={q.type === 'single' ? 'radio' : 'checkbox'}
-                      checked={checked}
-                      onChange={() => toggleCorrect(q.id, o.id)}
-                      title="Mark correct"
-                      className="h-4 w-4 accent-brand-500"
-                    />
-                    <input
-                      value={o.text}
-                      onChange={(e) => updateOption(q.id, o.id, e.target.value)}
-                      placeholder="Option text"
-                      className="flex-1 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none"
-                    />
-                    {(q.options?.length ?? 0) > 2 && (
-                      <button
-                        type="button"
-                        onClick={() => removeOption(q.id, o.id)}
-                        className="text-slate-400 hover:text-rose-600"
-                        aria-label="Remove option"
-                      >
-                        ✕
-                      </button>
-                    )}
+                  <div key={o.id}>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type={q.type === 'single' ? 'radio' : 'checkbox'}
+                        checked={checked}
+                        onChange={() => toggleCorrect(q.id, o.id)}
+                        title="Mark correct"
+                        className="h-4 w-4 accent-brand-500"
+                      />
+                      <input
+                        value={o.text}
+                        maxLength={v.LIMITS.quizOption}
+                        onChange={(e) => updateOption(q.id, o.id, e.target.value)}
+                        onBlur={() => markTouched(q.id)}
+                        placeholder="Option text"
+                        className="flex-1 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none"
+                        aria-invalid={optionError ? true : undefined}
+                        aria-describedby={optionError ? optionErrorId : undefined}
+                      />
+                      {(q.options?.length ?? 0) > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => removeOption(q.id, o.id)}
+                          className="text-slate-400 hover:text-rose-600"
+                          aria-label="Remove option"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    <div className="pl-6">
+                      <FieldError id={optionErrorId} message={optionError} />
+                    </div>
                   </div>
                 );
               })}
@@ -181,10 +254,12 @@ export default function QuizBuilder({
               >
                 + Add option
               </button>
+              <FieldError id={correctErrorId} message={problems?.correct} />
             </div>
           )}
         </div>
-      ))}
+        );
+      })}
 
       <div className="flex flex-wrap gap-2">
         <button

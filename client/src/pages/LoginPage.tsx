@@ -23,6 +23,9 @@ import { Alert, Spinner } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import FieldError from '../components/FieldError';
+import { useFormErrors } from '../lib/useFormErrors';
+import * as v from '../lib/validators';
 import loginHero from '../assets/login-hero.jpg';
 import loginHeroVideo from '../assets/login-hero.mp4';
 
@@ -58,6 +61,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const fieldErrors = useFormErrors<'email' | 'password'>('login');
 
   // 2FA step
   const [mfaToken, setMfaToken] = useState<string | null>(null);
@@ -66,6 +70,16 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    // Catch an empty/malformed credential before the round-trip, and show it on the
+    // offending field rather than as a generic banner.
+    if (
+      !fieldErrors.validate({
+        email: v.email(email),
+        password: v.required(password, 'Password'),
+      })
+    ) {
+      return;
+    }
     setLoading(true);
     try {
       const res = await login(email, password);
@@ -75,7 +89,7 @@ export default function LoginPage() {
         navigate(from, { replace: true });
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Login failed');
+      fieldErrors.setServerError(err, 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -101,6 +115,7 @@ export default function LoginPage() {
     setCode('');
     setError(null);
     setPassword('');
+    fieldErrors.reset();
   }
 
   return (
@@ -267,12 +282,19 @@ export default function LoginPage() {
                       id="email"
                       required
                       type="email"
+                      autoComplete="email"
+                      maxLength={v.LIMITS.email}
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        fieldErrors.clearError('email');
+                      }}
                       placeholder="hr@example.com"
                       className="pl-9"
+                      {...fieldErrors.fieldProps('email')}
                     />
                   </div>
+                  <FieldError id={fieldErrors.errorId('email')} message={fieldErrors.errors.email} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="password">Password</Label>
@@ -282,10 +304,16 @@ export default function LoginPage() {
                       id="password"
                       required
                       type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      maxLength={v.LIMITS.password}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        fieldErrors.clearError('password');
+                      }}
                       placeholder="••••••••"
                       className="pl-9 pr-10"
+                      {...fieldErrors.fieldProps('password')}
                     />
                     <button
                       type="button"
@@ -296,8 +324,12 @@ export default function LoginPage() {
                       {showPassword ? <LuEyeOff className="h-4 w-4" /> : <LuEye className="h-4 w-4" />}
                     </button>
                   </div>
+                  <FieldError
+                    id={fieldErrors.errorId('password')}
+                    message={fieldErrors.errors.password}
+                  />
                 </div>
-                {error && <Alert kind="error">{error}</Alert>}
+                {fieldErrors.formError && <Alert kind="error">{fieldErrors.formError}</Alert>}
                 <Button type="submit" disabled={loading} className="w-full">
                   {loading ? <Spinner /> : 'Sign in'}
                 </Button>

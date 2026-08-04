@@ -17,10 +17,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
+import FieldError from './FieldError';
+import { useFormErrors } from '../lib/useFormErrors';
+import * as v from '../lib/validators';
 import QuizBuilder from './QuizBuilder';
 
-function parseSkills(v: string): string[] {
-  return v
+/** No shared LIMITS entry — the server caps employment type at 100 characters. */
+const EMPLOYMENT_TYPE_MAX = 100;
+
+function parseSkills(raw: string): string[] {
+  return raw
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
@@ -58,6 +64,7 @@ export default function JobForm({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fieldErrors = useFormErrors('job');
 
   // AI quiz generation
   const [genCount, setGenCount] = useState(5);
@@ -95,6 +102,29 @@ export default function JobForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    // Validate everything up front so all problems show inline at once instead of one
+    // server round-trip per mistake.
+    const weightTotal = WEIGHT_ROWS.reduce((sum, r) => sum + (weights[r.key] || 0), 0);
+    const ok = fieldErrors.validate({
+      title:
+        v.required(title, 'Job title') ??
+        v.minLen(title, 2, 'Job title') ??
+        v.maxLen(title, v.LIMITS.jobTitle, 'Job title'),
+      department: v.maxLen(department, v.LIMITS.jobTitle, 'Department'),
+      location: v.maxLen(location, v.LIMITS.location, 'Location'),
+      employmentType: v.maxLen(employmentType, EMPLOYMENT_TYPE_MAX, 'Employment type'),
+      description:
+        v.required(description, 'Description') ??
+        v.minLen(description, 10, 'Description') ??
+        v.maxLen(description, v.LIMITS.jobDescription, 'Description'),
+      minYears: v.intInRange(minYears, { min: 0, max: 60, label: 'Min. years experience' }),
+      education: v.maxLen(education, v.LIMITS.educationRequirement, 'Education requirement'),
+      // All-zero weights would save happily and then rank every candidate at zero.
+      scoringWeights: weightTotal > 0 ? undefined : 'Set at least one weight above zero.',
+    });
+    if (!ok) return;
+
     const payload: JobInput = {
       title: title.trim(),
       department: department.trim() || undefined,
@@ -117,6 +147,8 @@ export default function JobForm({
         : await createJob(payload);
       onSaved(res.job);
     } catch (err) {
+      // Field-level details from the server land on their fields; the rest is form-level.
+      fieldErrors.setServerError(err, 'Failed to save job');
       setError(err instanceof ApiError ? err.message : 'Failed to save job');
     } finally {
       setSaving(false);
@@ -143,41 +175,59 @@ export default function JobForm({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
-          <Field label="Job title">
+          <Field label="Job title" required error={fieldErrors.errors.title} errorId={fieldErrors.errorId('title')}>
             <input
               required
+              maxLength={v.LIMITS.jobTitle}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => { setTitle(e.target.value); fieldErrors.clearError('title'); }}
               className={inputCls}
               placeholder="Senior Frontend Engineer"
+              {...fieldErrors.fieldProps('title')}
             />
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Department">
-              <input value={department} onChange={(e) => setDepartment(e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Location">
-              <input value={location} onChange={(e) => setLocation(e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Employment type">
+            <Field label="Department" error={fieldErrors.errors.department} errorId={fieldErrors.errorId('department')}>
               <input
+                maxLength={v.LIMITS.jobTitle}
+                value={department}
+                onChange={(e) => { setDepartment(e.target.value); fieldErrors.clearError('department'); }}
+                className={inputCls}
+                {...fieldErrors.fieldProps('department')}
+              />
+            </Field>
+            <Field label="Location" error={fieldErrors.errors.location} errorId={fieldErrors.errorId('location')}>
+              <input
+                maxLength={v.LIMITS.location}
+                value={location}
+                onChange={(e) => { setLocation(e.target.value); fieldErrors.clearError('location'); }}
+                className={inputCls}
+                {...fieldErrors.fieldProps('location')}
+              />
+            </Field>
+            <Field label="Employment type" error={fieldErrors.errors.employmentType} errorId={fieldErrors.errorId('employmentType')}>
+              <input
+                maxLength={EMPLOYMENT_TYPE_MAX}
                 value={employmentType}
-                onChange={(e) => setEmploymentType(e.target.value)}
+                onChange={(e) => { setEmploymentType(e.target.value); fieldErrors.clearError('employmentType'); }}
                 className={inputCls}
                 placeholder="Full-time"
+                {...fieldErrors.fieldProps('employmentType')}
               />
             </Field>
           </div>
 
-          <Field label="Description">
+          <Field label="Description" required error={fieldErrors.errors.description} errorId={fieldErrors.errorId('description')}>
             <textarea
               required
+              maxLength={v.LIMITS.jobDescription}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => { setDescription(e.target.value); fieldErrors.clearError('description'); }}
               rows={5}
               className={inputCls}
               placeholder="Role responsibilities, team, and what you're looking for…"
+              {...fieldErrors.fieldProps('description')}
             />
           </Field>
 
@@ -200,13 +250,15 @@ export default function JobForm({
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Min. years experience">
+            <Field label="Min. years experience" error={fieldErrors.errors.minYears} errorId={fieldErrors.errorId('minYears')}>
               <input
                 type="number"
                 min={0}
+                max={60}
                 value={minYears}
-                onChange={(e) => setMinYears(e.target.value)}
+                onChange={(e) => { setMinYears(e.target.value); fieldErrors.clearError('minYears'); }}
                 className={inputCls}
+                {...fieldErrors.fieldProps('minYears')}
               />
             </Field>
             <Field label="Status">
@@ -220,8 +272,14 @@ export default function JobForm({
                 <option value="closed">Closed</option>
               </select>
             </Field>
-            <Field label="Education requirement">
-              <input value={education} onChange={(e) => setEducation(e.target.value)} className={inputCls} />
+            <Field label="Education requirement" error={fieldErrors.errors.education} errorId={fieldErrors.errorId('education')}>
+              <input
+                maxLength={v.LIMITS.educationRequirement}
+                value={education}
+                onChange={(e) => { setEducation(e.target.value); fieldErrors.clearError('education'); }}
+                className={inputCls}
+                {...fieldErrors.fieldProps('education')}
+              />
             </Field>
           </div>
 
@@ -237,7 +295,13 @@ export default function JobForm({
               role. They don&apos;t need to add up to 100 — we balance them for you. Changing them
               instantly re-ranks existing candidates.
             </p>
-            <WeightsEditor value={weights} onChange={setWeights} hasQuiz={quiz.length > 0} />
+            <WeightsEditor
+              value={weights}
+              onChange={(w) => { setWeights(w); fieldErrors.clearError('scoringWeights'); }}
+              hasQuiz={quiz.length > 0}
+              error={fieldErrors.errors.scoringWeights}
+              errorId={fieldErrors.errorId('scoringWeights')}
+            />
           </div>
 
           <div className="border-t border-slate-200 pt-4">
@@ -294,7 +358,9 @@ export default function JobForm({
             <QuizBuilder value={quiz} onChange={setQuiz} />
           </div>
 
-            {error && <Alert kind="error">{error}</Alert>}
+            {(error || fieldErrors.formError) && (
+              <Alert kind="error">{error ?? fieldErrors.formError}</Alert>
+            )}
           </div>
 
           <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
@@ -314,11 +380,36 @@ export default function JobForm({
 const inputCls =
   'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * Labelled field with a required marker and an inline error slot. The error is rendered by
+ * FieldError and referenced from the input via aria-describedby (see useFormErrors).
+ */
+function Field({
+  label,
+  children,
+  required,
+  error,
+  errorId,
+}: {
+  label: string;
+  children: React.ReactNode;
+  required?: boolean;
+  error?: string;
+  errorId?: string;
+}) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-slate-700">
+        {label}
+        {required && (
+          <span aria-hidden="true" className="ml-0.5 text-rose-500">
+            *
+          </span>
+        )}
+        {required && <span className="sr-only"> (required)</span>}
+      </span>
       {children}
+      {errorId && <FieldError id={errorId} message={error} />}
     </label>
   );
 }
@@ -341,16 +432,24 @@ function WeightsEditor({
   value,
   onChange,
   hasQuiz,
+  error,
+  errorId,
 }: {
   value: ScoringWeights;
   onChange: (w: ScoringWeights) => void;
   hasQuiz: boolean;
+  error?: string;
+  errorId?: string;
 }) {
   const total = WEIGHT_ROWS.reduce((sum, r) => sum + (value[r.key] || 0), 0);
   const isDefault = WEIGHT_ROWS.every((r) => value[r.key] === DEFAULT_SCORING_WEIGHTS[r.key]);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+    <div
+      className={`rounded-xl border bg-slate-50/60 p-4 ${error ? 'border-rose-300' : 'border-slate-200'}`}
+      role="group"
+      aria-describedby={error && errorId ? errorId : undefined}
+    >
       <div className="space-y-3.5">
         {WEIGHT_ROWS.map((r) => {
           const raw = value[r.key] || 0;
@@ -400,6 +499,7 @@ function WeightsEditor({
           Reset
         </button>
       </div>
+      {errorId && <FieldError id={errorId} message={error} />}
     </div>
   );
 }

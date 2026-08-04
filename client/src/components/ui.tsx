@@ -212,14 +212,33 @@ export function Card({
   );
 }
 
-export function Alert({ kind = 'error', children }: { kind?: 'error' | 'success' | 'info'; children: ReactNode }) {
+export function Alert({
+  kind = 'error',
+  children,
+  id,
+}: {
+  kind?: 'error' | 'success' | 'info';
+  children: ReactNode;
+  id?: string;
+}) {
   const cls =
     kind === 'error'
       ? 'bg-rose-50 text-rose-700 border-rose-200'
       : kind === 'success'
         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
         : 'bg-brand-50 text-brand-700 border-brand-200';
-  return <div className={`rounded-lg border px-4 py-3 text-sm ${cls}`}>{children}</div>;
+  return (
+    // Errors are announced to screen readers; 'polite' for non-errors so we don't
+    // interrupt the user mid-typing.
+    <div
+      id={id}
+      role={kind === 'error' ? 'alert' : 'status'}
+      aria-live={kind === 'error' ? 'assertive' : 'polite'}
+      className={`rounded-lg border px-4 py-3 text-sm ${cls}`}
+    >
+      {children}
+    </div>
+  );
 }
 
 export const STAGES: CandidateStage[] = ['new', 'shortlisted', 'interviewing', 'hired', 'rejected'];

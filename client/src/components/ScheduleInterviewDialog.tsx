@@ -10,9 +10,11 @@ import {
   type EmailResult,
   type InterviewInput,
 } from '../api/endpoints';
-import { ApiError } from '../api/client';
 import type { CandidateSummary, Interview, InterviewMode, InterviewStatus } from '../api/types';
 import { Alert, Button, ScoreRing, Spinner } from './ui';
+import FieldError from './FieldError';
+import { useFormErrors } from '../lib/useFormErrors';
+import * as v from '../lib/validators';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +43,15 @@ function toLocalParts(iso?: string): { date: string; time: string } {
     date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
     time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
   };
+}
+
+/**
+ * A link typed into the location field is emailed to the candidate, so it has to be a real
+ * http(s) URL. Video calls are always links; on-site/phone may be a plain address, unless
+ * the recruiter clearly meant a URL (started typing a scheme or "www.").
+ */
+function isLinkValue(mode: InterviewMode, value: string) {
+  return mode === 'video' || /^[a-z][a-z0-9+.-]*:\/\//i.test(value) || /^www\./i.test(value);
 }
 
 export default function ScheduleInterviewDialog({
@@ -86,7 +97,18 @@ export default function ScheduleInterviewDialog({
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const f = useFormErrors<'candidate' | 'date' | 'time' | 'location' | 'notes'>('interview');
+
+  // An interview that already happened legitimately sits in the past (you reopen it to mark
+  // it completed), so only reject past times when the slot is actually being (re)scheduled.
+  const originalWhen = existing ? toLocalParts(existing.scheduledAt) : null;
+  const whenChanged =
+    !originalWhen || date !== originalWhen.date || time !== originalWhen.time;
+  const minDate = useMemo(() => {
+    const today = toLocalParts().date;
+    if (originalWhen && originalWhen.date < today) return originalWhen.date;
+    return today;
+  }, [originalWhen?.date]);
 
   // Existing scheduled interviews, to warn about double-booking (non-blocking).
   const [allInterviews, setAllInterviews] = useState<Interview[]>([]);
@@ -110,36 +132,51 @@ export default function ScheduleInterviewDialog({
     });
   }, [allInterviews, date, time, duration, existing]);
 
+  const locationLabel = mode === 'onsite' ? 'Location' : 'Meeting link';
+
+  function locationError() {
+    const val = location.trim();
+    if (!val) return undefined; // optional in every mode
+    return (
+      v.maxLen(val, v.LIMITS.interviewLocation, locationLabel) ??
+      (isLinkValue(mode, val) ? v.httpUrl(val, 'Meeting link') : undefined)
+    );
+  }
+
   async function handleDelete() {
     if (!existing) return;
     if (!confirm('Remove this interview from the calendar?')) return;
     setDeleting(true);
-    setError(null);
+    f.reset();
     try {
       await deleteInterview(existing.id);
       onDeleted?.(existing.id);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to delete the interview.');
+      f.setServerError(err, 'Failed to delete the interview.');
       setDeleting(false);
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    if (!selected) {
-      setError('Choose a candidate to schedule.');
-      return;
-    }
-    if (!date || !time) {
-      setError('Pick a date and time.');
-      return;
-    }
+
+    const ok = f.validate({
+      candidate: selected ? undefined : 'Choose a candidate to schedule.',
+      date:
+        v.required(date, 'Date') ??
+        (time
+          ? v.dateTime(`${date}T${time}`, {
+              label: 'Interview date and time',
+              allowPast: !whenChanged,
+            })
+          : undefined),
+      time: v.required(time, 'Time'),
+      location: locationError(),
+      notes: v.maxLen(notes, v.LIMITS.notes, 'Notes'),
+    });
+    if (!ok || !selected) return;
+
     const scheduledAt = new Date(`${date}T${time}`);
-    if (Number.isNaN(scheduledAt.getTime())) {
-      setError('Invalid date/time.');
-      return;
-    }
 
     const payload: InterviewInput = {
       candidateId: selected.id,
@@ -159,7 +196,7 @@ export default function ScheduleInterviewDialog({
         : await createInterview(payload);
       onSaved(res.interview, res.email);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to save the interview.');
+      f.setServerError(err, 'Failed to save the interview.');
     } finally {
       setSaving(false);
     }
@@ -195,27 +232,44 @@ export default function ScheduleInterviewDialog({
                   {selected?.fullName}
                 </div>
               ) : (
-                <CandidatePicker selected={selected} onSelect={setSelected} />
+                <CandidatePicker
+                  selected={selected}
+                  onSelect={(c) => {
+                    setSelected(c);
+                    f.clearError('candidate');
+                  }}
+                />
               )}
+              <FieldError id={f.errorId('candidate')} message={f.errors.candidate} />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Date">
+              <Field label="Date" required error={f.errors.date} errorId={f.errorId('date')}>
                 <input
                   type="date"
                   required
+                  min={minDate}
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                    f.clearError('date');
+                  }}
                   className={inputCls}
+                  {...f.fieldProps('date')}
                 />
               </Field>
-              <Field label="Time">
+              <Field label="Time" required error={f.errors.time} errorId={f.errorId('time')}>
                 <input
                   type="time"
                   required
                   value={time}
-                  onChange={(e) => setTime(e.target.value)}
+                  onChange={(e) => {
+                    setTime(e.target.value);
+                    f.clearError('time');
+                    f.clearError('date'); // the past-time error is about date+time together
+                  }}
                   className={inputCls}
+                  {...f.fieldProps('time')}
                 />
               </Field>
             </div>
@@ -236,6 +290,8 @@ export default function ScheduleInterviewDialog({
                         onClick={() => {
                           setDate(p.date);
                           setTime(p.time);
+                          f.clearError('date');
+                          f.clearError('time');
                         }}
                         className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
                           active
@@ -288,12 +344,25 @@ export default function ScheduleInterviewDialog({
             {mode === 'ai_voice' ? (
               <AiVoicePanel interviewId={existing?.id ?? null} />
             ) : (
-              <Field label={mode === 'onsite' ? 'Location / address' : 'Meeting link / details'}>
+              <Field
+                label={mode === 'onsite' ? 'Location / address' : 'Meeting link / details'}
+                error={f.errors.location}
+                errorId={f.errorId('location')}
+              >
                 <input
+                  // A video call's "location" is a link that goes out in the invite email, so let
+                  // the browser check it too; on-site/phone stay free text for an address.
+                  type={mode === 'video' ? 'url' : 'text'}
+                  inputMode={mode === 'video' ? 'url' : undefined}
+                  maxLength={v.LIMITS.interviewLocation}
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={(e) => {
+                    setLocation(e.target.value);
+                    f.clearError('location');
+                  }}
                   className={inputCls}
                   placeholder={mode === 'onsite' ? 'Office address, room…' : 'https://meet…'}
+                  {...f.fieldProps('location')}
                 />
               </Field>
             )}
@@ -327,13 +396,22 @@ export default function ScheduleInterviewDialog({
               </Field>
             )}
 
-            <Field label="Notes (optional, internal)">
+            <Field
+              label="Notes (optional, internal)"
+              error={f.errors.notes}
+              errorId={f.errorId('notes')}
+            >
               <textarea
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                maxLength={v.LIMITS.notes}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                  f.clearError('notes');
+                }}
                 rows={3}
                 className={inputCls}
                 placeholder="Panel, focus areas, prep… (not shared with the candidate)"
+                {...f.fieldProps('notes')}
               />
             </Field>
 
@@ -381,7 +459,7 @@ export default function ScheduleInterviewDialog({
               </div>
             )}
 
-            {error && <Alert kind="error">{error}</Alert>}
+            {f.formError && <Alert kind="error">{f.formError}</Alert>}
           </div>
 
           <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 px-6 py-4">
@@ -516,11 +594,36 @@ function CandidatePicker({
 const inputCls =
   'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * Labelled field with a required marker and an inline error slot. The error is rendered by
+ * FieldError and referenced from the input via aria-describedby (see useFormErrors).
+ */
+function Field({
+  label,
+  children,
+  required,
+  error,
+  errorId,
+}: {
+  label: string;
+  children: React.ReactNode;
+  required?: boolean;
+  error?: string;
+  errorId?: string;
+}) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-slate-700">
+        {label}
+        {required && (
+          <span aria-hidden="true" className="ml-0.5 text-rose-500 dark:text-rose-400">
+            *
+          </span>
+        )}
+        {required && <span className="sr-only"> (required)</span>}
+      </span>
       {children}
+      {errorId && <FieldError id={errorId} message={error} />}
     </label>
   );
 }
