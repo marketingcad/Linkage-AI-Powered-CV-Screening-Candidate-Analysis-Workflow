@@ -1,10 +1,12 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { candidates, interviews, jobs } from '../db/schema.js';
 import { createInterviewSchema, updateInterviewSchema } from '../lib/validation.js';
 import { notFound } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
+import { idParams, validate } from '../middleware/validate.js';
 import { recordAudit } from '../services/audit.js';
 import { sendCandidateInterviewEmail, type CandidateInterviewKind } from '../services/email.js';
 import { liveKitEnabled } from '../config/env.js';
@@ -107,23 +109,21 @@ async function emailCandidate(row: JoinedInterview, kind: CandidateInterviewKind
   }
 }
 
+const listQuery = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+  status: z.enum(['scheduled', 'completed', 'canceled', 'no_show']).optional(),
+  candidateId: z.string().uuid().optional(),
+});
+
 // List interviews, optionally within a [from, to] date range.
-interviewsRouter.get('/', async (req, res) => {
+interviewsRouter.get('/', validate({ query: listQuery }), async (req, res) => {
+  const { from, to, status, candidateId } = req.query as unknown as z.infer<typeof listQuery>;
   const filters = [];
-  if (typeof req.query.from === 'string') {
-    const from = new Date(req.query.from);
-    if (!Number.isNaN(from.getTime())) filters.push(gte(interviews.scheduledAt, from));
-  }
-  if (typeof req.query.to === 'string') {
-    const to = new Date(req.query.to);
-    if (!Number.isNaN(to.getTime())) filters.push(lte(interviews.scheduledAt, to));
-  }
-  if (typeof req.query.status === 'string') {
-    filters.push(eq(interviews.status, req.query.status));
-  }
-  if (typeof req.query.candidateId === 'string') {
-    filters.push(eq(interviews.candidateId, req.query.candidateId));
-  }
+  if (from) filters.push(gte(interviews.scheduledAt, from));
+  if (to) filters.push(lte(interviews.scheduledAt, to));
+  if (status) filters.push(eq(interviews.status, status));
+  if (candidateId) filters.push(eq(interviews.candidateId, candidateId));
 
   const rows = await withJoins()
     .where(filters.length ? and(...filters) : undefined)
@@ -176,7 +176,7 @@ interviewsRouter.post('/', async (req, res) => {
   res.status(201).json({ interview: row, email });
 });
 
-interviewsRouter.patch('/:id', async (req, res) => {
+interviewsRouter.patch('/:id', validate({ params: idParams }), async (req, res) => {
   const input = updateInterviewSchema.parse(req.body);
   // notifyCandidate is a control flag, not a column — keep it out of the DB update.
   const { notifyCandidate, ...updateFields } = input;
@@ -225,7 +225,7 @@ interviewsRouter.patch('/:id', async (req, res) => {
   res.json({ interview: row, email });
 });
 
-interviewsRouter.delete('/:id', async (req, res) => {
+interviewsRouter.delete('/:id', validate({ params: idParams }), async (req, res) => {
   const [deleted] = await db
     .delete(interviews)
     .where(eq(interviews.id, req.params.id))

@@ -8,6 +8,7 @@ import {
   S3Upload,
 } from 'livekit-server-sdk';
 import { env, liveKitHttpUrl, appPublicUrl, aiRecordingEnabled } from '../config/env.js';
+import { TOKEN_TYPES } from '../lib/auth.js';
 import { db } from '../db/client.js';
 import { logger } from '../lib/logger.js';
 import { interviewSessions, type InterviewMode } from '../db/schema.js';
@@ -24,7 +25,7 @@ const LEAD_MS = () => env.AI_INTERVIEW_LEAD_MINUTES * 60_000;
 const GRACE_MS = 5 * 60_000; // allow joining/finishing a few minutes past the end
 
 export interface JoinTokenPayload {
-  typ: 'ai_interview';
+  typ: typeof TOKEN_TYPES.aiInterview;
   interviewId: string;
   candidateId: string;
   candidateName: string;
@@ -36,12 +37,14 @@ export function signJoinToken(p: Omit<JoinTokenPayload, 'typ'>): string {
   const closesAt = new Date(p.scheduledAt).getTime() + p.durationMinutes * 60_000 + GRACE_MS;
   // Token is useless after the window closes.
   const expiresInSec = Math.max(60, Math.ceil((closesAt - Date.now()) / 1000));
-  return jwt.sign({ ...p, typ: 'ai_interview' }, env.JWT_SECRET, { expiresIn: expiresInSec });
+  return jwt.sign({ ...p, typ: TOKEN_TYPES.aiInterview }, env.JWT_SECRET, {
+    expiresIn: expiresInSec,
+  });
 }
 
 export function verifyJoinToken(token: string): JoinTokenPayload {
   const payload = jwt.verify(token, env.JWT_SECRET) as JoinTokenPayload;
-  if (payload.typ !== 'ai_interview') throw new Error('Not an AI interview token');
+  if (payload.typ !== TOKEN_TYPES.aiInterview) throw new Error('Not an AI interview token');
   return payload;
 }
 

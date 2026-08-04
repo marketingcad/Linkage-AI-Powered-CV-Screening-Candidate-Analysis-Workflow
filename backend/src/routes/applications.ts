@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import { eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
@@ -17,25 +16,14 @@ import {
   type NewApplicationInfo,
 } from '../services/email.js';
 import { logger } from '../lib/logger.js';
+import { publicSubmitLimiter } from '../middleware/rateLimit.js';
+import { tokenParams, validate } from '../middleware/validate.js';
 import { APPLICANT_TIMELINE, statusFor } from '../lib/applicantStatus.js';
 
 export const applicationsRouter = Router();
 
 // Spam protection for the public endpoints — cap submissions per IP.
-applicationsRouter.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 20,
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-    message: {
-      error: {
-        code: 'RATE_LIMITED',
-        message: 'Too many requests from this device. Please try again in a few minutes.',
-      },
-    },
-  }),
-);
+applicationsRouter.use(publicSubmitLimiter);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -183,7 +171,7 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res) => {
  * Public: an applicant checks their status via the opaque token from their email.
  * Returns status only — never AI scores, evaluations, or other candidates.
  */
-applicationsRouter.get('/status/:token', async (req, res) => {
+applicationsRouter.get('/status/:token', validate({ params: tokenParams }), async (req, res) => {
   const [row] = await db
     .select({
       fullName: candidates.fullName,

@@ -1,9 +1,12 @@
 import express, { Router } from 'express';
+import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { env, liveKitEnabled } from '../config/env.js';
 import { db } from '../db/client.js';
 import { candidates, interviews, interviewSessions } from '../db/schema.js';
 import { requireAuth } from '../middleware/auth.js';
+import { idParams, roomParams, validate } from '../middleware/validate.js';
+import { publicReadLimiter, publicSubmitLimiter } from '../middleware/rateLimit.js';
 import { logger } from '../lib/logger.js';
 import { summarizeInterviewTranscript } from '../services/gemini.js';
 import { signStorageObject } from '../services/storage.js';
@@ -17,6 +20,32 @@ import {
 } from '../services/aiInterview.js';
 
 export const aiInterviewRouter = Router();
+
+// --- Request schemas ---------------------------------------------------------------
+
+/** The signed join link token, passed as `?t=`. */
+const contextQuery = z.object({ t: z.string().min(1, 'Missing interview link token').max(2048) });
+
+/** Candidate join: the signed token plus explicit recording consent. */
+const joinSessionBody = z.object({
+  token: z.string().min(1, 'Missing interview link token').max(2048),
+  consent: z.literal(true, { message: 'Recording consent is required.' }),
+});
+
+/** Agent completion callback — bounded so a runaway worker can't post unlimited data. */
+const completeBody = z.object({
+  transcript: z
+    .array(
+      z.object({
+        role: z.enum(['agent', 'candidate']),
+        text: z.string().max(10_000),
+        at: z.number().int().min(0).optional(),
+      }),
+    )
+    .max(500)
+    .default([]),
+  durationSeconds: z.number().int().min(0).max(24 * 60 * 60).optional(),
+});
 
 // If LiveKit isn't configured, the whole feature is off — fail clearly, don't 404.
 aiInterviewRouter.use((_req, res, next) => {
@@ -32,7 +61,7 @@ aiInterviewRouter.use((_req, res, next) => {
  * Authed: (re)generate the candidate join link for an existing ai_voice interview.
  * The Scheduler UI calls this after creating/opening an AI interview.
  */
-aiInterviewRouter.post('/interviews/:id/link', requireAuth, async (req, res) => {
+aiInterviewRouter.post('/interviews/:id/link', requireAuth, validate({ params: idParams }), async (req, res) => {
   const interviewId = String(req.params.id);
   const [row] = await db
     .select({
@@ -67,8 +96,8 @@ aiInterviewRouter.post('/interviews/:id/link', requireAuth, async (req, res) => 
  * Public: the candidate page reads this to show the scheduled time and gate the Join button.
  * Returns only non-sensitive display info.
  */
-aiInterviewRouter.get('/context', (req, res) => {
-  const token = String(req.query.t ?? '');
+aiInterviewRouter.get('/context', publicReadLimiter, validate({ query: contextQuery }), (req, res) => {
+  const { t: token } = req.query as unknown as z.infer<typeof contextQuery>;
   try {
     const p = verifyJoinToken(token);
     res.json({
@@ -87,11 +116,8 @@ aiInterviewRouter.get('/context', (req, res) => {
  * Public: candidate joins. Verifies the signed link + time window + consent, then creates the
  * LiveKit room and returns a LiveKit access token.
  */
-aiInterviewRouter.post('/session', async (req, res) => {
-  const token = String(req.body?.token ?? '');
-  if (req.body?.consent !== true) {
-    return res.status(400).json({ error: { code: 'consent_required', message: 'Recording consent is required.' } });
-  }
+aiInterviewRouter.post('/session', publicSubmitLimiter, validate({ body: joinSessionBody }), async (req, res) => {
+  const { token } = req.body as z.infer<typeof joinSessionBody>;
 
   let p;
   try {
@@ -143,18 +169,14 @@ aiInterviewRouter.post('/session', async (req, res) => {
  * Internal: the agent worker POSTs the finished transcript here (authorized by a shared
  * secret). We store it and generate the AI summary that feeds the review card / scorecard.
  */
-aiInterviewRouter.post('/internal/:room/complete', express.json(), async (req, res) => {
+aiInterviewRouter.post('/internal/:room/complete', express.json({ limit: '512kb' }), validate({ params: roomParams, body: completeBody }), async (req, res) => {
   if (!env.AGENT_SHARED_SECRET || req.get('x-agent-secret') !== env.AGENT_SHARED_SECRET) {
     return res.status(401).json({ error: { code: 'unauthorized', message: 'Bad agent secret.' } });
   }
-  const roomName = String(req.params.room);
-  const rawTurns = Array.isArray(req.body?.transcript) ? req.body.transcript : [];
-  const transcript: InterviewTranscriptTurn[] = rawTurns.map((t: { role?: string; text?: unknown; at?: unknown }) => ({
-    role: t?.role === 'agent' ? 'agent' : 'candidate',
-    text: String(t?.text ?? ''),
-    at: Number(t?.at) || undefined,
-  }));
-  const durationSeconds = Number(req.body?.durationSeconds) || null;
+  const roomName = req.params.room;
+  const body = req.body as z.infer<typeof completeBody>;
+  const transcript: InterviewTranscriptTurn[] = body.transcript;
+  const durationSeconds = body.durationSeconds ?? null;
 
   const [session] = await db
     .select({
@@ -197,7 +219,7 @@ aiInterviewRouter.post('/internal/:room/complete', express.json(), async (req, r
  * Authed: HR review — the interview session (status, transcript, AI summary) plus a short-lived
  * signed URL for the recording.
  */
-aiInterviewRouter.get('/interviews/:id/session', requireAuth, async (req, res) => {
+aiInterviewRouter.get('/interviews/:id/session', requireAuth, validate({ params: idParams }), async (req, res) => {
   const interviewId = String(req.params.id);
   const [s] = await db
     .select()

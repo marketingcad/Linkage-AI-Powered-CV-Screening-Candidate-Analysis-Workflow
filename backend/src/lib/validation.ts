@@ -1,8 +1,10 @@
 import { z } from 'zod';
+import { httpUrl } from '../middleware/validate.js';
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(1),
+  // Bounded so an oversized body can't be pushed through bcrypt.
+  password: z.string().min(1).max(200),
 });
 
 // --- Account / profile ------------------------------------------------------
@@ -39,7 +41,7 @@ const codeField = z
 export const totpCodeSchema = z.object({ code: codeField });
 
 export const mfaLoginSchema = z.object({
-  mfaToken: z.string().min(10),
+  mfaToken: z.string().min(10).max(2048),
   code: codeField,
 });
 
@@ -98,9 +100,9 @@ export const createJobSchema = z.object({
   department: z.string().max(255).optional(),
   location: z.string().max(255).optional(),
   employmentType: z.string().max(100).optional(),
-  description: z.string().min(10),
-  requiredSkills: z.array(z.string().min(1)).default([]),
-  niceToHaveSkills: z.array(z.string().min(1)).default([]),
+  description: z.string().min(10).max(20_000),
+  requiredSkills: z.array(z.string().min(1).max(100)).max(50).default([]),
+  niceToHaveSkills: z.array(z.string().min(1).max(100)).max(50).default([]),
   minYearsExperience: z.number().int().min(0).max(60).nullable().optional(),
   educationRequirement: z.string().max(2000).nullable().optional(),
   quiz: z.array(quizQuestionSchema).max(30).default([]),
@@ -112,9 +114,9 @@ export const updateJobSchema = createJobSchema.partial();
 
 export const generateQuizSchema = z.object({
   title: z.string().min(2).max(255),
-  description: z.string().min(10),
-  requiredSkills: z.array(z.string().min(1)).optional(),
-  niceToHaveSkills: z.array(z.string().min(1)).optional(),
+  description: z.string().min(10).max(20_000),
+  requiredSkills: z.array(z.string().min(1).max(100)).max(50).optional(),
+  niceToHaveSkills: z.array(z.string().min(1).max(100)).max(50).optional(),
   minYearsExperience: z.number().int().min(0).max(60).nullable().optional(),
   educationRequirement: z.string().max(2000).nullable().optional(),
   count: z.number().int().min(1).max(15).optional(),
@@ -129,8 +131,10 @@ export const applicationSchema = z.object({
   location: z.string().max(255).optional(),
   currentTitle: z.string().max(255).optional(),
   declaredYearsExperience: z.coerce.number().int().min(0).max(60).optional(),
-  linkedinUrl: z.string().max(512).optional(),
-  portfolioUrl: z.string().max(512).optional(),
+  // Rendered as clickable links in the HR dashboard and emails — must be http(s)
+  // so `javascript:` / `data:` payloads can't be stored and clicked.
+  linkedinUrl: httpUrl(512).optional(),
+  portfolioUrl: httpUrl(512).optional(),
   noticePeriod: z.string().max(100).optional(),
   expectedSalary: z.string().max(100).optional(),
   coverNote: z.string().max(5000).optional(),
@@ -139,7 +143,22 @@ export const applicationSchema = z.object({
   // Candidate's up-to-3 preferred initial-interview slots (accepts ISO date strings).
   availabilitySlots: z.array(z.coerce.date()).max(3).optional(),
   // Candidate's IANA timezone (e.g. "America/New_York") — the slots above are in it.
-  timezone: z.string().max(64).optional(),
+  // Validated against the runtime's zone database since it drives email/calendar rendering.
+  timezone: z
+    .string()
+    .max(64)
+    .refine(
+      (tz) => {
+        try {
+          new Intl.DateTimeFormat('en-US', { timeZone: tz });
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Must be a valid IANA timezone' },
+    )
+    .optional(),
 });
 
 export const updateStageSchema = z.object({

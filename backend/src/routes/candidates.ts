@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import multer from 'multer';
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
@@ -8,6 +9,12 @@ import { createNoteSchema, rankCandidatesSchema, updateStageSchema } from '../li
 import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import { env } from '../config/env.js';
 import { requireAuth } from '../middleware/auth.js';
+import {
+  idNoteParams,
+  idParams,
+  optionalQueryString,
+  validate,
+} from '../middleware/validate.js';
 import { deleteCvFile, getCvSource, saveCvFile } from '../services/storage.js';
 import { detectCvKind, extractCvText } from '../services/cvParser.js';
 import {
@@ -40,10 +47,11 @@ const upload = multer({
  * is created and AI-analyzed against the job — same pipeline as a public application.
  * POST /api/candidates/import  (multipart: cv file + jobId)
  */
+const importCvBody = z.object({ jobId: z.string().uuid('A valid job must be selected.') });
+
 candidatesRouter.post('/import', upload.single('cv'), async (req, res) => {
   if (!req.file) throw badRequest('A CV file (field name "cv") is required.');
-  const jobId = typeof req.body.jobId === 'string' ? req.body.jobId : '';
-  if (!jobId) throw badRequest('jobId is required.');
+  const { jobId } = importCvBody.parse(req.body);
 
   const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
   if (!job) throw notFound('Job not found');
@@ -127,14 +135,18 @@ candidatesRouter.post('/rank', async (req, res) => {
  * List candidates, optionally filtered by job/stage/source, ranked by overall score.
  * GET /api/candidates?jobId=...&stage=...&source=...
  */
-candidatesRouter.get('/', async (req, res) => {
-  const jobId = typeof req.query.jobId === 'string' ? req.query.jobId : undefined;
-  const stage = typeof req.query.stage === 'string' ? req.query.stage : undefined;
-  const source = typeof req.query.source === 'string' ? req.query.source : undefined;
+const listQuery = z.object({
+  jobId: z.string().uuid().optional(),
+  stage: z.enum(['new', 'shortlisted', 'rejected', 'interviewing', 'hired']).optional(),
+  source: optionalQueryString(100),
+});
+
+candidatesRouter.get('/', validate({ query: listQuery }), async (req, res) => {
+  const { jobId, stage, source } = req.query as unknown as z.infer<typeof listQuery>;
 
   const filters = [];
   if (jobId) filters.push(eq(candidates.jobId, jobId));
-  if (stage) filters.push(eq(candidates.stage, stage as never));
+  if (stage) filters.push(eq(candidates.stage, stage));
   if (source) filters.push(eq(candidates.source, source));
 
   const rows = await db
@@ -190,7 +202,7 @@ candidatesRouter.get('/', async (req, res) => {
   res.json({ candidates: rows });
 });
 
-candidatesRouter.get('/:id', async (req, res) => {
+candidatesRouter.get('/:id', validate({ params: idParams }), async (req, res) => {
   const [candidate] = await db
     .select()
     .from(candidates)
@@ -224,7 +236,7 @@ candidatesRouter.get('/:id', async (req, res) => {
   res.json({ candidate, job: job ?? null, duplicates });
 });
 
-candidatesRouter.patch('/:id/stage', async (req, res) => {
+candidatesRouter.patch('/:id/stage', validate({ params: idParams }), async (req, res) => {
   const { stage } = updateStageSchema.parse(req.body);
 
   const [existing] = await db
@@ -279,7 +291,7 @@ candidatesRouter.patch('/:id/stage', async (req, res) => {
 // --- Candidate notes & human scorecards ------------------------------------
 
 /** List a candidate's notes + the aggregated human score (avg 1-5 rating). */
-candidatesRouter.get('/:id/notes', async (req, res) => {
+candidatesRouter.get('/:id/notes', validate({ params: idParams }), async (req, res) => {
   const notes = await db
     .select()
     .from(candidateNotes)
@@ -295,7 +307,7 @@ candidatesRouter.get('/:id/notes', async (req, res) => {
 });
 
 /** Add a note and/or a 1-5 scorecard rating for a candidate. */
-candidatesRouter.post('/:id/notes', async (req, res) => {
+candidatesRouter.post('/:id/notes', validate({ params: idParams }), async (req, res) => {
   const input = createNoteSchema.parse(req.body);
 
   const [candidate] = await db
@@ -329,7 +341,7 @@ candidatesRouter.post('/:id/notes', async (req, res) => {
 });
 
 /** Delete a note — allowed for its author or an admin. */
-candidatesRouter.delete('/:id/notes/:noteId', async (req, res) => {
+candidatesRouter.delete('/:id/notes/:noteId', validate({ params: idNoteParams }), async (req, res) => {
   const [note] = await db
     .select()
     .from(candidateNotes)
@@ -346,7 +358,7 @@ candidatesRouter.delete('/:id/notes/:noteId', async (req, res) => {
 
 // GDPR: return everything held about a candidate (feeds the readable data-export page;
 // the client also offers the raw JSON download for data portability).
-candidatesRouter.get('/:id/export', async (req, res) => {
+candidatesRouter.get('/:id/export', validate({ params: idParams }), async (req, res) => {
   const [candidate] = await db
     .select()
     .from(candidates)
@@ -371,7 +383,7 @@ candidatesRouter.get('/:id/export', async (req, res) => {
 });
 
 // GDPR: erase a candidate on request (removes the row + stored CV).
-candidatesRouter.delete('/:id', async (req, res) => {
+candidatesRouter.delete('/:id', validate({ params: idParams }), async (req, res) => {
   const [candidate] = await db
     .select({ id: candidates.id, fullName: candidates.fullName, cvStoragePath: candidates.cvStoragePath })
     .from(candidates)
@@ -395,7 +407,7 @@ candidatesRouter.delete('/:id', async (req, res) => {
 });
 
 // List the notification emails sent to this candidate.
-candidatesRouter.get('/:id/emails', async (req, res) => {
+candidatesRouter.get('/:id/emails', validate({ params: idParams }), async (req, res) => {
   const rows = await db
     .select()
     .from(emailLogs)
@@ -404,12 +416,11 @@ candidatesRouter.get('/:id/emails', async (req, res) => {
   res.json({ emails: rows });
 });
 
+const resendBody = z.object({ type: z.enum(['confirmation', 'status']) });
+
 // Manually (re)send the confirmation or the current-status email to the applicant.
-candidatesRouter.post('/:id/resend', async (req, res) => {
-  const kind = req.body?.type;
-  if (kind !== 'confirmation' && kind !== 'status') {
-    throw badRequest('type must be "confirmation" or "status".');
-  }
+candidatesRouter.post('/:id/resend', validate({ params: idParams, body: resendBody }), async (req, res) => {
+  const kind = (req.body as z.infer<typeof resendBody>).type;
 
   const [candidate] = await db
     .select()
@@ -447,7 +458,7 @@ candidatesRouter.post('/:id/resend', async (req, res) => {
 });
 
 // Generate (or regenerate) tailored interview questions for a candidate and store them.
-candidatesRouter.post('/:id/interview-questions', async (req, res) => {
+candidatesRouter.post('/:id/interview-questions', validate({ params: idParams }), async (req, res) => {
   const [candidate] = await db
     .select()
     .from(candidates)
@@ -487,7 +498,7 @@ candidatesRouter.post('/:id/interview-questions', async (req, res) => {
   res.json({ candidate: updated });
 });
 
-candidatesRouter.post('/:id/reanalyze', async (req, res) => {
+candidatesRouter.post('/:id/reanalyze', validate({ params: idParams }), async (req, res) => {
   const [candidate] = await db
     .select()
     .from(candidates)
@@ -509,7 +520,7 @@ candidatesRouter.post('/:id/reanalyze', async (req, res) => {
   res.json({ candidate: updated });
 });
 
-candidatesRouter.get('/:id/cv', async (req, res) => {
+candidatesRouter.get('/:id/cv', validate({ params: idParams }), async (req, res) => {
   const [candidate] = await db
     .select({ path: candidates.cvStoragePath, filename: candidates.cvFilename })
     .from(candidates)

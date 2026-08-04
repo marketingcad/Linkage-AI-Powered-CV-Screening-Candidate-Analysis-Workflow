@@ -18,6 +18,7 @@ import {
 } from '../lib/auth.js';
 import { badRequest, conflict, notFound, unauthorized } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rateLimit.js';
 import { createTotpSecret, totpAuthUrl, verifyTotp } from '../lib/totp.js';
 import { recordAudit } from '../services/audit.js';
 
@@ -51,7 +52,7 @@ function toPublicUser(u: {
   };
 }
 
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', authLimiter, async (req, res) => {
   const { email, password } = loginSchema.parse(req.body);
 
   const [user] = await db
@@ -81,7 +82,7 @@ authRouter.post('/login', async (req, res) => {
 });
 
 // Second login step — verify the authenticator code, then issue the real token.
-authRouter.post('/login/mfa', async (req, res) => {
+authRouter.post('/login/mfa', authLimiter, async (req, res) => {
   const { mfaToken, code } = mfaLoginSchema.parse(req.body);
 
   let userId: string;
@@ -168,7 +169,7 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
 });
 
 // Change password — verify the current password before setting a new one.
-authRouter.post('/change-password', requireAuth, async (req, res) => {
+authRouter.post('/change-password', authLimiter, requireAuth, async (req, res) => {
   const { oldPassword, newPassword } = changePasswordSchema.parse(req.body);
   const userId = req.user!.sub;
 
@@ -205,7 +206,7 @@ authRouter.post('/2fa/setup', requireAuth, async (req, res) => {
 });
 
 // Confirm setup: verify the first code from the app, then switch it on.
-authRouter.post('/2fa/enable', requireAuth, async (req, res) => {
+authRouter.post('/2fa/enable', authLimiter, requireAuth, async (req, res) => {
   const { code } = totpCodeSchema.parse(req.body);
   const userId = req.user!.sub;
   const [user] = await db.select().from(hrUsers).where(eq(hrUsers.id, userId)).limit(1);
@@ -226,7 +227,7 @@ authRouter.post('/2fa/enable', requireAuth, async (req, res) => {
 });
 
 // Disable: require a valid current code before turning it off.
-authRouter.post('/2fa/disable', requireAuth, async (req, res) => {
+authRouter.post('/2fa/disable', authLimiter, requireAuth, async (req, res) => {
   const { code } = totpCodeSchema.parse(req.body);
   const userId = req.user!.sub;
   const [user] = await db.select().from(hrUsers).where(eq(hrUsers.id, userId)).limit(1);

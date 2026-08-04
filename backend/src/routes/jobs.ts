@@ -5,6 +5,8 @@ import { candidates, jobs, type QuizQuestion } from '../db/schema.js';
 import { createJobSchema, generateQuizSchema, updateJobSchema } from '../lib/validation.js';
 import { notFound, serverError } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
+import { idParams, validate } from '../middleware/validate.js';
+import { z } from 'zod';
 import { generateQuiz } from '../services/gemini.js';
 import { recordAudit } from '../services/audit.js';
 import { recomputeJobScores } from '../services/scoring.js';
@@ -30,6 +32,11 @@ function sanitizeQuizForApplicant(quiz: QuizQuestion[]) {
 }
 
 // --- Public: list open jobs (used by the candidate application form) ---------
+/** Talent-pool suggestions: bounded, positive limit (a negative value silently corrupted results). */
+const talentPoolQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(25).default(10),
+});
+
 jobsRouter.get('/public', async (_req, res) => {
   const rows = await db
     .select({
@@ -49,7 +56,7 @@ jobsRouter.get('/public', async (_req, res) => {
   res.json({ jobs: rows });
 });
 
-jobsRouter.get('/public/:id', async (req, res) => {
+jobsRouter.get('/public/:id', validate({ params: idParams }), async (req, res) => {
   const [job] = await db.select().from(jobs).where(eq(jobs.id, req.params.id)).limit(1);
   if (!job) throw notFound('Job not found');
 
@@ -79,7 +86,7 @@ jobsRouter.use(requireAuth);
 
 // Talent-pool re-matching: rank candidates who applied to OTHER roles by semantic
 // fit to this job (embedding cosine similarity). Lets HR reuse past applicants.
-jobsRouter.get('/:id/talent-pool', async (req, res) => {
+jobsRouter.get('/:id/talent-pool', validate({ params: idParams, query: talentPoolQuery }), async (req, res) => {
   const [job] = await db.select().from(jobs).where(eq(jobs.id, req.params.id)).limit(1);
   if (!job) throw notFound('Job not found');
 
@@ -122,7 +129,7 @@ jobsRouter.get('/:id/talent-pool', async (req, res) => {
     }
   }
 
-  const limit = Math.min(Number(req.query.limit) || 10, 25);
+  const limit = (req.query as unknown as { limit: number }).limit;
   const matches = rows
     .filter((r) => r.embedding && r.embedding.length)
     .map((r) => ({
@@ -180,7 +187,7 @@ jobsRouter.get('/', async (_req, res) => {
   res.json({ jobs: rows });
 });
 
-jobsRouter.get('/:id', async (req, res) => {
+jobsRouter.get('/:id', validate({ params: idParams }), async (req, res) => {
   const [job] = await db.select().from(jobs).where(eq(jobs.id, req.params.id)).limit(1);
   if (!job) throw notFound('Job not found');
   res.json({ job });
@@ -195,7 +202,7 @@ jobsRouter.post('/', async (req, res) => {
   res.status(201).json({ job });
 });
 
-jobsRouter.put('/:id', async (req, res) => {
+jobsRouter.put('/:id', validate({ params: idParams }), async (req, res) => {
   const input = updateJobSchema.parse(req.body);
   const [job] = await db
     .update(jobs)
@@ -214,7 +221,7 @@ jobsRouter.put('/:id', async (req, res) => {
 });
 
 // Clone a job (requirements, skills, quiz, weights) as a new draft.
-jobsRouter.post('/:id/duplicate', async (req, res) => {
+jobsRouter.post('/:id/duplicate', validate({ params: idParams }), async (req, res) => {
   const [orig] = await db.select().from(jobs).where(eq(jobs.id, req.params.id)).limit(1);
   if (!orig) throw notFound('Job not found');
 
@@ -250,7 +257,7 @@ jobsRouter.post('/:id/duplicate', async (req, res) => {
   res.status(201).json({ job: copy });
 });
 
-jobsRouter.delete('/:id', async (req, res) => {
+jobsRouter.delete('/:id', validate({ params: idParams }), async (req, res) => {
   const [job] = await db.delete(jobs).where(eq(jobs.id, req.params.id)).returning();
   if (!job) throw notFound('Job not found');
   void recordAudit({
