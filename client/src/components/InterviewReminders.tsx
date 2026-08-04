@@ -112,7 +112,7 @@ export default function InterviewReminders() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-slate-800">{t.title}</p>
-              <p className="mt-0.5 text-xs text-slate-500">{t.body}</p>
+              <p className="mt-0.5 text-xs text-slate-600">{t.body}</p>
               <Link
                 to="/hr/scheduler"
                 onClick={() => dismiss(t.key)}
@@ -125,7 +125,7 @@ export default function InterviewReminders() {
               type="button"
               onClick={() => dismiss(t.key)}
               aria-label="Dismiss"
-              className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+              className="rounded-md p-1 text-slate-600 transition hover:bg-slate-100 hover:text-slate-600"
             >
               <LuX className="h-4 w-4" />
             </button>

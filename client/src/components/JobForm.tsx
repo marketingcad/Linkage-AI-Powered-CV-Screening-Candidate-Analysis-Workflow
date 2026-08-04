@@ -167,7 +167,7 @@ export default function JobForm({
               <DialogTitle className="font-display text-lg font-semibold text-slate-900">
                 {existing ? 'Edit job' : 'New job'}
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500">
+              <DialogDescription className="text-xs text-slate-600">
                 Define the role and its screening exam.
               </DialogDescription>
             </div>
@@ -290,7 +290,7 @@ export default function JobForm({
               </span>
               <span className="text-sm font-semibold text-slate-800">Ranking weights</span>
             </div>
-            <p className="mb-3 text-xs text-slate-500">
+            <p className="mb-3 text-xs text-slate-600">
               Control how much each factor counts toward a candidate&apos;s overall score for this
               role. They don&apos;t need to add up to 100 — we balance them for you. Changing them
               instantly re-ranks existing candidates.
@@ -307,11 +307,11 @@ export default function JobForm({
           <div className="border-t border-slate-200 pt-4">
             <div className="mb-1 flex items-center justify-between">
               <span className="text-sm font-semibold text-slate-800">Screening exam / quiz</span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-600">
                 {quiz.length} question{quiz.length === 1 ? '' : 's'} · optional
               </span>
             </div>
-            <p className="mb-3 text-xs text-slate-500">
+            <p className="mb-3 text-xs text-slate-600">
               Applicants answer these when they apply. Choice questions are auto-graded; short
               answers are graded by AI. The quiz score is combined with the CV match.
             </p>
@@ -347,7 +347,7 @@ export default function JobForm({
               >
                 {generating ? <Spinner /> : quiz.length ? 'Generate more' : 'Generate exam'}
               </button>
-              <span className="text-xs text-slate-500">from the job details above</span>
+              <span className="text-xs text-slate-600">from the job details above</span>
             </div>
             {genError && (
               <div className="mb-3">
@@ -378,7 +378,7 @@ export default function JobForm({
 }
 
 const inputCls =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
 
 /**
  * Labelled field with a required marker and an inline error slot. The error is rendered by
@@ -460,9 +460,9 @@ function WeightsEditor({
               <div className="mb-1 flex items-center justify-between gap-2">
                 <span className="text-sm font-medium text-slate-700">
                   {r.label}
-                  <span className="ml-1.5 text-xs font-normal text-slate-400">· {r.hint}</span>
+                  <span className="ml-1.5 text-xs font-normal text-slate-600">· {r.hint}</span>
                 </span>
-                <span className={`shrink-0 text-xs font-semibold ${inactive ? 'text-slate-400' : r.accent}`}>
+                <span className={`shrink-0 text-xs font-semibold ${inactive ? 'text-slate-600' : r.accent}`}>
                   {inactive ? 'no exam' : `${effective}%`}
                 </span>
               </div>
@@ -482,7 +482,7 @@ function WeightsEditor({
       </div>
 
       <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-600">
           {total === 0
             ? 'Set at least one weight above zero.'
             : hasQuiz
@@ -493,7 +493,7 @@ function WeightsEditor({
           type="button"
           onClick={() => onChange(DEFAULT_SCORING_WEIGHTS)}
           disabled={isDefault}
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40"
         >
           <LuRotateCcw className="h-3.5 w-3.5" />
           Reset

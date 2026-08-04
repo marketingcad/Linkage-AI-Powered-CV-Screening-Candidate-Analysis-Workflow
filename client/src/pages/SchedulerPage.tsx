@@ -143,7 +143,7 @@ export default function SchedulerPage() {
           </span>
           <div>
             <h1 className="font-display text-2xl font-semibold text-slate-900">Scheduler</h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-600">
               Pin candidates to the calendar and get reminded before each interview.
             </p>
           </div>
@@ -167,7 +167,7 @@ export default function SchedulerPage() {
               {awaitingOutcome.length}
             </span>
           </div>
-          <p className="mb-3 text-xs text-slate-500">
+          <p className="mb-3 text-xs text-slate-600">
             These interviews have passed — record how they went, then add a scorecard.
           </p>
           <ul className="space-y-2">
@@ -180,7 +180,7 @@ export default function SchedulerPage() {
                   <p className="truncate text-sm font-medium text-slate-800">
                     {iv.candidateName ?? 'Candidate'}
                   </p>
-                  <p className="truncate text-xs text-slate-500">
+                  <p className="truncate text-xs text-slate-600">
                     {new Date(iv.scheduledAt).toLocaleString('en-US', {
                       weekday: 'short',
                       month: 'short',
@@ -234,7 +234,7 @@ export default function SchedulerPage() {
                 type="button"
                 onClick={() => setViewMonth(addMonths(viewMonth, -1))}
                 aria-label="Previous month"
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
               >
                 <LuChevronLeft className="h-4 w-4" />
               </button>
@@ -249,7 +249,7 @@ export default function SchedulerPage() {
                 type="button"
                 onClick={() => setViewMonth(addMonths(viewMonth, 1))}
                 aria-label="Next month"
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
               >
                 <LuChevronRight className="h-4 w-4" />
               </button>
@@ -258,7 +258,7 @@ export default function SchedulerPage() {
 
           <div className="grid grid-cols-7 border-b border-slate-100 pb-2">
             {WEEKDAYS.map((w) => (
-              <div key={w} className="text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <div key={w} className="text-center text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                 {w}
               </div>
             ))}
@@ -317,7 +317,7 @@ export default function SchedulerPage() {
                       </span>
                     ))}
                     {dayItems.length > 3 && (
-                      <span className="block px-1.5 text-[11px] font-medium text-slate-400">
+                      <span className="block px-1.5 text-[11px] font-medium text-slate-600">
                         +{dayItems.length - 3} more
                       </span>
                     )}
@@ -336,7 +336,7 @@ export default function SchedulerPage() {
           ) : upcoming.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center">
               <LuCalendarClock className="mx-auto h-6 w-6 text-slate-300" />
-              <p className="mt-2 text-sm text-slate-400">No upcoming interviews.</p>
+              <p className="mt-2 text-sm text-slate-600">No upcoming interviews.</p>
               <button
                 type="button"
                 onClick={() => setDialog({ kind: 'new' })}
@@ -358,7 +358,7 @@ export default function SchedulerPage() {
                       className="group flex w-full items-center gap-3 rounded-lg border border-slate-100 p-2.5 text-left transition hover:border-brand-200 hover:bg-brand-50/30"
                     >
                       <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-slate-50 text-center">
-                        <span className="text-[10px] font-semibold uppercase text-slate-400">
+                        <span className="text-[10px] font-semibold uppercase text-slate-600">
                           {d.toLocaleDateString('en-US', { month: 'short' })}
                         </span>
                         <span className="text-sm font-bold leading-none text-slate-700">
@@ -369,7 +369,7 @@ export default function SchedulerPage() {
                         <p className="truncate text-sm font-medium text-slate-800">
                           {iv.candidateName ?? 'Candidate'}
                         </p>
-                        <p className="flex items-center gap-1.5 truncate text-xs text-slate-500">
+                        <p className="flex items-center gap-1.5 truncate text-xs text-slate-600">
                           <ModeIcon className="h-3 w-3" />
                           {fmtTime(iv.scheduledAt)}
                           {iv.jobTitle ? ` · ${iv.jobTitle}` : ''}
@@ -385,7 +385,7 @@ export default function SchedulerPage() {
             </ul>
           )}
 
-          <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400">
+          <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-600">
             You’ll get a reminder before each interview. Tip: schedule straight from a{' '}
             <Link to="/hr/candidates" className="font-medium text-brand-600 hover:underline">
               candidate’s page
@@ -415,7 +415,7 @@ export default function SchedulerPage() {
 }
 
 function pillCls(iv: Interview): string {
-  if (iv.status === 'canceled') return 'bg-slate-100 text-slate-400 line-through';
+  if (iv.status === 'canceled') return 'bg-slate-100 text-slate-600 line-through';
   if (iv.status === 'completed') return 'bg-emerald-100 text-emerald-700';
   if (iv.status === 'no_show') return 'bg-rose-100 text-rose-700';
   // Still scheduled but the time has passed → needs an outcome.

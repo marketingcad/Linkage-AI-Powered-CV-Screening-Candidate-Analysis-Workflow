@@ -40,9 +40,11 @@ export default function CandidateBoard({
   }
 
   return (
-    // Large screens: all 5 columns fit as an even grid (no scrollbar).
-    // Smaller screens: fall back to a horizontally scrollable row.
-    <div className="flex gap-4 overflow-x-auto pb-4 lg:grid lg:grid-cols-5 lg:overflow-x-visible">
+    // Columns keep a readable fixed width and the board scrolls sideways, rather than
+    // squeezing five columns into the viewport — at 5-across a column was ~150px, which
+    // truncated every candidate name to "Nadi…". They stretch to fill only once there's
+    // genuinely room for all five at full width.
+    <div className="flex gap-4 overflow-x-auto pb-4 2xl:grid 2xl:grid-cols-5 2xl:overflow-x-visible">
       {COLUMNS.map((col) => {
         const items = byStage(col.stage);
         const isOver = overStage === col.stage;
@@ -61,7 +63,7 @@ export default function CandidateBoard({
               }
             }}
             onDrop={() => handleDrop(col.stage)}
-            className={`flex w-72 shrink-0 flex-col rounded-2xl border bg-slate-50/60 transition-colors lg:w-auto lg:min-w-0 ${
+            className={`flex w-72 shrink-0 flex-col rounded-2xl border bg-slate-50/60 transition-colors 2xl:w-auto 2xl:min-w-0 ${
               isOver ? 'border-brand-400 bg-brand-50/70' : 'border-slate-200/70'
             }`}
           >
@@ -71,7 +73,7 @@ export default function CandidateBoard({
                 <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
                 <span className="text-sm font-semibold text-slate-700">{col.label}</span>
               </div>
-              <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-slate-200">
+              <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
                 {items.length}
               </span>
             </div>
@@ -106,7 +108,7 @@ export default function CandidateBoard({
                     <ScoreRing score={c.overallScore ?? c.qualificationScore} size={40} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-800">{c.fullName}</p>
-                      <p className="truncate text-xs text-slate-400">{c.jobTitle ?? '—'}</p>
+                      <p className="truncate text-xs text-slate-600">{c.jobTitle ?? '—'}</p>
                     </div>
                   </div>
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
@@ -120,7 +122,7 @@ export default function CandidateBoard({
               {items.length === 0 && (
                 <div
                   className={`flex flex-1 items-center justify-center rounded-xl border-2 border-dashed py-8 text-center text-xs ${
-                    isOver ? 'border-brand-300 text-brand-500' : 'border-slate-200 text-slate-400'
+                    isOver ? 'border-brand-300 text-brand-500' : 'border-slate-200 text-slate-600'
                   }`}
                 >
                   {isOver ? 'Drop here' : 'No candidates'}

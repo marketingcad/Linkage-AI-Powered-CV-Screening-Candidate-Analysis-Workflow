@@ -329,7 +329,7 @@ export default function CandidateDetailPage() {
     <div className="animate-rise space-y-6">
       <Link
         to="/hr/candidates"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-700"
+        className="inline-flex items-center gap-1.5 text-sm text-slate-600 transition hover:text-slate-700"
       >
         <LuArrowLeft className="h-4 w-4" />
         Back to candidates
@@ -341,7 +341,7 @@ export default function CandidateDetailPage() {
           <ScoreRing score={c.overallScore ?? c.qualificationScore} size={72} />
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">{c.fullName}</h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-600">
               {c.email}
               {c.phone ? ` · ${c.phone}` : ''}
             </p>
@@ -389,7 +389,7 @@ export default function CandidateDetailPage() {
                 <button
                   type="button"
                   aria-label="More actions"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 data-[state=open]:border-brand-300 data-[state=open]:bg-brand-50 data-[state=open]:text-brand-600"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-700 data-[state=open]:border-brand-300 data-[state=open]:bg-brand-50 data-[state=open]:text-brand-600"
                 >
                   <LuEllipsisVertical className="h-4 w-4" />
                 </button>
@@ -398,7 +398,7 @@ export default function CandidateDetailPage() {
                 <DropdownMenuItem
                   onSelect={() => window.open(`/hr/candidates/${c.id}/data`, '_blank')}
                 >
-                  <LuFileJson className="text-slate-500" />
+                  <LuFileJson className="text-slate-600" />
                   Export personal data
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -446,7 +446,7 @@ export default function CandidateDetailPage() {
                     >
                       {d.jobTitle ?? 'Untitled role'}
                     </Link>
-                    <span className="text-slate-500">
+                    <span className="text-slate-600">
                       {' · '}
                       {d.stage}
                       {(d.overallScore ?? d.qualificationScore) != null &&
@@ -506,26 +506,26 @@ export default function CandidateDetailPage() {
             {/* AI vs Human, side by side */}
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 text-center">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">AI score</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-600">AI score</p>
                 <p className="mt-1 flex items-baseline justify-center gap-1">
                   <span className={`text-2xl font-bold ${scoreColor(c.overallScore ?? c.qualificationScore)}`}>
                     {c.overallScore ?? c.qualificationScore ?? '—'}
                   </span>
-                  <span className="text-xs text-slate-400">/ 100</span>
+                  <span className="text-xs text-slate-600">/ 100</span>
                 </p>
-                <p className="mt-1 text-[11px] text-slate-400">Gemini evaluation</p>
+                <p className="mt-1 text-[11px] text-slate-600">Gemini evaluation</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 text-center">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Human score</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Human score</p>
                 <p className="mt-1 flex items-baseline justify-center gap-1">
                   <span className="text-2xl font-bold text-slate-800">
                     {humanScore != null ? humanScore.toFixed(1) : '—'}
                   </span>
-                  <span className="text-xs text-slate-400">/ 5</span>
+                  <span className="text-xs text-slate-600">/ 5</span>
                 </p>
                 <div className="mt-1 flex items-center justify-center gap-1.5">
                   <StarRating value={humanScore} size="sm" />
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-slate-600">
                     {ratingCount > 0 ? `${ratingCount} rating${ratingCount === 1 ? '' : 's'}` : 'not rated'}
                   </span>
                 </div>
@@ -541,7 +541,7 @@ export default function CandidateDetailPage() {
                   <button
                     type="button"
                     onClick={() => setRatingInput(0)}
-                    className="text-xs text-slate-400 hover:text-slate-600"
+                    className="text-xs text-slate-600 hover:text-slate-600"
                   >
                     clear
                   </button>
@@ -556,7 +556,7 @@ export default function CandidateDetailPage() {
                 }}
                 rows={2}
                 placeholder="Add an internal note about this candidate…"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
                 {...review.fieldProps('body')}
               />
               <FieldError id={review.errorId('body')} message={review.errors.body} />
@@ -594,7 +594,7 @@ export default function CandidateDetailPage() {
                           {n.rating != null && <StarRating value={n.rating} size="sm" />}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-slate-400">
+                          <span className="text-[11px] text-slate-600">
                             {new Date(n.createdAt).toLocaleString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -607,7 +607,7 @@ export default function CandidateDetailPage() {
                               type="button"
                               onClick={() => removeNote(n.id)}
                               aria-label="Delete note"
-                              className="rounded p-1 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                              className="rounded p-1 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600"
                             >
                               <LuTrash2 className="h-3.5 w-3.5" />
                             </button>
@@ -640,7 +640,7 @@ export default function CandidateDetailPage() {
                 <AiWrittenBadge likelihood={c.aiLikelihood} size="md" />
               </div>
               <div className="mb-1 flex justify-between text-xs">
-                <span className="text-slate-500">Estimated AI-generated</span>
+                <span className="text-slate-600">Estimated AI-generated</span>
                 <span className="font-semibold text-slate-700">{c.aiLikelihood}%</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-slate-100">
@@ -659,13 +659,13 @@ export default function CandidateDetailPage() {
                 <ul className="mt-3 space-y-1.5">
                   {c.aiSignals.map((s, i) => (
                     <li key={i} className="flex gap-2 text-sm text-slate-600">
-                      <span className="text-slate-400">•</span>
+                      <span className="text-slate-600">•</span>
                       {s}
                     </li>
                   ))}
                 </ul>
               )}
-              <p className="mt-3 text-xs text-slate-400">
+              <p className="mt-3 text-xs text-slate-600">
                 Heuristic estimate from writing style — not a definitive detector. Use as one signal
                 alongside the interview and exam.
               </p>
@@ -716,7 +716,7 @@ export default function CandidateDetailPage() {
                   </Button>
                 </div>
               </div>
-              <p className="mb-3 text-xs text-slate-500">
+              <p className="mb-3 text-xs text-slate-600">
                 Tailored to this candidate’s strengths and gaps — each with what to listen for.
               </p>
 
@@ -734,15 +734,15 @@ export default function CandidateDetailPage() {
                       className="rounded-lg border border-slate-100 bg-slate-50/50 p-3.5"
                     >
                       <div className="flex items-start gap-2.5">
-                        <span className="mt-0.5 text-xs font-semibold text-slate-400">{i + 1}.</span>
+                        <span className="mt-0.5 text-xs font-semibold text-slate-600">{i + 1}.</span>
                         <div className="min-w-0 flex-1">
                           <div className="mb-1.5">
                             <FocusTag focus={q.focus} />
                           </div>
                           <p className="text-sm font-medium text-slate-700">{q.question}</p>
                           {q.rationale && (
-                            <p className="mt-1 text-xs text-slate-500">
-                              <span className="font-medium text-slate-400">Listen for:</span>{' '}
+                            <p className="mt-1 text-xs text-slate-600">
+                              <span className="font-medium text-slate-600">Listen for:</span>{' '}
                               {q.rationale}
                             </p>
                           )}
@@ -753,7 +753,7 @@ export default function CandidateDetailPage() {
                 </ol>
               ) : (
                 !genQ && (
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-600">
                     No questions yet — generate a tailored interview kit from this candidate’s
                     screening results.
                   </p>
@@ -773,7 +773,7 @@ export default function CandidateDetailPage() {
                     </span>
                     <div>
                       <span className="font-medium text-slate-700">{m.skill}</span>
-                      {m.evidence && <span className="text-slate-500"> — {m.evidence}</span>}
+                      {m.evidence && <span className="text-slate-600"> — {m.evidence}</span>}
                     </div>
                   </div>
                 ))}
@@ -791,7 +791,7 @@ export default function CandidateDetailPage() {
                       {exp.title} {exp.company ? `· ${exp.company}` : ''}
                     </p>
                     {(exp.startDate || exp.endDate) && (
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-600">
                         {exp.startDate ?? '?'} – {exp.endDate ?? 'Present'}
                       </p>
                     )}
@@ -807,7 +807,7 @@ export default function CandidateDetailPage() {
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-700">Exam results</h2>
                 {c.quizScore != null && (
-                  <span className="text-xs font-medium text-slate-500">{c.quizScore}/100</span>
+                  <span className="text-xs font-medium text-slate-600">{c.quizScore}/100</span>
                 )}
               </div>
               <div className="space-y-4">
@@ -831,7 +831,7 @@ export default function CandidateDetailPage() {
                     </div>
                     <AnswerDisplay result={r} answers={c.quizAnswers} job={job} />
                     {r.feedback && (
-                      <p className="mt-1 text-xs italic text-slate-500">AI: {r.feedback}</p>
+                      <p className="mt-1 text-xs italic text-slate-600">AI: {r.feedback}</p>
                     )}
                   </div>
                 ))}
@@ -867,20 +867,20 @@ export default function CandidateDetailPage() {
               const differs = Boolean(c.timezone && me && c.timezone !== me);
               return (
                 <div className="mb-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                  <p className="mb-1.5 text-xs font-medium text-slate-500">
+                  <p className="mb-1.5 text-xs font-medium text-slate-600">
                     Candidate&apos;s preferred times
                   </p>
                   <ul className="space-y-1.5">
                     {c.availabilitySlots.map((iso, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-sm text-slate-700">
-                        <LuCalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                        <LuCalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-600" />
                         <span>
                           {fmtInTz(iso, candTz)}{' '}
-                          <span className="text-slate-400">
+                          <span className="text-slate-600">
                             {tzAbbrev(new Date(iso), candTz)}
                           </span>
                           {differs && (
-                            <span className="block text-[11px] text-slate-400">
+                            <span className="block text-[11px] text-slate-600">
                               = {fmtInTz(iso, me)} {tzAbbrev(new Date(iso), me)} your time
                             </span>
                           )}
@@ -888,7 +888,7 @@ export default function CandidateDetailPage() {
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-1.5 text-[11px] text-slate-400">
+                  <p className="mt-1.5 text-[11px] text-slate-600">
                     {c.timezone
                       ? `Candidate's local time (${c.timezone}). Use “Schedule” to pick one.`
                       : 'Shown in your timezone. Use “Schedule” to pick one.'}
@@ -904,7 +904,7 @@ export default function CandidateDetailPage() {
             )}
 
             {interviews.length === 0 ? (
-              <p className="text-sm text-slate-400">No interviews scheduled yet.</p>
+              <p className="text-sm text-slate-600">No interviews scheduled yet.</p>
             ) : (
               <ul className="space-y-2">
                 {interviews.map((iv) => {
@@ -921,7 +921,7 @@ export default function CandidateDetailPage() {
                         className="flex w-full items-center gap-3 rounded-lg border border-slate-100 p-2.5 text-left transition hover:border-violet-200 hover:bg-violet-50/40"
                       >
                         <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-slate-50 text-center">
-                          <span className="text-[10px] font-semibold uppercase text-slate-400">
+                          <span className="text-[10px] font-semibold uppercase text-slate-600">
                             {d.toLocaleDateString('en-US', { month: 'short' })}
                           </span>
                           <span className="text-sm font-bold leading-none text-slate-700">
@@ -931,12 +931,12 @@ export default function CandidateDetailPage() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-slate-700">
                             {d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                            <span className="ml-1 font-normal text-slate-400">{tzAbbrev(d)}</span>
-                            <span className="ml-1.5 font-normal capitalize text-slate-400">
+                            <span className="ml-1 font-normal text-slate-600">{tzAbbrev(d)}</span>
+                            <span className="ml-1.5 font-normal capitalize text-slate-600">
                               · {iv.mode}
                             </span>
                           </p>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-slate-600">
                             {d.toLocaleDateString('en-US', {
                               weekday: 'short',
                               month: 'short',
@@ -1007,7 +1007,7 @@ export default function CandidateDetailPage() {
               </dl>
               {c.coverNote && (
                 <div className="mt-3 border-t border-slate-100 pt-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Note</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Note</p>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{c.coverNote}</p>
                 </div>
               )}
@@ -1023,7 +1023,7 @@ export default function CandidateDetailPage() {
             {c.educationScore != null && <ScoreLine label="Education" value={c.educationScore} />}
             {c.quizScore != null && <ScoreLine label="Quiz / exam" value={c.quizScore} />}
             <div className="mt-3 flex justify-between text-sm">
-              <span className="text-slate-500">Total experience</span>
+              <span className="text-slate-600">Total experience</span>
               <span className="font-medium text-slate-700">
                 {c.totalYearsExperience != null ? `${c.totalYearsExperience} yr` : '—'}
               </span>
@@ -1050,7 +1050,7 @@ export default function CandidateDetailPage() {
                 {c.extractedEducation.map((ed, i) => (
                   <div key={i}>
                     <p className="text-sm font-medium text-slate-800">{ed.institution}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-600">
                       {[ed.degree, ed.field, ed.year].filter(Boolean).join(' · ')}
                     </p>
                   </div>
@@ -1073,7 +1073,7 @@ export default function CandidateDetailPage() {
           {/* Notifications / email log */}
           <Card className="p-5">
             <h2 className="mb-1 text-sm font-semibold text-slate-700">Notifications</h2>
-            <p className="mb-3 text-xs text-slate-400">Emails sent to {c.email}</p>
+            <p className="mb-3 text-xs text-slate-600">Emails sent to {c.email}</p>
 
             <div className="mb-3 flex flex-wrap gap-2">
               <button
@@ -1093,24 +1093,24 @@ export default function CandidateDetailPage() {
                 {resending === 'status' ? 'Sending…' : 'Send status update'}
               </button>
             </div>
-            {resendNote && <p className="mb-3 text-xs text-slate-500">{resendNote}</p>}
+            {resendNote && <p className="mb-3 text-xs text-slate-600">{resendNote}</p>}
 
             {emails.length === 0 ? (
-              <p className="text-xs text-slate-400">No emails sent yet.</p>
+              <p className="text-xs text-slate-600">No emails sent yet.</p>
             ) : (
               <ul className="space-y-2">
                 {emails.map((e) => (
                   <li key={e.id} className="flex items-start justify-between gap-2 text-xs">
                     <div>
                       <p className="font-medium text-slate-700">{e.subject}</p>
-                      <p className="text-slate-400">{new Date(e.createdAt).toLocaleString()}</p>
+                      <p className="text-slate-600">{new Date(e.createdAt).toLocaleString()}</p>
                     </div>
                     <span
                       className={`shrink-0 rounded-full px-2 py-0.5 font-medium ${
                         e.status === 'sent'
                           ? 'bg-emerald-100 text-emerald-700'
                           : e.status === 'skipped'
-                            ? 'bg-slate-100 text-slate-500'
+                            ? 'bg-slate-100 text-slate-600'
                             : 'bg-rose-100 text-rose-700'
                       }`}
                       title={e.error ?? undefined}
@@ -1167,7 +1167,7 @@ export default function CandidateDetailPage() {
 function interviewStatusCls(status: string): string {
   if (status === 'completed') return 'bg-emerald-100 text-emerald-700';
   if (status === 'no_show') return 'bg-rose-100 text-rose-700';
-  if (status === 'canceled') return 'bg-slate-100 text-slate-500';
+  if (status === 'canceled') return 'bg-slate-100 text-slate-600';
   return 'bg-violet-100 text-violet-700';
 }
 
@@ -1253,7 +1253,7 @@ function WhyThisScore({ c, job }: { c: Candidate; job: Job | null }) {
         </span>
         <h2 className="text-sm font-semibold text-slate-700">Why this score</h2>
       </div>
-      <p className="mb-4 text-xs text-slate-500">
+      <p className="mb-4 text-xs text-slate-600">
         How each factor scored, what it counts toward the overall, and the CV evidence behind it.
       </p>
 
@@ -1275,7 +1275,7 @@ function WhyThisScore({ c, job }: { c: Candidate; job: Job | null }) {
                   </span>
                 </div>
                 {contribution != null && (
-                  <span className="text-xs font-medium text-slate-400">
+                  <span className="text-xs font-medium text-slate-600">
                     {contribution}% of overall
                   </span>
                 )}
@@ -1290,7 +1290,7 @@ function WhyThisScore({ c, job }: { c: Candidate; job: Job | null }) {
                   {ex.evidence.map((quote, i) => (
                     <blockquote
                       key={i}
-                      className="flex gap-1.5 rounded-md border-l-2 border-slate-300 bg-white px-2.5 py-1.5 text-xs italic text-slate-500"
+                      className="flex gap-1.5 rounded-md border-l-2 border-slate-300 bg-white px-2.5 py-1.5 text-xs italic text-slate-600"
                     >
                       <LuQuote className="mt-0.5 h-3 w-3 shrink-0 text-slate-300" />
                       <span>{quote}</span>
@@ -1300,7 +1300,7 @@ function WhyThisScore({ c, job }: { c: Candidate; job: Job | null }) {
               )}
 
               {m.key === 'quiz' && (
-                <p className="mt-2 text-xs text-slate-400">Graded from the screening exam (see below).</p>
+                <p className="mt-2 text-xs text-slate-600">Graded from the screening exam (see below).</p>
               )}
             </div>
           );
@@ -1324,7 +1324,7 @@ function AnswerDisplay({
   if (result.type === 'short') {
     return (
       <p className="mt-1 text-sm text-slate-600">
-        {answer?.text ? answer.text : <span className="text-slate-400">No answer</span>}
+        {answer?.text ? answer.text : <span className="text-slate-600">No answer</span>}
       </p>
     );
   }
@@ -1342,7 +1342,7 @@ function AnswerDisplay({
         {selected.length ? (
           selected.map((id) => optionText(id)).join(', ')
         ) : (
-          <span className="text-slate-400">No answer</span>
+          <span className="text-slate-600">No answer</span>
         )}
       </p>
       {!result.correct && correct.length > 0 && (
@@ -1358,7 +1358,7 @@ function DetailRow({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
     <div className="flex justify-between gap-3">
-      <dt className="shrink-0 text-slate-500">{label}</dt>
+      <dt className="shrink-0 text-slate-600">{label}</dt>
       <dd className="text-right font-medium text-slate-700">{value}</dd>
     </div>
   );
@@ -1368,7 +1368,7 @@ function LinkRow({ label, href }: { label: string; href: string | null }) {
   if (!href) return null;
   return (
     <div className="flex justify-between gap-3">
-      <dt className="shrink-0 text-slate-500">{label}</dt>
+      <dt className="shrink-0 text-slate-600">{label}</dt>
       <dd className="truncate text-right">
         <a
           href={href}
@@ -1408,7 +1408,7 @@ function ListCard({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-slate-400">{empty}</p>
+        <p className="text-sm text-slate-600">{empty}</p>
       )}
     </Card>
   );
@@ -1418,7 +1418,7 @@ function ScoreLine({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="mb-3">
       <div className="mb-1 flex justify-between text-sm">
-        <span className="text-slate-500">{label}</span>
+        <span className="text-slate-600">{label}</span>
         <span className={`rounded px-1.5 text-xs font-semibold ${scoreBg(value)}`}>
           {value ?? '—'}
         </span>

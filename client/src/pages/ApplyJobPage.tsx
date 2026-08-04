@@ -253,7 +253,7 @@ export default function ApplyJobPage() {
               className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${
                 unavailable.kind === 'closed'
                   ? 'bg-amber-100 text-amber-600'
-                  : 'bg-slate-100 text-slate-500'
+                  : 'bg-slate-100 text-slate-600'
               }`}
             >
               {unavailable.kind === 'closed' ? (
@@ -267,7 +267,7 @@ export default function ApplyJobPage() {
                 <h1 className="font-display text-xl font-semibold text-slate-900">
                   Applications are closed
                 </h1>
-                <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
                   {unavailable.title ? (
                     <>
                       The <span className="font-medium text-slate-700">{unavailable.title}</span>{' '}
@@ -284,7 +284,7 @@ export default function ApplyJobPage() {
                 <h1 className="font-display text-xl font-semibold text-slate-900">
                   Position not found
                 </h1>
-                <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
                   This application link may be invalid or has expired. Please double-check the link
                   from the job posting.
                 </p>
@@ -299,7 +299,7 @@ export default function ApplyJobPage() {
               ✓
             </div>
             <h2 className="text-xl font-semibold text-slate-900">Application received</h2>
-            <p className="mx-auto mt-2 max-w-md text-slate-500">
+            <p className="mx-auto mt-2 max-w-md text-slate-600">
               Thanks, {fullName || 'candidate'}. Your CV{quiz.length > 0 ? ' and exam' : ''} have
               been received and shared with our recruiting team. We've emailed you a confirmation with
               a link to track your status.
@@ -318,7 +318,7 @@ export default function ApplyJobPage() {
             {/* Job header */}
             <div>
               <h1 className="text-3xl font-bold text-slate-900">{job.title}</h1>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500">
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-600">
                 {job.department && <span>{job.department}</span>}
                 {job.location && <span>· {job.location}</span>}
                 {job.employmentType && <span>· {job.employmentType}</span>}
@@ -382,13 +382,13 @@ export default function ApplyJobPage() {
                           Reading your CV to autofill…
                         </span>
                       ) : (
-                        <p className="mt-1 text-xs text-slate-400">Click to replace</p>
+                        <p className="mt-1 text-xs text-slate-600">Click to replace</p>
                       )}
                     </>
                   ) : (
                     <>
                       <p className="text-sm font-medium text-slate-600">Drop your CV here or click to browse</p>
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-slate-600">
                         PDF or DOCX only, up to 10&nbsp;MB · we'll autofill your details
                       </p>
                     </>
@@ -521,11 +521,11 @@ export default function ApplyJobPage() {
                   placeholder="A short note or cover message…"
                   {...fieldErrors.fieldProps('coverNote')}
                 />
-                <span className="mt-1 block text-right text-xs text-slate-400">
+                <span className="mt-1 block text-right text-xs text-slate-600">
                   {coverNote.length}/{v.LIMITS.coverNote}
                 </span>
               </Field>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Only name, email, and CV are required — the rest help us evaluate you faster.
               </p>
             </Card>
@@ -534,7 +534,7 @@ export default function ApplyJobPage() {
             <Card className="space-y-4 p-6">
               <div>
                 <h2 className="text-sm font-semibold text-slate-800">Preferred interview times</h2>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-600">
                   Suggest up to 3 date &amp; time options that work for an initial interview. Optional —
                   it helps us schedule faster. Use your own local timezone.
                 </p>
@@ -561,13 +561,13 @@ export default function ApplyJobPage() {
               <Card className="space-y-5 p-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-slate-800">Screening exam</h2>
-                  <span className="text-xs text-slate-400">{quiz.length} questions · {totalPoints} points</span>
+                  <span className="text-xs text-slate-600">{quiz.length} questions · {totalPoints} points</span>
                 </div>
                 {quiz.map((q, i) => (
                   <div key={q.id} className="border-t border-slate-100 pt-4 first:border-0 first:pt-0">
                     <p className="mb-2 text-sm font-medium text-slate-700">
                       {i + 1}. {q.prompt}
-                      <span className="ml-2 text-xs font-normal text-slate-400">
+                      <span className="ml-2 text-xs font-normal text-slate-600">
                         ({q.points} pt{q.points === 1 ? '' : 's'})
                       </span>
                     </p>

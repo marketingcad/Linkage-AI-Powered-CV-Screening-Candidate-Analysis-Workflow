@@ -18,7 +18,7 @@ import CandidateTable from '../components/CandidateTable';
 
 // Fixed order + colors for the pipeline visualization.
 const STAGE_ORDER: { stage: CandidateStage; label: string; bar: string; text: string }[] = [
-  { stage: 'new', label: 'New', bar: 'bg-slate-300', text: 'text-slate-500' },
+  { stage: 'new', label: 'New', bar: 'bg-slate-300', text: 'text-slate-600' },
   { stage: 'shortlisted', label: 'Shortlisted', bar: 'bg-brand-500', text: 'text-brand-600' },
   { stage: 'interviewing', label: 'Interviewing', bar: 'bg-violet-500', text: 'text-violet-600' },
   { stage: 'hired', label: 'Hired', bar: 'bg-emerald-500', text: 'text-emerald-600' },
@@ -133,7 +133,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="animate-rise">
         <h1 className="text-2xl font-semibold text-slate-900">Overview</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-600">
           AI-screened candidates across all your open roles.
         </p>
       </div>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
         <Card className="animate-rise p-5" style={{ animationDelay: '300ms' }}>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-700">Pipeline by stage</h2>
-            <span className="text-xs text-slate-400">{totalStaged} total</span>
+            <span className="text-xs text-slate-600">{totalStaged} total</span>
           </div>
 
           {totalStaged === 0 ? (
@@ -272,7 +272,7 @@ export default function DashboardPage() {
                       <span className="text-slate-600">{f.label}</span>
                       <span className="font-semibold text-slate-800">
                         {f.value}{' '}
-                        <span className="text-xs font-normal text-slate-400">({pct}%)</span>
+                        <span className="text-xs font-normal text-slate-600">({pct}%)</span>
                       </span>
                     </div>
                     <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                       minHeight: grow && d.count ? 4 : 0,
                     }}
                   />
-                  <span className="text-[10px] text-slate-400">{d.label}</span>
+                  <span className="text-[10px] text-slate-600">{d.label}</span>
                 </div>
               ))}
             </div>
@@ -330,7 +330,7 @@ export default function DashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-slate-100 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                   <th className="pb-2">Source</th>
                   <th className="pb-2 text-right">Applicants</th>
                   <th className="pb-2 text-right">Avg score</th>
@@ -372,7 +372,7 @@ export default function DashboardPage() {
 
 function EmptyHint({ text }: { text: string }) {
   return (
-    <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400">
+    <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-600">
       {text}
     </div>
   );
@@ -445,12 +445,12 @@ function StatCard({
           <LuArrowRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500" />
         )}
       </div>
-      <p className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">
+      <p className="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">
         {shown}
-        {suffix && <span className="text-base font-medium text-slate-400">{suffix}</span>}
+        {suffix && <span className="text-base font-medium text-slate-600">{suffix}</span>}
       </p>
       <p className="mt-0.5 text-sm font-medium text-slate-600">{label}</p>
-      <p className="text-xs text-slate-400">{caption}</p>
+      <p className="text-xs text-slate-600">{caption}</p>
     </Card>
   );
 

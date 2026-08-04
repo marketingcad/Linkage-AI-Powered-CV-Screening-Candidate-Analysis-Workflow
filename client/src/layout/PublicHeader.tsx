@@ -18,7 +18,7 @@ export default function PublicHeader({ container = 'max-w-4xl' }: { container?: 
           />
           <span className="flex flex-col leading-none">
             <span className="font-display text-lg font-semibold text-slate-900">Linkage ScreenAI</span>
-            <span className="text-[11px] font-medium tracking-wide text-slate-400">Careers</span>
+            <span className="text-[11px] font-medium tracking-wide text-slate-600">Careers</span>
           </span>
         </div>
       </div>

@@ -284,7 +284,7 @@ export default function AccountSettingsPage() {
     <div className="animate-rise mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Account settings</h1>
-        <p className="mt-1 text-sm text-slate-500">Manage your recruiter profile and password.</p>
+        <p className="mt-1 text-sm text-slate-600">Manage your recruiter profile and password.</p>
       </div>
 
       {/* Profile */}
@@ -318,7 +318,7 @@ export default function AccountSettingsPage() {
                   </Button>
                 )}
               </div>
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-slate-600">
                 PNG, JPG or WebP · up to {AVATAR_MAX_MB} MB.
               </p>
               <FieldError
@@ -381,7 +381,7 @@ export default function AccountSettingsPage() {
       {/* Password */}
       <Card className="p-6">
         <h2 className="text-sm font-semibold text-slate-700">Change password</h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-600">
           Enter your current password, then choose a new one.
         </p>
 
@@ -427,7 +427,7 @@ export default function AccountSettingsPage() {
                     : 'newPassword-hint'
                 }
               />
-              <p id="newPassword-hint" className="text-xs text-slate-400 dark:text-slate-500">
+              <p id="newPassword-hint" className="text-xs text-slate-600 dark:text-slate-600">
                 At least {PASSWORD_MIN} characters — mix letters, numbers, and symbols.
               </p>
               <FieldError
@@ -472,7 +472,7 @@ export default function AccountSettingsPage() {
       {/* Two-factor authentication */}
       <Card className="p-6">
         <div className="flex items-center gap-2">
-          <LuShieldCheck className="h-4 w-4 text-slate-500" />
+          <LuShieldCheck className="h-4 w-4 text-slate-600" />
           <h2 className="text-sm font-semibold text-slate-700">Two-factor authentication</h2>
           {user?.totpEnabled && (
             <span className="ml-1 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
@@ -480,7 +480,7 @@ export default function AccountSettingsPage() {
             </span>
           )}
         </div>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-600">
           Require a one-time code from an authenticator app (Google Authenticator, Authy,
           1Password…) each time you sign in.
         </p>
@@ -637,22 +637,22 @@ export default function AccountSettingsPage() {
             aria-controls="recent-activity-panel"
             className="flex w-full items-center gap-2 text-left"
           >
-            <LuHistory className="h-4 w-4 shrink-0 text-slate-500" />
+            <LuHistory className="h-4 w-4 shrink-0 text-slate-600" />
             <span className="flex-1">
               <span className="block text-sm font-semibold text-slate-700">Recent activity</span>
-              <span className="mt-1 block text-sm text-slate-500">
+              <span className="mt-1 block text-sm text-slate-600">
                 An audit trail of recent recruiter and system actions.
               </span>
             </span>
             {showActivity && activity.length > 0 && (
-              <span className="shrink-0 text-xs text-slate-400">{activity.length} entries</span>
+              <span className="shrink-0 text-xs text-slate-600">{activity.length} entries</span>
             )}
             <span className="shrink-0 text-xs font-medium text-brand-600">
               {showActivity ? 'Hide' : 'Show'}
             </span>
             <LuChevronDown
               aria-hidden="true"
-              className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${
+              className={`h-4 w-4 shrink-0 text-slate-600 transition-transform ${
                 showActivity ? 'rotate-180' : ''
               }`}
             />
@@ -661,9 +661,9 @@ export default function AccountSettingsPage() {
           {showActivity && (
             <div id="recent-activity-panel">
               {!activityLoaded ? (
-                <p className="mt-4 text-sm text-slate-400">Loading…</p>
+                <p className="mt-4 text-sm text-slate-600">Loading…</p>
               ) : activity.length === 0 ? (
-                <p className="mt-4 text-sm text-slate-400">No activity recorded yet.</p>
+                <p className="mt-4 text-sm text-slate-600">No activity recorded yet.</p>
               ) : (
                 // Caps at ~10 rows (640px) then scrolls, so the page stays short without
                 // hiding older history behind an arbitrary cut-off.
@@ -674,10 +674,10 @@ export default function AccountSettingsPage() {
                         <p className="text-sm font-medium text-slate-700">
                           {ACTION_LABELS[e.action] ?? e.action}
                         </p>
-                        {e.detail && <p className="truncate text-xs text-slate-500">{e.detail}</p>}
-                        <p className="text-xs text-slate-400">{e.actorEmail ?? 'system'}</p>
+                        {e.detail && <p className="truncate text-xs text-slate-600">{e.detail}</p>}
+                        <p className="text-xs text-slate-600">{e.actorEmail ?? 'system'}</p>
                       </div>
-                      <span className="shrink-0 text-xs text-slate-400">
+                      <span className="shrink-0 text-xs text-slate-600">
                         {new Date(e.createdAt).toLocaleString()}
                       </span>
                     </li>
@@ -692,7 +692,7 @@ export default function AccountSettingsPage() {
       {/* Session */}
       <Card className="p-6">
         <h2 className="text-sm font-semibold text-slate-700">Session</h2>
-        <p className="mt-1 text-sm text-slate-500">Sign out of the dashboard on this device.</p>
+        <p className="mt-1 text-sm text-slate-600">Sign out of the dashboard on this device.</p>
         <Button variant="outline" className="mt-4" onClick={signOut}>
           <LuLogOut className="h-4 w-4" />
           Sign out

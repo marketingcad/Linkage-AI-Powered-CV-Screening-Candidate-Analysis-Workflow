@@ -178,7 +178,7 @@ export default function CandidatesPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Candidates</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-600">
             {view === 'board'
               ? 'Drag candidates between stages to move them through the pipeline.'
               : 'Search, filter, compare, and bulk-manage applicants across all roles.'}
@@ -203,7 +203,7 @@ export default function CandidatesPage() {
                 className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                   active
                     ? 'bg-brand-500 text-white shadow-[0_2px_8px_-2px_rgba(51,88,240,0.6)]'
-                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-700'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -242,7 +242,7 @@ export default function CandidatesPage() {
 
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative min-w-52 flex-1">
-                <LuSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <LuSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
                 <input
                   aria-label="Search candidates by name, email, or role"
                   maxLength={SEARCH_MAX}
@@ -310,7 +310,7 @@ export default function CandidatesPage() {
                 🔍
               </div>
               <p className="text-sm font-medium text-slate-600">No candidates match your filters</p>
-              <p className="mx-auto mt-1 max-w-sm text-xs text-slate-400">
+              <p className="mx-auto mt-1 max-w-sm text-xs text-slate-600">
                 {skill.trim()
                   ? `No candidate lists a “${skill.trim()}” skill — try a different term or clear the filters.`
                   : 'Try adjusting or clearing your filters.'}
@@ -341,7 +341,7 @@ export default function CandidatesPage() {
                       const Icon = STAGE_ICONS[s];
                       return (
                         <DropdownMenuItem key={s} onSelect={() => void bulkMove(s)}>
-                          <Icon className="text-slate-500" />
+                          <Icon className="text-slate-600" />
                           <span className="capitalize">{s}</span>
                         </DropdownMenuItem>
                       );
@@ -380,7 +380,7 @@ export default function CandidatesPage() {
             duplicateEmails={duplicateEmails}
           />
 
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Showing {filtered.length} of {candidates.length} candidate
                 {candidates.length === 1 ? '' : 's'}
               </p>

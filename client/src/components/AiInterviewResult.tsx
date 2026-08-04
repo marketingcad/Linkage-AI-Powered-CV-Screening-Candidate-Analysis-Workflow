@@ -31,7 +31,7 @@ function RatingPips({ rating }: { rating: number }) {
   const label = RATING_LABEL[rating] ?? '';
   if (rating < 1) {
     return (
-      <span title={label} className="shrink-0 text-[11px] italic text-slate-400">
+      <span title={label} className="shrink-0 text-[11px] italic text-slate-600">
         not assessed
       </span>
     );
@@ -54,7 +54,7 @@ function RatingPips({ rating }: { rating: number }) {
           />
         ))}
       </span>
-      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{rating}/5</span>
+      <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-600">{rating}/5</span>
     </span>
   );
 }
@@ -76,8 +76,8 @@ export default function AiInterviewResult({ interviewId }: { interviewId: string
     };
   }, [interviewId]);
 
-  if (loading) return <p className="mt-1.5 text-xs text-slate-400">Loading AI results…</p>;
-  if (!session) return <p className="mt-1.5 text-xs text-slate-400">No AI interview session yet.</p>;
+  if (loading) return <p className="mt-1.5 text-xs text-slate-600">Loading AI results…</p>;
+  if (!session) return <p className="mt-1.5 text-xs text-slate-600">No AI interview session yet.</p>;
 
   const s = session;
   const sum = s.aiSummary;
@@ -91,7 +91,7 @@ export default function AiInterviewResult({ interviewId }: { interviewId: string
           {STATUS_LABEL[s.status]}
         </span>
         {s.durationSeconds != null && (
-          <span className="text-[11px] text-slate-400">{Math.round(s.durationSeconds / 60)} min</span>
+          <span className="text-[11px] text-slate-600">{Math.round(s.durationSeconds / 60)} min</span>
         )}
       </div>
 
@@ -99,7 +99,7 @@ export default function AiInterviewResult({ interviewId }: { interviewId: string
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-lg font-bold text-slate-800 dark:text-slate-100">{sum.score}</span>
-            <span className="text-xs text-slate-400">/ 100 (AI interview)</span>
+            <span className="text-xs text-slate-600">/ 100 (AI interview)</span>
             <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${REC_CLS[sum.recommendation] ?? ''}`}>
               {sum.recommendation}
             </span>
@@ -108,7 +108,7 @@ export default function AiInterviewResult({ interviewId }: { interviewId: string
 
           {sum.competencies && sum.competencies.length > 0 && (
             <div>
-              <p className="mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <p className="mb-1 text-xs font-semibold text-slate-600 dark:text-slate-600">
                 Competency ratings
               </p>
               <ul className="space-y-1.5">
@@ -121,14 +121,14 @@ export default function AiInterviewResult({ interviewId }: { interviewId: string
                       <RatingPips rating={c.rating} />
                     </div>
                     {c.evidence && (
-                      <p className="mt-0.5 text-[11px] italic text-slate-500 dark:text-slate-400">
+                      <p className="mt-0.5 text-[11px] italic text-slate-600 dark:text-slate-600">
                         “{c.evidence}”
                       </p>
                     )}
                   </li>
                 ))}
               </ul>
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-slate-600">
                 1 = well below · 3 = meets · 5 = exceptional. The score above is the average of
                 the assessed areas.
               </p>
@@ -188,7 +188,7 @@ export default function AiInterviewResult({ interviewId }: { interviewId: string
       )}
 
       {!sum && !s.recordingUrl && (!s.transcript || s.transcript.length === 0) && (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-600">
           {s.status === 'ready' ? 'Interview finished; no summary was produced.' : 'Waiting for the interview to complete…'}
         </p>
       )}

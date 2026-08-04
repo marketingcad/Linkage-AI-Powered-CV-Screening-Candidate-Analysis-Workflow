@@ -226,14 +226,14 @@ export default function LoginPage() {
                   <h1 className="font-display text-2xl font-semibold text-slate-900">
                     Two-factor authentication
                   </h1>
-                  <p className="mt-1.5 text-sm text-slate-500">
+                  <p className="mt-1.5 text-sm text-slate-600">
                     Enter the 6-digit code from your authenticator app.
                   </p>
                 </>
               ) : (
                 <>
                   <h1 className="font-display text-2xl font-semibold text-slate-900">Welcome back</h1>
-                  <p className="mt-1.5 text-sm text-slate-500">
+                  <p className="mt-1.5 text-sm text-slate-600">
                     Sign in to your recruiter dashboard.
                   </p>
                 </>
@@ -245,7 +245,7 @@ export default function LoginPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="code">Authentication code</Label>
                   <div className="relative">
-                    <LuShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <LuShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
                     <Input
                       id="code"
                       autoFocus
@@ -267,7 +267,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={backToSignIn}
-                  className="w-full text-center text-sm font-medium text-slate-500 transition hover:text-slate-700"
+                  className="w-full text-center text-sm font-medium text-slate-600 transition hover:text-slate-700"
                 >
                   Back to sign in
                 </button>
@@ -277,7 +277,7 @@ export default function LoginPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
-                    <LuMail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <LuMail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
                     <Input
                       id="email"
                       required
@@ -299,7 +299,7 @@ export default function LoginPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
-                    <LuLock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <LuLock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
                     <Input
                       id="password"
                       required
@@ -319,7 +319,7 @@ export default function LoginPage() {
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:text-slate-600"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-600 transition hover:text-slate-600"
                     >
                       {showPassword ? <LuEyeOff className="h-4 w-4" /> : <LuEye className="h-4 w-4" />}
                     </button>
@@ -337,7 +337,7 @@ export default function LoginPage() {
             )}
           </div>
 
-          <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-slate-400">
+          <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-slate-600">
             <LuLock className="h-3.5 w-3.5" />
             Secure recruiter access · Linkage ScreenAI
           </p>

@@ -65,7 +65,7 @@ export default function CandidateDataExportPage() {
       <div className="mx-auto mb-4 flex max-w-3xl items-center justify-between gap-2 px-6 print:hidden">
         <Link
           to={`/hr/candidates/${c.id}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-700"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-700"
         >
           <LuArrowLeft className="h-4 w-4" />
           Back to candidate
@@ -89,14 +89,14 @@ export default function CandidateDataExportPage() {
             <img src="/Favicon_Linkage.png" alt="" className="h-9 w-9 rounded-lg object-contain" />
             <div className="leading-none">
               <p className="font-display text-lg font-semibold text-slate-900">Linkage ScreenAI</p>
-              <p className="mt-1 text-xs text-slate-400">Personal data export</p>
+              <p className="mt-1 text-xs text-slate-600">Personal data export</p>
             </div>
           </div>
-          <p className="text-xs text-slate-400">Generated {fmtDate(exportedAt)}</p>
+          <p className="text-xs text-slate-600">Generated {fmtDate(exportedAt)}</p>
         </div>
 
         <h1 className="mt-6 font-display text-2xl font-semibold text-slate-900">{c.fullName}</h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-600">
           This document contains all personal data held about this candidate.
         </p>
 
@@ -137,7 +137,7 @@ export default function CandidateDataExportPage() {
           />
           {c.summary && (
             <div className="pt-2">
-              <p className="text-sm font-medium text-slate-500">Summary</p>
+              <p className="text-sm font-medium text-slate-600">Summary</p>
               <p className="mt-1 text-sm leading-relaxed text-slate-700">{c.summary}</p>
             </div>
           )}
@@ -165,7 +165,7 @@ export default function CandidateDataExportPage() {
                     {exp.title} {exp.company ? `· ${exp.company}` : ''}
                   </p>
                   {(exp.startDate || exp.endDate) && (
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-600">
                       {exp.startDate ?? '?'} – {exp.endDate ?? 'Present'}
                     </p>
                   )}
@@ -207,7 +207,7 @@ export default function CandidateDataExportPage() {
           </Section>
         )}
 
-        <p className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-400">
+        <p className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-600">
           Linkage ScreenAI · Personal data export · Confidential
         </p>
       </div>
@@ -222,7 +222,7 @@ function numOrDash(n: number | null): string | null {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-6 break-inside-avoid">
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</h2>
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">{title}</h2>
       <div className="space-y-1.5">{children}</div>
     </section>
   );
@@ -232,7 +232,7 @@ function Row({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
     <div className="flex justify-between gap-4 text-sm">
-      <span className="shrink-0 text-slate-500">{label}</span>
+      <span className="shrink-0 text-slate-600">{label}</span>
       <span className="break-words text-right font-medium text-slate-800">{value}</span>
     </div>
   );
@@ -242,11 +242,11 @@ function ListBlock({ title, items }: { title: string; items: string[] | null }) 
   if (!items || items.length === 0) return null;
   return (
     <div className="pt-1">
-      <p className="text-sm font-medium text-slate-500">{title}</p>
+      <p className="text-sm font-medium text-slate-600">{title}</p>
       <ul className="mt-1 space-y-1">
         {items.map((item, i) => (
           <li key={i} className="flex gap-2 text-sm text-slate-700">
-            <span className="text-slate-400">•</span>
+            <span className="text-slate-600">•</span>
             {item}
           </li>
         ))}

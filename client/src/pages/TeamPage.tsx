@@ -20,7 +20,7 @@ const ROLE_HELP: Record<TeamRole, string> = {
 };
 
 const inputCls =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
 
 export default function TeamPage() {
   const { user } = useAuth();
@@ -117,7 +117,7 @@ export default function TeamPage() {
             <LuUsers className="h-5 w-5 text-brand-500" />
             Team
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-slate-600">
             Everyone who can sign in and review candidates.
           </p>
         </div>
@@ -178,7 +178,7 @@ export default function TeamPage() {
                   {...f.fieldProps('password')}
                 />
                 <FieldError id={f.errorId('password')} message={f.errors.password} />
-                <span className="mt-1 block text-xs text-slate-400">
+                <span className="mt-1 block text-xs text-slate-600">
                   Share this with them — they can change it in Settings after signing in.
                 </span>
               </label>
@@ -194,7 +194,7 @@ export default function TeamPage() {
                   <option value="member">Member</option>
                   <option value="admin">Admin</option>
                 </select>
-                <span className="mt-1 block text-xs text-slate-400">{ROLE_HELP[role]}</span>
+                <span className="mt-1 block text-xs text-slate-600">{ROLE_HELP[role]}</span>
               </label>
             </div>
 
@@ -229,7 +229,7 @@ export default function TeamPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
                       {m.name}
-                      {isSelf && <span className="ml-1.5 text-xs font-normal text-slate-400">(you)</span>}
+                      {isSelf && <span className="ml-1.5 text-xs font-normal text-slate-600">(you)</span>}
                       {m.totpEnabled && (
                         <LuShieldCheck
                           title="Two-factor enabled"
@@ -237,7 +237,7 @@ export default function TeamPage() {
                         />
                       )}
                     </p>
-                    <p className="truncate text-xs text-slate-500">{m.email}</p>
+                    <p className="truncate text-xs text-slate-600">{m.email}</p>
                   </div>
 
                   <select
@@ -257,7 +257,7 @@ export default function TeamPage() {
                     title={isSelf ? 'You cannot remove your own account' : `Remove ${m.name}`}
                     disabled={isSelf || busyId === m.id}
                     onClick={() => void remove(m)}
-                    className="rounded-md p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-rose-950/30"
+                    className="rounded-md p-1.5 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-rose-950/30"
                   >
                     <LuTrash2 className="h-4 w-4" />
                   </button>
@@ -268,7 +268,7 @@ export default function TeamPage() {
         )}
       </Card>
 
-      <Card className="p-4 text-xs text-slate-500 dark:text-slate-400">
+      <Card className="p-4 text-xs text-slate-600 dark:text-slate-600">
         <p className="mb-1 font-semibold text-slate-600 dark:text-slate-300">What the roles mean</p>
         <p className="mb-0.5"><strong>Admin</strong> — {ROLE_HELP.admin}</p>
         <p><strong>Member</strong> — {ROLE_HELP.member}</p>

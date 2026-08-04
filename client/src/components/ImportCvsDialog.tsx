@@ -126,7 +126,7 @@ export default function ImportCvsDialog({
               <DialogTitle className="font-display text-lg font-semibold text-slate-900">
                 Import CVs
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500">
+              <DialogDescription className="text-xs text-slate-600">
                 Upload PDF/DOCX files — each is parsed, AI-scored, and added to this job.
               </DialogDescription>
             </div>
@@ -171,7 +171,7 @@ export default function ImportCvsDialog({
             <p className="mt-2 text-sm font-medium text-slate-700">
               Drop CVs here, or click to browse
             </p>
-            <p className="mt-0.5 text-xs text-slate-400">
+            <p className="mt-0.5 text-xs text-slate-600">
               PDF or DOCX · up to {MAX_MB}&nbsp;MB each · multiple files supported
             </p>
           </div>
@@ -208,7 +208,7 @@ export default function ImportCvsDialog({
                     <p className="truncate text-sm font-medium text-slate-700">
                       {it.name || it.file.name}
                     </p>
-                    <p className="truncate text-xs text-slate-400">
+                    <p className="truncate text-xs text-slate-600">
                       {it.status === 'error'
                         ? it.message
                         : it.status === 'done'
@@ -230,7 +230,7 @@ export default function ImportCvsDialog({
         </div>
 
         <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 px-6 py-4">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-600">
             {items.length === 0
               ? 'No files selected'
               : settled
@@ -263,5 +263,5 @@ function StatusIcon({ status }: { status: ItemStatus }) {
   if (status === 'error') return <LuCircleX className="h-5 w-5 shrink-0 text-rose-500" />;
   if (status === 'processing')
     return <LuLoaderCircle className="h-5 w-5 shrink-0 animate-spin text-brand-500" />;
-  return <LuFileText className="h-5 w-5 shrink-0 text-slate-400" />;
+  return <LuFileText className="h-5 w-5 shrink-0 text-slate-600" />;
 }

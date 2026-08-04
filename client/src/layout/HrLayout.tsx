@@ -72,13 +72,13 @@ export default function HrLayout() {
           />
           <span className="flex flex-col leading-none">
             <span className="font-display text-lg font-semibold text-slate-900">Linkage ScreenAI</span>
-            <span className="text-[11px] font-medium tracking-wide text-slate-400">Recruiting</span>
+            <span className="text-[11px] font-medium tracking-wide text-slate-600">Recruiting</span>
           </span>
         </NavLink>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
+          className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100 lg:hidden"
           aria-label="Close menu"
         >
           <LuX className="h-5 w-5" />
@@ -87,7 +87,7 @@ export default function HrLayout() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 px-3 py-3">
-        <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
           Menu
         </p>
         {navItems
@@ -121,7 +121,7 @@ export default function HrLayout() {
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-800">{user?.name}</p>
-                  <p className="truncate text-xs text-slate-400">{user?.email}</p>
+                  <p className="truncate text-xs text-slate-600">{user?.email}</p>
                 </div>
               </NavLink>
             </TooltipTrigger>

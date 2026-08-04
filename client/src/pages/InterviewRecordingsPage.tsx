@@ -53,7 +53,7 @@ function when(iso: string | null): string {
 }
 
 const inputCls =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
 
 /**
  * Library of every AI voice interview, so recruiters can review recordings in one place
@@ -143,7 +143,7 @@ export default function InterviewRecordingsPage() {
           <LuVideo className="h-5 w-5 text-brand-500" />
           Interview recordings
         </h1>
-        <p className="mt-0.5 text-sm text-slate-500">
+        <p className="mt-0.5 text-sm text-slate-600">
           Every AI voice interview in one place — watch the call, read the transcript, and see how
           the candidate scored.
         </p>
@@ -161,7 +161,7 @@ export default function InterviewRecordingsPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-56 flex-1">
-          <LuSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <LuSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
           <input
             aria-label="Search recordings by candidate"
             value={q}
@@ -199,7 +199,7 @@ export default function InterviewRecordingsPage() {
       </div>
 
       {!loading && sessions.length > 0 && (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-600">
           {stats.total} recording{stats.total === 1 ? '' : 's'} · {stats.scored} scored
         </p>
       )}
@@ -212,7 +212,7 @@ export default function InterviewRecordingsPage() {
           <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
             {q || jobId || status ? 'No recordings match these filters.' : 'No interview recordings yet.'}
           </p>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-slate-600">
             {q || jobId || status
               ? 'Try clearing the search or filters.'
               : 'Recordings appear here once a candidate completes an AI voice interview.'}
@@ -233,14 +233,14 @@ export default function InterviewRecordingsPage() {
                     >
                       {s.candidateName ?? 'Candidate'}
                     </Link>
-                    <p className="truncate text-xs text-slate-500">{s.jobTitle ?? 'Role'}</p>
+                    <p className="truncate text-xs text-slate-600">{s.jobTitle ?? 'Role'}</p>
                   </div>
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
                     {meta.label}
                   </span>
                 </div>
 
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-600">
                   <span>{when(s.startedAt ?? s.scheduledAt ?? s.createdAt)}</span>
                   <span className="inline-flex items-center gap-1">
                     <LuClock className="h-3 w-3" />
@@ -257,7 +257,7 @@ export default function InterviewRecordingsPage() {
                 {s.aiSummary && (
                   <div className="mt-2 flex items-center gap-2">
                     <span className="text-base font-bold text-slate-800 dark:text-slate-100">{score}</span>
-                    <span className="text-[11px] text-slate-400">/ 100</span>
+                    <span className="text-[11px] text-slate-600">/ 100</span>
                     <span
                       className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${
                         REC_CLS[s.aiSummary.recommendation] ?? ''
@@ -308,7 +308,7 @@ export default function InterviewRecordingsPage() {
                 <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                   {playing.candidateName ?? 'Candidate'}
                 </p>
-                <p className="truncate text-xs text-slate-500">
+                <p className="truncate text-xs text-slate-600">
                   {playing.jobTitle ?? 'Role'} · {when(playing.startedAt ?? playing.createdAt)} ·{' '}
                   {duration(playing.durationSeconds)}
                 </p>
@@ -317,7 +317,7 @@ export default function InterviewRecordingsPage() {
                 type="button"
                 aria-label="Close recording"
                 onClick={() => setPlaying(null)}
-                className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+                className="rounded-md p-1 text-slate-600 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
               >
                 <LuX className="h-4 w-4" />
               </button>
@@ -340,7 +340,7 @@ export default function InterviewRecordingsPage() {
             )}
 
             <div className="mt-3 flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
                 <LuBot className="h-3.5 w-3.5" />
                 Conducted by the AI interviewer
               </span>

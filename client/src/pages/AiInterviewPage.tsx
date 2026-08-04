@@ -105,7 +105,7 @@ export default function AiInterviewPage() {
     <div className="mx-auto max-w-2xl px-4 py-10 text-slate-800 dark:text-slate-100">
       <h1 className="text-2xl font-bold">AI Voice Interview</h1>
 
-      {phase === 'loading' && <p className="mt-4 text-slate-500">Loading…</p>}
+      {phase === 'loading' && <p className="mt-4 text-slate-600">Loading…</p>}
 
       {phase === 'invalid' && (
         <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
@@ -152,7 +152,7 @@ export default function AiInterviewPage() {
               >
                 Join interview
               </button>
-              {status && <p className="text-sm text-slate-500">{status}</p>}
+              {status && <p className="text-sm text-slate-600">{status}</p>}
             </div>
           )}
 
@@ -166,7 +166,7 @@ export default function AiInterviewPage() {
                 className="w-full max-w-md rounded-xl bg-black"
                 style={{ aspectRatio: '4 / 3' }}
               />
-              <p className="text-sm text-slate-500">{status}</p>
+              <p className="text-sm text-slate-600">{status}</p>
               {phase === 'live' && (
                 <button
                   type="button"

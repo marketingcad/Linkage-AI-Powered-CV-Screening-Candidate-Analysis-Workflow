@@ -214,7 +214,7 @@ export default function ScheduleInterviewDialog({
               <DialogTitle className="font-display text-lg font-semibold text-slate-900">
                 {existing ? 'Edit interview' : 'Schedule interview'}
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500">
+              <DialogDescription className="text-xs text-slate-600">
                 Pin a candidate to the calendar and get a reminder before it starts.
               </DialogDescription>
             </div>
@@ -228,7 +228,7 @@ export default function ScheduleInterviewDialog({
               <span className="mb-1.5 block text-sm font-medium text-slate-700">Candidate</span>
               {presetCandidate ? (
                 <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                  <LuUser className="h-4 w-4 text-slate-400" />
+                  <LuUser className="h-4 w-4 text-slate-600" />
                   {selected?.fullName}
                 </div>
               ) : (
@@ -424,7 +424,7 @@ export default function ScheduleInterviewDialog({
               />
               <span className="text-sm text-slate-700">
                 Email the candidate
-                <span className="block text-xs font-normal text-slate-500">
+                <span className="block text-xs font-normal text-slate-600">
                   {existing
                     ? 'Send an updated invite if you reschedule, or a notice if you cancel — with the meeting link and a calendar file.'
                     : 'Sends an invitation with the date, time, meeting link, and a calendar (.ics) attachment.'}
@@ -527,7 +527,7 @@ function CandidatePicker({
     return (
       <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
         <span className="flex items-center gap-2 text-slate-700">
-          <LuUser className="h-4 w-4 text-slate-400" />
+          <LuUser className="h-4 w-4 text-slate-600" />
           {selected.fullName}
         </span>
         <button
@@ -547,13 +547,13 @@ function CandidatePicker({
   return (
     <div className="relative">
       <div className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 focus-within:border-brand-500">
-        <LuSearch className="h-4 w-4 text-slate-400" />
+        <LuSearch className="h-4 w-4 text-slate-600" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder="Search candidates by name, email, or role…"
-          className="w-full text-sm text-slate-800 outline-none placeholder:text-slate-400"
+          className="w-full text-sm text-slate-800 outline-none placeholder:text-slate-600"
         />
       </div>
       {open && (
@@ -563,7 +563,7 @@ function CandidatePicker({
               <Spinner label="Loading…" />
             </div>
           ) : results.length === 0 ? (
-            <p className="p-3 text-sm text-slate-400">No candidates found.</p>
+            <p className="p-3 text-sm text-slate-600">No candidates found.</p>
           ) : (
             results.map((c) => (
               <button
@@ -578,7 +578,7 @@ function CandidatePicker({
                 <ScoreRing score={c.overallScore ?? c.qualificationScore} size={30} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-slate-700">{c.fullName}</span>
-                  <span className="block truncate text-xs text-slate-400">
+                  <span className="block truncate text-xs text-slate-600">
                     {c.jobTitle ?? c.email}
                   </span>
                 </span>
@@ -592,7 +592,7 @@ function CandidatePicker({
 }
 
 const inputCls =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25';
 
 /**
  * Labelled field with a required marker and an inline error slot. The error is rendered by
@@ -664,7 +664,7 @@ function AiVoicePanel({ interviewId }: { interviewId: string | null }) {
       </p>
 
       {!interviewId && (
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-slate-600">
           Save the interview to generate the candidate’s join link (it’s included in their invite
           email automatically).
         </p>

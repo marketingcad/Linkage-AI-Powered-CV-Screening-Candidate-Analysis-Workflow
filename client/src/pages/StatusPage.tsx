@@ -62,7 +62,7 @@ export default function StatusPage() {
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Application status</h1>
-              <p className="mt-1 text-slate-500">
+              <p className="mt-1 text-slate-600">
                 Hi {app.fullName}, here's the latest on your application
                 {app.jobTitle ? (
                   <>
@@ -117,7 +117,7 @@ export default function StatusPage() {
                                 ? 'bg-emerald-500 text-white'
                                 : current
                                   ? 'bg-brand-500 text-white'
-                                  : 'bg-slate-200 text-slate-500'
+                                  : 'bg-slate-200 text-slate-600'
                             }`}
                           >
                             {done ? (
@@ -141,13 +141,13 @@ export default function StatusPage() {
                         <div className={`pb-6 ${last ? 'pb-0' : ''}`}>
                           <p
                             className={`text-sm font-medium ${
-                              current ? 'text-brand-700' : done ? 'text-slate-700' : 'text-slate-400'
+                              current ? 'text-brand-700' : done ? 'text-slate-700' : 'text-slate-600'
                             }`}
                           >
                             {STEP_LABELS[stage] ?? stage}
                           </p>
                           {current && (
-                            <p className="text-xs text-slate-500">You are here</p>
+                            <p className="text-xs text-slate-600">You are here</p>
                           )}
                         </div>
                       </li>
@@ -157,12 +157,12 @@ export default function StatusPage() {
               </Card>
             )}
 
-            <div className="flex flex-wrap justify-between gap-2 text-xs text-slate-400">
+            <div className="flex flex-wrap justify-between gap-2 text-xs text-slate-600">
               <span>Submitted {fmtDate(app.submittedAt)}</span>
               <span>Last updated {fmtDate(app.updatedAt)}</span>
             </div>
 
-            <p className="text-center text-xs text-slate-400">
+            <p className="text-center text-xs text-slate-600">
               Bookmark this page to check back anytime. We'll also email you when your status changes.
             </p>
           </div>

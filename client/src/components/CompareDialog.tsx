@@ -69,7 +69,7 @@ export default function CompareDialog({
               <DialogTitle className="font-display text-lg font-semibold text-slate-900">
                 Compare candidates
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500">
+              <DialogDescription className="text-xs text-slate-600">
                 Best value in each row is highlighted.
               </DialogDescription>
             </div>
@@ -126,7 +126,7 @@ export default function CompareDialog({
                                 {r.fitScore}% fit
                               </span>
                             </div>
-                            <p className="text-xs text-slate-500">{r.reason}</p>
+                            <p className="text-xs text-slate-600">{r.reason}</p>
                           </div>
                           <LuChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500" />
                         </Link>
@@ -143,7 +143,7 @@ export default function CompareDialog({
           <table className="w-full border-collapse text-sm">
             <thead className="sticky top-0 z-10 bg-white">
               <tr>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Metric
                 </th>
                 {candidates.map((c) => (
@@ -155,7 +155,7 @@ export default function CompareDialog({
                       <ScoreRing score={c.overallScore ?? c.qualificationScore} size={40} />
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-slate-800">{c.fullName}</p>
-                        <p className="truncate text-xs font-normal text-slate-400">{c.email}</p>
+                        <p className="truncate text-xs font-normal text-slate-600">{c.email}</p>
                       </div>
                     </div>
                   </th>
@@ -204,7 +204,7 @@ export default function CompareDialog({
                 {candidates.map((c) => (
                   <td
                     key={c.id}
-                    className="border-l border-slate-100 px-4 py-2.5 align-top text-xs leading-relaxed text-slate-500"
+                    className="border-l border-slate-100 px-4 py-2.5 align-top text-xs leading-relaxed text-slate-600"
                   >
                     {c.summary ?? '—'}
                   </td>

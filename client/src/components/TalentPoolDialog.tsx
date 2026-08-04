@@ -16,7 +16,7 @@ import {
 function simTone(sim: number): string {
   if (sim >= 75) return 'bg-emerald-100 text-emerald-700';
   if (sim >= 50) return 'bg-amber-100 text-amber-700';
-  return 'bg-slate-100 text-slate-500';
+  return 'bg-slate-100 text-slate-600';
 }
 
 export default function TalentPoolDialog({
@@ -51,7 +51,7 @@ export default function TalentPoolDialog({
               <DialogTitle className="font-display text-lg font-semibold text-slate-900">
                 Talent-pool matches
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500">
+              <DialogDescription className="text-xs text-slate-600">
                 Past applicants to other roles, ranked by fit to <b>{jobTitle}</b>.
               </DialogDescription>
             </div>
@@ -65,11 +65,11 @@ export default function TalentPoolDialog({
             <Spinner label="Scanning the talent pool…" />
           ) : matches.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-10 text-center">
-              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600">
                 <LuUsers className="h-5 w-5" />
               </div>
               <p className="text-sm font-medium text-slate-600">No other applicants yet</p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-slate-600">
                 Once people apply to other roles, their best matches for this job show up here.
               </p>
             </div>
@@ -89,7 +89,7 @@ export default function TalentPoolDialog({
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-800">{m.fullName}</p>
-                      <p className="truncate text-xs text-slate-400">
+                      <p className="truncate text-xs text-slate-600">
                         Applied to {m.jobTitle ?? 'another role'}
                       </p>
                     </div>

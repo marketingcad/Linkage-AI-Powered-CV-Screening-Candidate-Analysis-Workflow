@@ -60,14 +60,14 @@ function QrModal({
       <DialogContent className="text-center sm:max-w-xs">
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold text-slate-800">QR · {label}</DialogTitle>
-          <DialogDescription className="text-xs text-slate-500">
+          <DialogDescription className="text-xs text-slate-600">
             Scan to open the application page.
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center rounded-lg bg-white p-3">
           <QRCodeCanvas id="distribute-qr-canvas" value={url} size={220} level="M" marginSize={2} />
         </div>
-        <p className="break-all text-center text-[11px] text-slate-400">{url}</p>
+        <p className="break-all text-center text-[11px] text-slate-600">{url}</p>
         <Button type="button" onClick={download} className="w-full">
           Download PNG
         </Button>
@@ -135,7 +135,7 @@ export default function DistributePanel({ job }: { job: Job }) {
         </span>
         <h2 className="text-sm font-semibold text-slate-800">Distribute this job</h2>
       </div>
-      <p className="mt-1.5 text-xs text-slate-500">
+      <p className="mt-1.5 text-xs text-slate-600">
         Paste these tracked links into each platform. Applicants who use them are tagged by source,
         so you can see which channel each candidate came from.
       </p>
@@ -187,7 +187,7 @@ export default function DistributePanel({ job }: { job: Job }) {
 
       <div className="mt-5">
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
             Ready-to-paste posting
           </span>
           <CopyButton text={postingText} />

@@ -40,7 +40,7 @@ const STATUS_META: Record<string, { label: string; cls: string; dot: string }> =
 const STATUS_OPTIONS: { value: JobStatus; label: string; hint: string; Icon: IconType; cls: string }[] = [
   { value: 'open', label: 'Available', hint: 'accepting applications', Icon: LuCircleCheck, cls: 'text-emerald-600' },
   { value: 'closed', label: 'Unavailable', hint: 'not accepting', Icon: LuBan, cls: 'text-rose-600' },
-  { value: 'draft', label: 'Draft', hint: 'hidden from applicants', Icon: LuPencilLine, cls: 'text-slate-500' },
+  { value: 'draft', label: 'Draft', hint: 'hidden from applicants', Icon: LuPencilLine, cls: 'text-slate-600' },
 ];
 
 type SortKey = 'recent' | 'candidates' | 'title';
@@ -137,7 +137,7 @@ export default function JobsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Jobs</h1>
-          <p className="mt-1 text-sm text-slate-500">Positions candidates are screened against.</p>
+          <p className="mt-1 text-sm text-slate-600">Positions candidates are screened against.</p>
         </div>
         <Button onClick={() => setShowForm(true)}>
           <LuPlus className="h-4 w-4" />
@@ -159,7 +159,7 @@ export default function JobsPage() {
             <LuBriefcase className="h-6 w-6" />
           </div>
           <p className="text-sm font-medium text-slate-700">No jobs yet</p>
-          <p className="mt-1 text-xs text-slate-400">Create your first job to start receiving applications.</p>
+          <p className="mt-1 text-xs text-slate-600">Create your first job to start receiving applications.</p>
           <Button className="mt-5" onClick={() => setShowForm(true)}>
             <LuPlus className="h-4 w-4" />
             New job
@@ -184,7 +184,7 @@ export default function JobsPage() {
                   {tab.label}
                   <span
                     className={`rounded-full px-1.5 text-xs ${
-                      statusFilter === tab.value ? 'bg-white/20' : 'bg-slate-100 text-slate-500'
+                      statusFilter === tab.value ? 'bg-white/20' : 'bg-slate-100 text-slate-600'
                     }`}
                   >
                     {counts[tab.value] ?? 0}
@@ -206,7 +206,7 @@ export default function JobsPage() {
           {visibleJobs.length === 0 ? (
             <Card className="px-6 py-12 text-center">
               <p className="text-sm font-medium text-slate-600">No {statusFilter} jobs</p>
-              <p className="mt-1 text-xs text-slate-400">Try a different filter.</p>
+              <p className="mt-1 text-xs text-slate-600">Try a different filter.</p>
             </Card>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -241,7 +241,7 @@ export default function JobsPage() {
                           type="button"
                           aria-label="Job actions"
                           onClick={(e) => e.stopPropagation()}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 data-[state=open]:bg-slate-100 data-[state=open]:text-slate-700"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-600 data-[state=open]:bg-slate-100 data-[state=open]:text-slate-700"
                         >
                           <LuEllipsisVertical className="h-4 w-4" />
                         </button>
@@ -263,7 +263,7 @@ export default function JobsPage() {
                               <opt.Icon className={opt.cls} />
                               <span className="flex-1">
                                 {opt.label}
-                                <span className="block text-[11px] text-slate-400">{opt.hint}</span>
+                                <span className="block text-[11px] text-slate-600">{opt.hint}</span>
                               </span>
                               {current && <LuCheck className="h-4 w-4 text-brand-600" />}
                             </DropdownMenuItem>
@@ -271,11 +271,11 @@ export default function JobsPage() {
                         })}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onSelect={() => navigate(`/hr/jobs/${job.id}`)}>
-                          <LuArrowRight className="text-slate-500" />
+                          <LuArrowRight className="text-slate-600" />
                           Open & edit
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => void handleDuplicate(job)}>
-                          <LuCopy className="text-slate-500" />
+                          <LuCopy className="text-slate-600" />
                           Duplicate
                         </DropdownMenuItem>
                         {isAdmin && (
@@ -292,7 +292,7 @@ export default function JobsPage() {
                   </div>
                 </div>
 
-                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
                   {job.department && (
                     <span className="inline-flex items-center gap-1">
                       <LuBuilding2 className="h-3.5 w-3.5" />
@@ -321,7 +321,7 @@ export default function JobsPage() {
                       </span>
                     ))}
                     {job.requiredSkills.length > 4 && (
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-400">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
                         +{job.requiredSkills.length - 4}
                       </span>
                     )}
@@ -329,8 +329,8 @@ export default function JobsPage() {
                 )}
 
                 <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
-                    <LuUsers className="h-4 w-4 text-slate-400" />
+                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                    <LuUsers className="h-4 w-4 text-slate-600" />
                     {job.candidateCount} candidate{job.candidateCount === 1 ? '' : 's'}
                   </span>
                   <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-600">

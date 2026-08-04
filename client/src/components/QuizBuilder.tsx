@@ -138,7 +138,7 @@ export default function QuizBuilder({
   return (
     <div className="space-y-4">
       {value.length === 0 && (
-        <p className="rounded-lg border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-400">
+        <p className="rounded-lg border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-600">
           No quiz yet. Add questions to screen applicants with a position-specific exam.
         </p>
       )}
@@ -150,7 +150,7 @@ export default function QuizBuilder({
         return (
         <div key={q.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
               Q{i + 1} · {TYPE_LABELS[q.type]}
             </span>
             <button
@@ -176,7 +176,7 @@ export default function QuizBuilder({
           <FieldError id={promptErrorId} message={problems?.prompt} />
 
           <div className="mt-3 flex items-center gap-3">
-            <label className="text-xs text-slate-500">Points</label>
+            <label className="text-xs text-slate-600">Points</label>
             <input
               type="number"
               min={POINTS_MIN}
@@ -189,7 +189,7 @@ export default function QuizBuilder({
 
           {q.type === 'short' ? (
             <div className="mt-3">
-              <label className="mb-1 block text-xs font-medium text-slate-500">
+              <label className="mb-1 block text-xs font-medium text-slate-600">
                 Grading rubric (guides the AI; not shown to applicants)
               </label>
               <textarea
@@ -203,7 +203,7 @@ export default function QuizBuilder({
             </div>
           ) : (
             <div className="mt-3 space-y-2">
-              <p className="text-xs font-medium text-slate-500">
+              <p className="text-xs font-medium text-slate-600">
                 Options ({q.type === 'single' ? 'pick one correct' : 'pick all correct'})
               </p>
               {(q.options ?? []).map((o) => {
@@ -234,7 +234,7 @@ export default function QuizBuilder({
                         <button
                           type="button"
                           onClick={() => removeOption(q.id, o.id)}
-                          className="text-slate-400 hover:text-rose-600"
+                          className="text-slate-600 hover:text-rose-600"
                           aria-label="Remove option"
                         >
                           ✕

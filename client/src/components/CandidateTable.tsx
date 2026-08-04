@@ -44,7 +44,7 @@ export default function CandidateTable({
           🗂️
         </div>
         <p className="text-sm font-medium text-slate-600">No candidates yet</p>
-        <p className="mt-1 text-xs text-slate-400">
+        <p className="mt-1 text-xs text-slate-600">
           Applicants will appear here — ranked by AI — as they apply.
         </p>
       </div>
@@ -52,7 +52,7 @@ export default function CandidateTable({
   }
 
   const headCls =
-    'px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500';
+    'px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600';
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-(--shadow-card)">
@@ -95,7 +95,7 @@ export default function CandidateTable({
               )}
               <TableCell className="px-4 py-3">
                 <div className="flex items-center justify-center gap-2">
-                  <span className="w-5 text-right text-xs font-medium text-slate-400">{i + 1}</span>
+                  <span className="w-5 text-right text-xs font-medium text-slate-600">{i + 1}</span>
                   <ScoreRing score={c.overallScore ?? c.qualificationScore} size={44} />
                 </div>
               </TableCell>
@@ -113,7 +113,7 @@ export default function CandidateTable({
                   )}
                   <InterviewChip at={c.nextInterviewAt} />
                 </div>
-                <div className="text-xs text-slate-400">{c.email}</div>
+                <div className="text-xs text-slate-600">{c.email}</div>
               </TableCell>
               {showJob && (
                 <TableCell className="px-4 py-3 text-slate-600">{c.jobTitle ?? '—'}</TableCell>
@@ -134,7 +134,7 @@ export default function CandidateTable({
                 {c.humanScore != null ? (
                   <div className="flex items-center gap-1.5">
                     <StarRating value={c.humanScore} size="sm" />
-                    <span className="text-xs font-medium text-slate-500">
+                    <span className="text-xs font-medium text-slate-600">
                       {c.humanScore.toFixed(1)}
                     </span>
                   </div>

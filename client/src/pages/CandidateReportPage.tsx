@@ -63,7 +63,7 @@ export default function CandidateReportPage() {
       <div className="mx-auto mb-4 flex max-w-3xl items-center justify-between px-6 print:hidden">
         <Link
           to={`/hr/candidates/${c.id}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-700"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-700"
         >
           <LuArrowLeft className="h-4 w-4" />
           Back to candidate
@@ -82,10 +82,10 @@ export default function CandidateReportPage() {
             <img src="/Favicon_Linkage.png" alt="" className="h-9 w-9 rounded-lg object-contain" />
             <div className="leading-none">
               <p className="font-display text-lg font-semibold text-slate-900">Linkage ScreenAI</p>
-              <p className="mt-1 text-xs text-slate-400">Candidate screening report</p>
+              <p className="mt-1 text-xs text-slate-600">Candidate screening report</p>
             </div>
           </div>
-          <p className="text-xs text-slate-400">Generated {generated}</p>
+          <p className="text-xs text-slate-600">Generated {generated}</p>
         </div>
 
         {/* Candidate identity */}
@@ -93,7 +93,7 @@ export default function CandidateReportPage() {
           <ScoreRing score={c.overallScore ?? c.qualificationScore} size={72} />
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-semibold text-slate-900">{c.fullName}</h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-600">
               {c.email}
               {c.phone ? ` · ${c.phone}` : ''}
             </p>
@@ -116,7 +116,7 @@ export default function CandidateReportPage() {
             <ScoreTile label="Education" value={c.educationScore} />
             <ScoreTile label="Quiz / exam" value={c.quizScore} />
           </div>
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-slate-600">
             Total experience:{' '}
             <span className="font-medium text-slate-700">
               {c.totalYearsExperience != null ? `${c.totalYearsExperience} years` : '—'}
@@ -144,16 +144,16 @@ export default function CandidateReportPage() {
             <ol className="space-y-2.5">
               {c.interviewQuestions.map((q, i) => (
                 <li key={i} className="flex gap-2 break-inside-avoid text-sm">
-                  <span className="font-semibold text-slate-400">{i + 1}.</span>
+                  <span className="font-semibold text-slate-600">{i + 1}.</span>
                   <div>
                     <p className="font-medium text-slate-700">
                       {q.question}
-                      <span className="ml-2 text-xs font-normal uppercase tracking-wide text-slate-400">
+                      <span className="ml-2 text-xs font-normal uppercase tracking-wide text-slate-600">
                         {REPORT_FOCUS_LABEL[q.focus] ?? q.focus}
                       </span>
                     </p>
                     {q.rationale && (
-                      <p className="mt-0.5 text-xs text-slate-500">Listen for: {q.rationale}</p>
+                      <p className="mt-0.5 text-xs text-slate-600">Listen for: {q.rationale}</p>
                     )}
                   </div>
                 </li>
@@ -188,7 +188,7 @@ export default function CandidateReportPage() {
                         {ex.evidence.map((quote, i) => (
                           <p
                             key={i}
-                            className="border-l-2 border-slate-300 pl-2.5 text-xs italic text-slate-500"
+                            className="border-l-2 border-slate-300 pl-2.5 text-xs italic text-slate-600"
                           >
                             “{quote}”
                           </p>
@@ -212,7 +212,7 @@ export default function CandidateReportPage() {
                   </span>
                   <div>
                     <span className="font-medium text-slate-700">{m.skill}</span>
-                    {m.evidence && <span className="text-slate-500"> — {m.evidence}</span>}
+                    {m.evidence && <span className="text-slate-600"> — {m.evidence}</span>}
                   </div>
                 </div>
               ))}
@@ -229,7 +229,7 @@ export default function CandidateReportPage() {
                     {exp.title} {exp.company ? `· ${exp.company}` : ''}
                   </p>
                   {(exp.startDate || exp.endDate) && (
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-600">
                       {exp.startDate ?? '?'} – {exp.endDate ?? 'Present'}
                     </p>
                   )}
@@ -246,7 +246,7 @@ export default function CandidateReportPage() {
               {c.extractedEducation.map((ed, i) => (
                 <div key={i}>
                   <p className="text-sm font-medium text-slate-800">{ed.institution}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-600">
                     {[ed.degree, ed.field, ed.year].filter(Boolean).join(' · ')}
                   </p>
                 </div>
@@ -265,7 +265,7 @@ export default function CandidateReportPage() {
           </Section>
         )}
 
-        <p className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-400">
+        <p className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-600">
           Generated by Linkage ScreenAI · Confidential — for hiring evaluation only
         </p>
       </div>
@@ -276,7 +276,7 @@ export default function CandidateReportPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-6 break-inside-avoid">
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</h2>
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">{title}</h2>
       {children}
     </section>
   );
@@ -288,7 +288,7 @@ function ScoreTile({ label, value }: { label: string; value: number | null }) {
       <span className={`inline-block rounded px-2 py-0.5 text-lg font-bold ${scoreBg(value)}`}>
         {value ?? '—'}
       </span>
-      <p className="mt-1 text-xs text-slate-500">{label}</p>
+      <p className="mt-1 text-xs text-slate-600">{label}</p>
     </div>
   );
 }
@@ -315,7 +315,7 @@ function ReportList({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-slate-400">—</p>
+        <p className="text-sm text-slate-600">—</p>
       )}
     </div>
   );

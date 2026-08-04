@@ -106,7 +106,7 @@ export default function NotificationBell() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={`Notifications${unreadCount ? ` (${unreadCount} new)` : ''}`}
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 data-[open=true]:bg-slate-100"
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-700 data-[open=true]:bg-slate-100"
         data-open={open}
       >
         <LuBell className="h-5 w-5" />
@@ -143,7 +143,7 @@ export default function NotificationBell() {
             {items.length === 0 ? (
               <div className="px-4 py-10 text-center">
                 <LuBell className="mx-auto h-6 w-6 text-slate-300" />
-                <p className="mt-2 text-sm text-slate-400">No new candidates.</p>
+                <p className="mt-2 text-sm text-slate-600">No new candidates.</p>
               </div>
             ) : (
               items.map((c) => {
@@ -160,7 +160,7 @@ export default function NotificationBell() {
                     <ScoreRing score={c.overallScore ?? c.qualificationScore} size={34} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-800">{c.fullName}</p>
-                      <p className="truncate text-xs text-slate-400">
+                      <p className="truncate text-xs text-slate-600">
                         {c.jobTitle ?? 'Candidate'} · {timeAgo(c.createdAt)}
                       </p>
                       <div className="mt-1">

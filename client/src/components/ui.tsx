@@ -41,7 +41,7 @@ export const STAGE_ICONS: Record<CandidateStage, IconType> = {
 
 export function Spinner({ label }: { label?: string }) {
   return (
-    <div className="flex items-center gap-3 text-slate-500">
+    <div className="flex items-center gap-3 text-slate-600">
       <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-500" />
       {label && <span className="text-sm">{label}</span>}
     </div>
@@ -73,14 +73,14 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 }
 
 export function scoreColor(score: number | null | undefined): string {
-  if (score == null) return 'text-slate-400';
+  if (score == null) return 'text-slate-600';
   if (score >= 80) return 'text-emerald-600';
   if (score >= 60) return 'text-amber-600';
   return 'text-rose-600';
 }
 
 export function scoreBg(score: number | null | undefined): string {
-  if (score == null) return 'bg-slate-100 text-slate-500';
+  if (score == null) return 'bg-slate-100 text-slate-600';
   if (score >= 80) return 'bg-emerald-100 text-emerald-700';
   if (score >= 60) return 'bg-amber-100 text-amber-700';
   return 'bg-rose-100 text-rose-700';
@@ -134,7 +134,7 @@ export function ScoreRing({ score, size = 56 }: { score: number | null; size?: n
           strokeLinecap="round"
         />
       </svg>
-      <span className={`absolute text-sm font-bold ${scoreColor(score)}`}>
+      <span className={`absolute text-sm font-bold tabular-nums ${scoreColor(score)}`}>
         {score == null ? '—' : Math.round(p)}
       </span>
     </div>
@@ -148,11 +148,11 @@ const RECOMMENDATION_META: Record<Recommendation, { label: string; cls: string; 
 };
 
 export function RecommendationBadge({ value }: { value: Recommendation | null }) {
-  if (!value) return <span className="text-xs text-slate-400">—</span>;
+  if (!value) return <span className="text-xs text-slate-600">—</span>;
   const meta = RECOMMENDATION_META[value];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
-      <meta.Icon className="h-3 w-3" />
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
+      <meta.Icon className="h-3 w-3 shrink-0" />
       {meta.label}
     </span>
   );
@@ -170,8 +170,8 @@ export function StageBadge({ value }: { value: CandidateStage }) {
   const meta = STAGE_META[value];
   const Icon = STAGE_ICONS[value];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
-      <Icon className="h-3 w-3" />
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
+      <Icon className="h-3 w-3 shrink-0" />
       {meta.label}
     </span>
   );
@@ -186,7 +186,7 @@ export function AnalysisStatusBadge({ value }: { value: AnalysisStatus }) {
   };
   const meta = map[value];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
       <meta.Icon className={`h-3 w-3 ${meta.spin ? 'animate-spin' : ''}`} />
       {meta.label}
     </span>
@@ -264,7 +264,7 @@ export function aiLevel(likelihood: number | null | undefined): {
   cls: string;
   tone: 'low' | 'medium' | 'high';
 } {
-  if (likelihood == null) return { label: 'Not assessed', cls: 'bg-slate-100 text-slate-500', tone: 'low' };
+  if (likelihood == null) return { label: 'Not assessed', cls: 'bg-slate-100 text-slate-600', tone: 'low' };
   if (likelihood >= 70)
     return { label: 'Likely AI-written', cls: 'bg-rose-100 text-rose-700', tone: 'high' };
   if (likelihood >= 40)
@@ -280,7 +280,7 @@ export function AiWrittenBadge({
   size?: 'sm' | 'md';
 }) {
   if (likelihood == null) {
-    return <span className="text-xs text-slate-400">—</span>;
+    return <span className="text-xs text-slate-600">—</span>;
   }
   const meta = aiLevel(likelihood);
   const pad = size === 'md' ? 'px-3 py-1 text-sm' : 'px-2 py-0.5 text-xs';
@@ -321,8 +321,8 @@ export function SourceBadge({ source }: { source: string }) {
   const cls = meta?.cls ?? 'bg-slate-100 text-slate-600';
   const Icon = meta?.Icon ?? LuLink;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
-      <Icon className="h-3 w-3" />
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
+      <Icon className="h-3 w-3 shrink-0" />
       {meta?.label ?? formatSource(source)}
     </span>
   );

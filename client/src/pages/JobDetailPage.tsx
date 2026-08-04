@@ -128,7 +128,7 @@ export default function JobDetailPage() {
     <div className="animate-rise space-y-6">
       <Link
         to="/hr/jobs"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-700"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-700"
       >
         <LuArrowLeft className="h-4 w-4" />
         Back to jobs
@@ -172,14 +172,14 @@ export default function JobDetailPage() {
               <button
                 type="button"
                 aria-label="Job actions"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 data-[state=open]:border-brand-300 data-[state=open]:bg-brand-50 data-[state=open]:text-brand-600"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-700 data-[state=open]:border-brand-300 data-[state=open]:bg-brand-50 data-[state=open]:text-brand-600"
               >
                 <LuEllipsisVertical className="h-5 w-5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onSelect={() => setEditing(true)}>
-                <LuPencil className="text-slate-500" />
+                <LuPencil className="text-slate-600" />
                 Edit job
               </DropdownMenuItem>
               {isAdmin && (
@@ -207,7 +207,7 @@ export default function JobDetailPage() {
           className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
             view === 'details'
               ? 'bg-brand-500 text-white shadow-[0_2px_8px_-2px_rgba(51,88,240,0.6)]'
-              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-700'
           }`}
         >
           <LuFileText className="h-4 w-4" />
@@ -221,14 +221,14 @@ export default function JobDetailPage() {
           className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
             view === 'candidates'
               ? 'bg-brand-500 text-white shadow-[0_2px_8px_-2px_rgba(51,88,240,0.6)]'
-              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-700'
           }`}
         >
           <LuUsers className="h-4 w-4" />
           Ranked candidates
           <span
             className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-              view === 'candidates' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+              view === 'candidates' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
             }`}
           >
             {candidates.length}
@@ -320,7 +320,7 @@ export default function JobDetailPage() {
                 <LuUsers className="h-4 w-4" />
               </span>
               <h2 className="text-lg font-semibold text-slate-900">Ranked candidates</h2>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                 {candidates.length}
               </span>
             </div>
@@ -369,7 +369,7 @@ const TILE_TINTS: Record<string, string> = {
   amber: 'bg-amber-50 text-amber-600',
   sky: 'bg-sky-50 text-sky-600',
   emerald: 'bg-emerald-50 text-emerald-600',
-  slate: 'bg-slate-100 text-slate-500',
+  slate: 'bg-slate-100 text-slate-600',
 };
 
 function MetaChip({ Icon, text, tint = 'slate' }: { Icon: IconType; text: string; tint?: string }) {
@@ -402,7 +402,7 @@ function InfoRow({
         <Icon className="h-4 w-4" />
       </span>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-slate-400">{label}</p>
+        <p className="text-xs font-medium text-slate-600">{label}</p>
         <p className="text-sm font-medium text-slate-700">{value}</p>
       </div>
     </div>
@@ -437,7 +437,7 @@ function WeightsCard({ job, onAdjust }: { job: Job; onAdjust: () => void }) {
           </span>
           <div>
             <h2 className="text-sm font-semibold text-slate-800">Ranking weights</h2>
-            <p className="text-xs text-slate-500">How each factor counts toward the overall score.</p>
+            <p className="text-xs text-slate-600">How each factor counts toward the overall score.</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={onAdjust}>
@@ -452,7 +452,7 @@ function WeightsCard({ job, onAdjust }: { job: Job; onAdjust: () => void }) {
             <div key={r.key}>
               <div className="mb-1 flex items-center justify-between text-sm">
                 <span className="font-medium text-slate-700">{r.label}</span>
-                <span className={`text-xs font-semibold ${r.inactive ? 'text-slate-400' : r.text}`}>
+                <span className={`text-xs font-semibold ${r.inactive ? 'text-slate-600' : r.text}`}>
                   {r.inactive ? 'no exam' : `${pct}%`}
                 </span>
               </div>
@@ -486,12 +486,12 @@ function SkillGroup({
   const iconCls = tone === 'required' ? 'text-emerald-500' : 'text-violet-500';
   return (
     <div>
-      <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
         <Icon className={`h-3.5 w-3.5 ${iconCls}`} />
         {title}
       </p>
       {skills.length === 0 ? (
-        <p className="text-sm text-slate-400">—</p>
+        <p className="text-sm text-slate-600">—</p>
       ) : (
         <div className="flex flex-wrap gap-1.5">
           {skills.map((s) => (
