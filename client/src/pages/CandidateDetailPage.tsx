@@ -322,6 +322,8 @@ export default function CandidateDetailPage() {
   if (error || !candidate) return <Alert kind="error">{error ?? 'Candidate not found.'}</Alert>;
 
   const c = candidate;
+  // Delete + data export are admin-only server-side (403 for members), so hide them.
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="animate-rise space-y-6">
@@ -380,34 +382,37 @@ export default function CandidateDetailPage() {
             <LuRefreshCw className={`h-4 w-4 ${busy ? 'animate-spin' : ''}`} />
             Re-run AI
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                aria-label="More actions"
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 data-[state=open]:border-brand-300 data-[state=open]:bg-brand-50 data-[state=open]:text-brand-600"
-              >
-                <LuEllipsisVertical className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem
-                onSelect={() => window.open(`/hr/candidates/${c.id}/data`, '_blank')}
-              >
-                <LuFileJson className="text-slate-500" />
-                Export personal data
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                disabled={deletingCandidate}
-                onSelect={() => void handleDelete()}
-              >
-                <LuTrash2 />
-                {deletingCandidate ? 'Deleting…' : 'Delete candidate'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Every item in this menu is admin-only, so drop the whole menu for members. */}
+          {isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="More actions"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 data-[state=open]:border-brand-300 data-[state=open]:bg-brand-50 data-[state=open]:text-brand-600"
+                >
+                  <LuEllipsisVertical className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem
+                  onSelect={() => window.open(`/hr/candidates/${c.id}/data`, '_blank')}
+                >
+                  <LuFileJson className="text-slate-500" />
+                  Export personal data
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={deletingCandidate}
+                  onSelect={() => void handleDelete()}
+                >
+                  <LuTrash2 />
+                  {deletingCandidate ? 'Deleting…' : 'Delete candidate'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

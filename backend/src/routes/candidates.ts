@@ -8,7 +8,7 @@ import { candidates, candidateNotes, jobs, emailLogs } from '../db/schema.js';
 import { createNoteSchema, rankCandidatesSchema, updateStageSchema } from '../lib/validation.js';
 import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import { env } from '../config/env.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 import {
   idNoteParams,
   idParams,
@@ -358,7 +358,7 @@ candidatesRouter.delete('/:id/notes/:noteId', validate({ params: idNoteParams })
 
 // GDPR: return everything held about a candidate (feeds the readable data-export page;
 // the client also offers the raw JSON download for data portability).
-candidatesRouter.get('/:id/export', validate({ params: idParams }), async (req, res) => {
+candidatesRouter.get('/:id/export', requireRole('admin'), validate({ params: idParams }), async (req, res) => {
   const [candidate] = await db
     .select()
     .from(candidates)
@@ -383,7 +383,7 @@ candidatesRouter.get('/:id/export', validate({ params: idParams }), async (req, 
 });
 
 // GDPR: erase a candidate on request (removes the row + stored CV).
-candidatesRouter.delete('/:id', validate({ params: idParams }), async (req, res) => {
+candidatesRouter.delete('/:id', requireRole('admin'), validate({ params: idParams }), async (req, res) => {
   const [candidate] = await db
     .select({ id: candidates.id, fullName: candidates.fullName, cvStoragePath: candidates.cvStoragePath })
     .from(candidates)

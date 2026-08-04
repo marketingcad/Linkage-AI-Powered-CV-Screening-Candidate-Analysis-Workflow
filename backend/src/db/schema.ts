@@ -41,7 +41,8 @@ export const hrUsers = pgTable('hr_users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   name: varchar('name', { length: 255 }).notNull(),
   passwordHash: text('password_hash').notNull(),
-  role: varchar('role', { length: 50 }).notNull().default('recruiter'),
+  // 'admin' | 'member' — see lib/roles.ts. Anything else is treated as 'member'.
+  role: varchar('role', { length: 50 }).notNull().default('member'),
   // Profile picture stored as a small resized data URL (base64); null = use placeholder.
   avatarUrl: text('avatar_url'),
   // TOTP two-factor auth. Secret is the base32 shared secret; enabled gates login.

@@ -7,6 +7,7 @@ import {
   LuLogOut,
   LuMenu,
   LuUsers,
+  LuUserCog,
   LuX,
 } from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
@@ -27,6 +28,8 @@ const navItems = [
   { to: '/hr/jobs', label: 'Jobs', end: false, Icon: LuBriefcase },
   { to: '/hr/candidates', label: 'Candidates', end: false, Icon: LuUsers },
   { to: '/hr/scheduler', label: 'Scheduler', end: false, Icon: LuCalendarClock },
+  // Managing who has access is admin-only; hidden for members.
+  { to: '/hr/team', label: 'Team', end: false, Icon: LuUserCog, adminOnly: true },
 ];
 
 function initials(name?: string): string {
@@ -85,7 +88,9 @@ export default function HrLayout() {
         <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
           Menu
         </p>
-        {navItems.map(({ to, label, end, Icon }) => (
+        {navItems
+          .filter((item) => !item.adminOnly || user?.role === 'admin')
+          .map(({ to, label, end, Icon }) => (
           <NavLink key={to} to={to} end={end} className={navLinkClass} onClick={() => setOpen(false)}>
             <Icon className="h-4.5 w-4.5" />
             {label}

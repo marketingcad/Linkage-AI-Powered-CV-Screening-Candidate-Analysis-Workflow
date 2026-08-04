@@ -18,6 +18,7 @@ import {
 } from 'react-icons/lu';
 import { deleteJob, duplicateJob, fetchJobs, updateJob } from '../api/endpoints';
 import type { Job, JobStatus, JobSummary } from '../api/types';
+import { useAuth } from '../auth/AuthContext';
 import { Alert, Button, Card, Skeleton } from '../components/ui';
 import {
   DropdownMenu,
@@ -58,6 +59,9 @@ export default function JobsPage() {
   const [statusFilter, setStatusFilter] = useState<'' | JobStatus>('');
   const [sort, setSort] = useState<SortKey>('recent');
   const navigate = useNavigate();
+  const { user } = useAuth();
+  // Deleting a job is admin-only server-side (403 for members).
+  const isAdmin = user?.role === 'admin';
 
   function load() {
     setLoading(true);
@@ -274,10 +278,15 @@ export default function JobsPage() {
                           <LuCopy className="text-slate-500" />
                           Duplicate
                         </DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive" onSelect={() => void handleDelete(job)}>
-                          <LuTrash2 />
-                          Delete job
-                        </DropdownMenuItem>
+                        {isAdmin && (
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => void handleDelete(job)}
+                          >
+                            <LuTrash2 />
+                            Delete job
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

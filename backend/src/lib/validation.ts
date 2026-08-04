@@ -45,6 +45,23 @@ export const mfaLoginSchema = z.object({
   code: codeField,
 });
 
+// --- Team management (admin only) -------------------------------------------
+
+export const createTeamMemberSchema = z.object({
+  name: z.string().trim().min(2, 'Name is required').max(255),
+  email: z.string().email().max(255),
+  // Initial password — the teammate can change it after signing in.
+  password: z.string().min(8, 'Password must be at least 8 characters').max(200),
+  role: z.enum(['admin', 'member']).default('member'),
+});
+
+export const updateTeamMemberSchema = z
+  .object({
+    name: z.string().trim().min(2).max(255).optional(),
+    role: z.enum(['admin', 'member']).optional(),
+  })
+  .refine((v) => v.name !== undefined || v.role !== undefined, 'Provide a field to update');
+
 export const rankCandidatesSchema = z.object({
   candidateIds: z.array(z.string().uuid()).min(2).max(6),
 });

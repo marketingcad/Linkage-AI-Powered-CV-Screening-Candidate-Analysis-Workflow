@@ -24,6 +24,7 @@ import {
 } from 'react-icons/lu';
 import { deleteJob, fetchCandidates, fetchJob } from '../api/endpoints';
 import type { Candidate, CandidateSummary, Job } from '../api/types';
+import { useAuth } from '../auth/AuthContext';
 import { Alert, Button, Card, Skeleton, TableSkeleton } from '../components/ui';
 import CandidateTable from '../components/CandidateTable';
 import JobForm from '../components/JobForm';
@@ -66,6 +67,9 @@ export default function JobDetailPage() {
   const [importing, setImporting] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [view, setView] = useState<'details' | 'candidates'>('details');
+  const { user } = useAuth();
+  // Deleting a job is admin-only server-side (403 for members).
+  const isAdmin = user?.role === 'admin';
 
   function load() {
     if (!id) return;
@@ -178,10 +182,12 @@ export default function JobDetailPage() {
                 <LuPencil className="text-slate-500" />
                 Edit job
               </DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onSelect={() => void handleDelete()}>
-                <LuTrash2 />
-                Delete job
-              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem variant="destructive" onSelect={() => void handleDelete()}>
+                  <LuTrash2 />
+                  Delete job
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

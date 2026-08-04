@@ -351,6 +351,36 @@ export function startAiInterviewSession(token: string) {
   });
 }
 
+// --- Team management (admin only) -------------------------------------------
+
+export type TeamRole = 'admin' | 'member';
+export type TeamMember = {
+  id: string;
+  email: string;
+  name: string;
+  role: TeamRole;
+  avatarUrl: string | null;
+  totpEnabled: boolean;
+  createdAt: string;
+};
+export function fetchTeam() {
+  return apiRequest<{ members: TeamMember[]; roles: TeamRole[] }>('/team');
+}
+export function createTeamMember(input: {
+  name: string;
+  email: string;
+  password: string;
+  role: TeamRole;
+}) {
+  return apiRequest<{ member: TeamMember }>('/team', { method: 'POST', body: input });
+}
+export function updateTeamMember(id: string, input: { name?: string; role?: TeamRole }) {
+  return apiRequest<{ member: TeamMember }>(`/team/${id}`, { method: 'PATCH', body: input });
+}
+export function removeTeamMember(id: string) {
+  return apiRequest<{ ok: true }>(`/team/${id}`, { method: 'DELETE' });
+}
+
 export type AiCompetencyRating = {
   competency: string;
   /** 0 = not assessed, else 1–5 on the anchored scale. */

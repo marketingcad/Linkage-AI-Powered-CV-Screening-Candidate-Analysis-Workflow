@@ -4,7 +4,7 @@ import { client, db } from '../db/client.js';
 import { candidates, jobs, type QuizQuestion } from '../db/schema.js';
 import { createJobSchema, generateQuizSchema, updateJobSchema } from '../lib/validation.js';
 import { notFound, serverError } from '../lib/errors.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 import { idParams, validate } from '../middleware/validate.js';
 import { z } from 'zod';
 import { generateQuiz } from '../services/gemini.js';
@@ -257,7 +257,7 @@ jobsRouter.post('/:id/duplicate', validate({ params: idParams }), async (req, re
   res.status(201).json({ job: copy });
 });
 
-jobsRouter.delete('/:id', validate({ params: idParams }), async (req, res) => {
+jobsRouter.delete('/:id', requireRole('admin'), validate({ params: idParams }), async (req, res) => {
   const [job] = await db.delete(jobs).where(eq(jobs.id, req.params.id)).returning();
   if (!job) throw notFound('Job not found');
   void recordAudit({
