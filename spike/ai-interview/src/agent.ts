@@ -39,6 +39,7 @@ export default defineAgent({
       }
     } catch {
       // fall back to the sample context
+      console.warn('[agent] failed to parse room metadata, using sample interview context');
     }
 
     const instructions = buildInterviewerInstructions(interview);
