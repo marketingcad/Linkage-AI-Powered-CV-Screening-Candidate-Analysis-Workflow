@@ -52,8 +52,11 @@ function when(iso: string | null): string {
   });
 }
 
+// Width is deliberately NOT baked in: composing this with `w-auto` doesn't override a
+// built-in `w-full` (Tailwind resolves conflicts by stylesheet order, not class order),
+// which forced every control onto its own row. Callers set their own width.
 const inputCls =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
+  'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition placeholder:text-slate-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
 
 /**
  * Library of every AI voice interview, so recruiters can review recordings in one place
@@ -158,24 +161,24 @@ export default function InterviewRecordingsPage() {
       )}
       {error && <Alert kind="error">{error}</Alert>}
 
-      {/* Filters */}
+      {/* Filters — search grows, selects keep a fixed width; all stack on small screens. */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-56 flex-1">
-          <LuSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
+        <div className="relative min-w-52 flex-1">
+          <LuSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
           <input
             aria-label="Search recordings by candidate"
             value={q}
             maxLength={120}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by candidate name or email…"
-            className={`${inputCls} pl-9`}
+            className={`${inputCls} w-full pl-9`}
           />
         </div>
         <select
           aria-label="Filter by role"
           value={jobId}
           onChange={(e) => setJobId(e.target.value)}
-          className={`${inputCls} w-auto`}
+          className={`${inputCls} w-full sm:w-48`}
         >
           <option value="">All roles</option>
           {jobs.map((j) => (
@@ -188,7 +191,7 @@ export default function InterviewRecordingsPage() {
           aria-label="Filter by status"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className={`${inputCls} w-auto`}
+          className={`${inputCls} w-full sm:w-40`}
         >
           <option value="">Any status</option>
           <option value="ready">Ready</option>
