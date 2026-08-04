@@ -20,6 +20,11 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 ## Recent updates
 
 - AI voice interviews (work in progress) — schedule an interview that an AI interviewer runs as a recorded video call, then review the recording, transcript, and an AI summary next to your own rating.
+- Interview room — candidates get a Meet-style call: a camera and mic check before joining, then the AI interviewer and the candidate side by side, with a recording indicator, a timer, and mute controls.
+- Spoken consent — the AI opens by saying it is an AI, that the call is recorded, and that a person makes the decision, then asks the candidate to confirm before starting.
+- Interview scoring you can defend — each interview is rated against the role's requirements on a 1–5 scale, with a quote showing what earned each rating. Areas the interview never covered are marked "not assessed" instead of counting against the candidate.
+- Recordings library — every recorded AI interview in one place, searchable by candidate and filterable by role.
+- Team accounts — invite colleagues as Admin or Member. Members can review candidates and leave ratings but cannot delete records, export data, or manage the team.
 - Interview scheduling — book interviews on a calendar, auto-email candidates their invite, and get a reminder before each one. Warns you about double-bookings.
 - Email alerts & notifications — recruiters are emailed when someone applies, plus a header bell that flags new candidates.
 - Interview outcomes — mark interviews Completed or No-show and leave a quick scorecard.
