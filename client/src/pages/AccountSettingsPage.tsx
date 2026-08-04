@@ -34,7 +34,6 @@ const ACTION_LABELS: Record<string, string> = {
   'auth.login': 'Signed in',
   'candidate.stage_change': 'Moved candidate',
   'candidate.delete': 'Deleted candidate',
-  'candidate.export': 'Exported candidate data',
   'job.delete': 'Deleted job',
   'interview.create': 'Scheduled interview',
   'interview.delete': 'Removed interview',

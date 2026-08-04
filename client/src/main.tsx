@@ -15,7 +15,6 @@ import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
 import SchedulerPage from './pages/SchedulerPage';
 import CandidateReportPage from './pages/CandidateReportPage';
-import CandidateDataExportPage from './pages/CandidateDataExportPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import AiInterviewPage from './pages/AiInterviewPage';
 import TeamPage from './pages/TeamPage';
@@ -36,14 +35,6 @@ const router = createBrowserRouter([
     element: (
       <RequireAuth>
         <CandidateReportPage />
-      </RequireAuth>
-    ),
-  },
-  {
-    path: '/hr/candidates/:id/data',
-    element: (
-      <RequireAuth>
-        <CandidateDataExportPage />
       </RequireAuth>
     ),
   },

@@ -8,7 +8,6 @@ import {
   LuCopy,
   LuDownload,
   LuEllipsisVertical,
-  LuFileJson,
   LuFileText,
   LuClipboardCheck,
   LuLoaderCircle,
@@ -41,7 +40,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import { API_BASE, getToken } from '../api/client';
@@ -395,13 +393,6 @@ export default function CandidateDetailPage() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem
-                  onSelect={() => window.open(`/hr/candidates/${c.id}/data`, '_blank')}
-                >
-                  <LuFileJson className="text-slate-600" />
-                  Export personal data
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
                   disabled={deletingCandidate}

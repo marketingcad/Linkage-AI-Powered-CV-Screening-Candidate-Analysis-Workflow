@@ -227,11 +227,6 @@ export function updateCandidateStage(id: string, stage: CandidateStage) {
 export function deleteCandidate(id: string) {
   return apiRequest<{ ok: true }>(`/candidates/${id}`, { method: 'DELETE' });
 }
-export function fetchCandidateExport(id: string) {
-  return apiRequest<{ candidate: Candidate; job: Job | null; exportedAt: string }>(
-    `/candidates/${id}/export`,
-  );
-}
 export function fetchAuditLog() {
   return apiRequest<{ entries: AuditLog[] }>('/audit');
 }

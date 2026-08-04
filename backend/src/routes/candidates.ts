@@ -358,30 +358,6 @@ candidatesRouter.delete('/:id/notes/:noteId', validate({ params: idNoteParams })
 
 // GDPR: return everything held about a candidate (feeds the readable data-export page;
 // the client also offers the raw JSON download for data portability).
-candidatesRouter.get('/:id/export', requireRole('admin'), validate({ params: idParams }), async (req, res) => {
-  const [candidate] = await db
-    .select()
-    .from(candidates)
-    .where(eq(candidates.id, req.params.id))
-    .limit(1);
-  if (!candidate) throw notFound('Candidate not found');
-
-  const [job] = await db.select().from(jobs).where(eq(jobs.id, candidate.jobId)).limit(1);
-
-  void recordAudit({
-    actorEmail: req.user?.email ?? null,
-    action: 'candidate.export',
-    targetType: 'candidate',
-    targetId: candidate.id,
-    detail: `Exported data for ${candidate.fullName}`,
-    ip: req.ip ?? null,
-  });
-
-  const safe = candidate as Record<string, unknown>;
-  delete safe.embedding;
-  res.json({ candidate: safe, job: job ?? null, exportedAt: new Date().toISOString() });
-});
-
 // GDPR: erase a candidate on request (removes the row + stored CV).
 candidatesRouter.delete('/:id', requireRole('admin'), validate({ params: idParams }), async (req, res) => {
   const [candidate] = await db
