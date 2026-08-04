@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
 import { z } from 'zod';
-import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { env, liveKitEnabled } from '../config/env.js';
 import { db } from '../db/client.js';
 import { candidates, interviews, interviewSessions, jobs } from '../db/schema.js';
@@ -252,15 +252,24 @@ const sessionsQuery = z.object({
   status: z.enum(['pending', 'live', 'recording', 'processing', 'ready', 'failed']).optional(),
   /** Free-text match on candidate name or email. */
   q: z.string().trim().max(120).optional(),
+  /** Only interviews with a saved video — what the recordings library asks for. */
+  hasRecording: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === 'true')),
 });
 
 aiInterviewRouter.get('/sessions', requireAuth, validate({ query: sessionsQuery }), async (req, res) => {
-  const { jobId, candidateId, status, q } = req.query as unknown as z.infer<typeof sessionsQuery>;
+  const { jobId, candidateId, status, q, hasRecording } = req.query as unknown as z.infer<
+    typeof sessionsQuery
+  >;
 
   const filters = [];
   if (jobId) filters.push(eq(interviews.jobId, jobId));
   if (candidateId) filters.push(eq(interviewSessions.candidateId, candidateId));
   if (status) filters.push(eq(interviewSessions.status, status));
+  if (hasRecording === true) filters.push(isNotNull(interviewSessions.recordingPath));
+  if (hasRecording === false) filters.push(isNull(interviewSessions.recordingPath));
   if (q) {
     const like = `%${q}%`;
     filters.push(or(ilike(candidates.fullName, like), ilike(candidates.email, like))!);

@@ -429,12 +429,13 @@ export type AiInterviewSessionSummary = {
 };
 /** Authed: every AI voice interview, newest first. */
 export function fetchAiInterviewSessions(
-  params: { jobId?: string; status?: string; q?: string } = {},
+  params: { jobId?: string; status?: string; q?: string; hasRecording?: boolean } = {},
 ) {
   const qs = new URLSearchParams();
   if (params.jobId) qs.set('jobId', params.jobId);
   if (params.status) qs.set('status', params.status);
   if (params.q) qs.set('q', params.q);
+  if (params.hasRecording !== undefined) qs.set('hasRecording', String(params.hasRecording));
   const s = qs.toString();
   return apiRequest<{ sessions: AiInterviewSessionSummary[]; recordingEnabled: boolean }>(
     `/ai-interview/sessions${s ? `?${s}` : ''}`,

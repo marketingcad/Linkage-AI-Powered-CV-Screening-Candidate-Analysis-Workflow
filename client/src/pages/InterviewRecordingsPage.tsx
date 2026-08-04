@@ -89,7 +89,13 @@ export default function InterviewRecordingsPage() {
     setError(null);
     // Debounce the free-text search so typing doesn't hammer the API.
     const t = setTimeout(() => {
-      fetchAiInterviewSessions({ q: q || undefined, jobId: jobId || undefined, status: status || undefined })
+      // This page is the video library: only interviews with a saved recording belong here.
+      fetchAiInterviewSessions({
+        q: q || undefined,
+        jobId: jobId || undefined,
+        status: status || undefined,
+        hasRecording: true,
+      })
         .then((r) => {
           setSessions(r.sessions);
           setRecordingEnabled(r.recordingEnabled);
@@ -125,8 +131,7 @@ export default function InterviewRecordingsPage() {
   const stats = useMemo(
     () => ({
       total: sessions.length,
-      withVideo: sessions.filter((s) => s.hasRecording).length,
-      reviewed: sessions.filter((s) => s.aiSummary).length,
+      scored: sessions.filter((s) => s.aiSummary).length,
     }),
     [sessions],
   );
@@ -195,8 +200,7 @@ export default function InterviewRecordingsPage() {
 
       {!loading && sessions.length > 0 && (
         <p className="text-xs text-slate-400">
-          {stats.total} interview{stats.total === 1 ? '' : 's'} · {stats.withVideo} with video ·{' '}
-          {stats.reviewed} scored
+          {stats.total} recording{stats.total === 1 ? '' : 's'} · {stats.scored} scored
         </p>
       )}
 
@@ -206,12 +210,12 @@ export default function InterviewRecordingsPage() {
         <Card className="p-10 text-center">
           <LuVideoOff className="mx-auto h-8 w-8 text-slate-300" />
           <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-            {q || jobId || status ? 'No interviews match these filters.' : 'No AI interviews yet.'}
+            {q || jobId || status ? 'No recordings match these filters.' : 'No interview recordings yet.'}
           </p>
           <p className="mt-1 text-sm text-slate-400">
             {q || jobId || status
               ? 'Try clearing the search or filters.'
-              : 'Schedule an interview in “AI voice” mode and it will appear here once the candidate completes it.'}
+              : 'Recordings appear here once a candidate completes an AI voice interview.'}
           </p>
         </Card>
       ) : (
@@ -265,21 +269,14 @@ export default function InterviewRecordingsPage() {
                 )}
 
                 <div className="mt-3 flex items-center gap-2 pt-1">
-                  {s.hasRecording ? (
-                    <button
-                      type="button"
-                      onClick={() => void play(s)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700"
-                    >
-                      <LuCirclePlay className="h-3.5 w-3.5" />
-                      Watch
-                    </button>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
-                      <LuVideoOff className="h-3.5 w-3.5" />
-                      No video
-                    </span>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => void play(s)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700"
+                  >
+                    <LuCirclePlay className="h-3.5 w-3.5" />
+                    Watch
+                  </button>
                   <Link
                     to={`/hr/candidates/${s.candidateId}`}
                     className="ml-auto text-xs font-medium text-brand-600 hover:underline"
