@@ -166,6 +166,58 @@ aiInterviewRouter.post('/session', publicSubmitLimiter, validate({ body: joinSes
 });
 
 /**
+ * Public: the candidate's browser reports that they switched away from the interview tab.
+ *
+ * Advisory only. It's a weak signal — a second device defeats it entirely — so it is
+ * recorded for a human to interpret alongside the recording, never scored or acted on.
+ * Sent via sendBeacon on tab close, so it must accept a plain body with the join token
+ * rather than an auth header.
+ */
+const focusBody = z.object({
+  token: z.string().min(1).max(2048),
+  awaySeconds: z.number().int().min(0).max(3600),
+});
+
+aiInterviewRouter.post(
+  '/focus',
+  publicSubmitLimiter,
+  // The app-level express.json() has already parsed application/json bodies, so this only
+  // needs to cover the text/plain shape sendBeacon can send. Handle both.
+  express.text({ limit: '4kb', type: 'text/plain' }),
+  async (req, res) => {
+    const raw = typeof req.body === 'string' ? safeJson(req.body) : req.body;
+    const parsed = focusBody.safeParse(raw);
+    // Ignore anything malformed rather than surfacing an error to the candidate.
+    if (!parsed.success) return res.sendStatus(204);
+
+    let p;
+    try {
+      p = verifyJoinToken(parsed.data.token);
+    } catch {
+      return res.sendStatus(204);
+    }
+
+    await db
+      .update(interviewSessions)
+      .set({
+        tabAwayCount: sql`${interviewSessions.tabAwayCount} + 1`,
+        tabAwaySeconds: sql`${interviewSessions.tabAwaySeconds} + ${parsed.data.awaySeconds}`,
+      })
+      .where(eq(interviewSessions.interviewId, p.interviewId));
+
+    res.sendStatus(204);
+  },
+);
+
+function safeJson(s: string): unknown {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Internal: the agent worker POSTs the finished transcript here (authorized by a shared
  * secret). We store it and generate the AI summary that feeds the review card / scorecard.
  */
@@ -292,6 +344,8 @@ aiInterviewRouter.get('/sessions', requireAuth, validate({ query: sessionsQuery 
       transcriptTurns: sql<number>`coalesce(jsonb_array_length(${interviewSessions.transcript}), 0)`,
       aiSummary: interviewSessions.aiSummary,
       durationSeconds: interviewSessions.durationSeconds,
+      tabAwayCount: interviewSessions.tabAwayCount,
+      tabAwaySeconds: interviewSessions.tabAwaySeconds,
       startedAt: interviewSessions.startedAt,
       endedAt: interviewSessions.endedAt,
       createdAt: interviewSessions.createdAt,

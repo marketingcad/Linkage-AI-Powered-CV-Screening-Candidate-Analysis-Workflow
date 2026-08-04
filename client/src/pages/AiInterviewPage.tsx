@@ -14,6 +14,7 @@ import {
   LuVideo,
   LuVideoOff,
 } from 'react-icons/lu';
+import { API_BASE } from '../api/client';
 import {
   fetchAiInterviewContext,
   startAiInterviewSession,
@@ -248,6 +249,48 @@ export default function AiInterviewPage() {
 
   const elapsed = startedAt ? Math.floor((now - startedAt) / 1000) : 0;
   const total = (ctx?.durationMinutes ?? 12) * 60;
+
+  // Report time spent away from the interview tab. Advisory only — the recruiter sees it
+  // beside the recording; nothing is scored or blocked on it. sendBeacon is used when the
+  // page is being hidden so the report still lands if the candidate closes the tab.
+  useEffect(() => {
+    if (phase !== 'live' || !token) return;
+    let hiddenAt: number | null = null;
+
+    const report = (awaySeconds: number) => {
+      if (awaySeconds < 1) return;
+      const body = JSON.stringify({ token, awaySeconds });
+      const url = `${API_BASE}/ai-interview/focus`;
+      if (!navigator.sendBeacon?.(url, new Blob([body], { type: 'application/json' }))) {
+        void fetch(url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        hiddenAt = Date.now();
+      } else if (hiddenAt) {
+        report(Math.round((Date.now() - hiddenAt) / 1000));
+        hiddenAt = null;
+      }
+    };
+    // If they never come back, still report what we know as the page unloads.
+    const onPageHide = () => {
+      if (hiddenAt) report(Math.round((Date.now() - hiddenAt) / 1000));
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', onPageHide);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', onPageHide);
+    };
+  }, [phase, token]);
 
   // --- Screens ----------------------------------------------------------------
 

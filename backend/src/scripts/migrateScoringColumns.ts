@@ -83,6 +83,10 @@ async function main() {
   await client`CREATE UNIQUE INDEX IF NOT EXISTS interview_sessions_interview_id_key ON interview_sessions (interview_id)`;
   await client`CREATE INDEX IF NOT EXISTS interview_sessions_candidate_id_idx ON interview_sessions (candidate_id)`;
 
+  // Advisory focus-loss counters for AI interviews.
+  await client`ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS tab_away_count integer NOT NULL DEFAULT 0`;
+  await client`ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS tab_away_seconds integer NOT NULL DEFAULT 0`;
+
   // Team roles: collapse the old free-form role column onto 'admin' | 'member'.
   await client`ALTER TABLE hr_users ALTER COLUMN role SET DEFAULT 'member'`;
   await client`UPDATE hr_users SET role = 'member' WHERE role IS NULL OR role <> 'admin'`;

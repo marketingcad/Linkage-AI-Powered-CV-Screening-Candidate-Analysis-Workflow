@@ -403,6 +403,8 @@ export type AiInterviewSession = {
   transcript: { role: 'agent' | 'candidate'; text: string; at?: number }[] | null;
   aiSummary: AiInterviewSummary | null;
   durationSeconds: number | null;
+  tabAwayCount?: number;
+  tabAwaySeconds?: number;
   startedAt: string | null;
   endedAt: string | null;
 };
@@ -423,6 +425,9 @@ export type AiInterviewSessionSummary = {
   transcriptTurns: number;
   aiSummary: AiInterviewSummary | null;
   durationSeconds: number | null;
+  /** Advisory: times the candidate left the interview tab, and total seconds away. */
+  tabAwayCount: number;
+  tabAwaySeconds: number;
   startedAt: string | null;
   endedAt: string | null;
   createdAt: string;

@@ -95,6 +95,19 @@ export default function AiInterviewResult({ interviewId }: { interviewId: string
         )}
       </div>
 
+      {/* Advisory only — context for the reviewer, not a verdict. A second device defeats
+          this entirely, and leaving the tab has innocent explanations. */}
+      {!!s.tabAwayCount && s.tabAwayCount > 0 && (
+        <p
+          title="Recorded from the candidate's browser. This is context, not evidence — watch the recording before drawing conclusions."
+          className="mb-2 rounded-md bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+        >
+          Left the interview tab {s.tabAwayCount}×
+          {s.tabAwaySeconds ? ` (${Math.round(s.tabAwaySeconds)}s total)` : ''} — worth a look in
+          the recording.
+        </p>
+      )}
+
       {sum && (
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">

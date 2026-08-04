@@ -347,6 +347,12 @@ export const interviewSessions = pgTable('interview_sessions', {
   transcript: jsonb('transcript').$type<InterviewTranscriptTurn[]>(),
   aiSummary: jsonb('ai_summary').$type<Record<string, unknown>>(), // feeds the scorecard
 
+  // Advisory only: how often the candidate left the interview tab, and for how long.
+  // A weak signal (a second device defeats it) — surfaced for a human to interpret,
+  // never scored or acted on automatically.
+  tabAwayCount: integer('tab_away_count').notNull().default(0),
+  tabAwaySeconds: integer('tab_away_seconds').notNull().default(0),
+
   consentAt: timestamp('consent_at', { withTimezone: true }),
   startedAt: timestamp('started_at', { withTimezone: true }),
   endedAt: timestamp('ended_at', { withTimezone: true }),
