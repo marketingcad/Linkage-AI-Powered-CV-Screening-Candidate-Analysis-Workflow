@@ -850,25 +850,70 @@ export async function generateInterviewQuestions(
 // AI voice interview: summarize the transcript into a structured evaluation
 // ---------------------------------------------------------------------------
 
+/**
+ * Behaviourally anchored rating scale. Structured-interview practice: each rating point is
+ * defined by observable behaviour so two reviewers (and two candidates) are judged the
+ * same way, and every rating must cite the evidence behind it.
+ */
+export const RATING_ANCHORS: Record<number, string> = {
+  0: 'Not assessed — the interview produced no usable evidence for this area.',
+  1: 'Well below — no relevant experience, or what they described contradicts the requirement.',
+  2: 'Below — generic or second-hand; could not point to their own concrete contribution.',
+  3: 'Meets — a real example with a clear personal action and a plausible outcome.',
+  4: 'Strong — specific example with a measurable outcome and sound reasoning about tradeoffs.',
+  5: 'Exceptional — depth and judgement; handled genuine complexity and explained why, not just what.',
+};
+
+export type CompetencyRating = {
+  competency: string; // the requirement being judged, e.g. "API design"
+  rating: number; // 0 = not assessed, else 1–5 against RATING_ANCHORS
+  evidence: string; // what the candidate actually said that justifies the rating
+};
+
 export type InterviewSummary = {
   overview: string;
+  competencies: CompetencyRating[];
   strengths: string[];
   concerns: string[];
   recommendation: 'advance' | 'hold' | 'reject';
-  score: number; // 0–100, how well the interview answers fit the role
+  score: number; // 0–100, derived from the assessed competency ratings
 };
 
 const interviewSummarySchema = {
   type: Type.OBJECT,
   properties: {
     overview: { type: Type.STRING },
+    competencies: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          competency: { type: Type.STRING },
+          rating: { type: Type.INTEGER },
+          evidence: { type: Type.STRING },
+        },
+        required: ['competency', 'rating', 'evidence'],
+      },
+    },
     strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
     concerns: { type: Type.ARRAY, items: { type: Type.STRING } },
     recommendation: { type: Type.STRING, enum: ['advance', 'hold', 'reject'] },
-    score: { type: Type.INTEGER },
   },
-  required: ['overview', 'strengths', 'concerns', 'recommendation', 'score'],
+  required: ['overview', 'competencies', 'strengths', 'concerns', 'recommendation'],
 };
+
+/**
+ * Overall score from the assessed ratings only. Computed here rather than asked of the
+ * model so the number is reproducible and traceable to the per-competency evidence.
+ * Returns 0 when nothing could be assessed (e.g. the candidate never really answered).
+ */
+export function scoreFromCompetencies(competencies: CompetencyRating[]): number {
+  const assessed = competencies.filter((c) => c.rating >= 1 && c.rating <= 5);
+  if (assessed.length === 0) return 0;
+  const mean = assessed.reduce((sum, c) => sum + c.rating, 0) / assessed.length;
+  // 1–5 → 0–100 (a flat "meets" across the board lands at 50).
+  return Math.round(((mean - 1) / 4) * 100);
+}
 
 /**
  * Summarize an AI voice interview transcript into a structured evaluation for the recruiter's
@@ -878,22 +923,51 @@ export async function summarizeInterviewTranscript(input: {
   jobTitle: string | null;
   candidateName: string;
   transcript: { role: string; text: string }[];
+  /** Role requirements to rate against. Falls back to whatever the interview covered. */
+  competencies?: string[];
 }): Promise<InterviewSummary> {
   const convo = input.transcript
     .map((t) => `${t.role === 'agent' ? 'Interviewer' : 'Candidate'}: ${t.text}`)
     .join('\n');
 
+  const anchors = Object.entries(RATING_ANCHORS)
+    .map(([n, text]) => `  ${n} = ${text}`)
+    .join('\n');
+
+  const competencyList = input.competencies?.length
+    ? input.competencies.map((c) => `  - ${c}`).join('\n')
+    : '  (None supplied — derive 3–6 competencies from what the interview actually probed.)';
+
   const prompt = [
     `You are reviewing a recorded voice interview for the ${input.jobTitle ?? 'role'} position with ${input.candidateName}.`,
-    'Based ONLY on the transcript below, write a concise, fair evaluation for the hiring team:',
+    'Produce a structured, defensible evaluation for the hiring team.',
+    '',
+    '=== RATE THESE COMPETENCIES ===',
+    competencyList,
+    '',
+    'For EACH competency return: the name, a rating, and the evidence behind it.',
+    'Rate strictly against this scale — the anchor text is the definition, not a vibe:',
+    anchors,
+    '',
+    'Rules for rating:',
+    '- "evidence" must quote or closely paraphrase what the CANDIDATE actually said. Never the interviewer.',
+    '- If the interview never produced evidence for a competency, rate it 0 and say so in the evidence',
+    '  field. Do NOT guess, and do not penalise the candidate for a question that was never asked.',
+    '- Judge only what was demonstrated in this conversation. Do not infer from their job titles,',
+    '  employer names, or how confident/articulate they sounded.',
+    '- A polished answer with no concrete personal contribution is a 2, not a 4.',
+    '',
+    '=== ALSO RETURN ===',
     '- "overview": 2–3 sentences on how the candidate came across.',
     '- "strengths" and "concerns": specific, grounded in what they actually said.',
     '- "recommendation": advance | hold | reject.',
-    '- "score": 0–100 for how well their answers fit the role.',
-    'Do not invent facts not present in the transcript. This assists a human; it is not a final decision.',
+    '',
+    'Do not invent facts not present in the transcript. This assists a human reviewer; it is not',
+    'a hiring decision. Be fair and consistent — the same answer must earn the same rating for',
+    'every candidate.',
     '',
     '=== TRANSCRIPT ===',
-    convo || '(no transcript captured)',
+    convo || '(no transcript captured — the candidate did not answer)',
   ].join('\n');
 
   try {
@@ -905,12 +979,22 @@ export async function summarizeInterviewTranscript(input: {
     const text = response.text;
     if (!text) throw new Error('Empty response from Gemini');
     const parsed = JSON.parse(text) as InterviewSummary;
+
+    const competencies: CompetencyRating[] = (parsed.competencies ?? [])
+      .filter((c) => c?.competency?.trim())
+      .map((c) => ({
+        competency: c.competency.trim(),
+        rating: Math.max(0, Math.min(5, Math.round(Number(c.rating) || 0))),
+        evidence: (c.evidence ?? '').trim(),
+      }));
+
     return {
       overview: parsed.overview ?? '',
+      competencies,
       strengths: parsed.strengths ?? [],
       concerns: parsed.concerns ?? [],
       recommendation: parsed.recommendation ?? 'hold',
-      score: Math.max(0, Math.min(100, Math.round(parsed.score ?? 0))),
+      score: scoreFromCompetencies(competencies),
     };
   } catch (err) {
     logger.error({ err }, 'Interview summary generation failed');

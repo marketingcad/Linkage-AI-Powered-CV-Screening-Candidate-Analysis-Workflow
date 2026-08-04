@@ -17,6 +17,48 @@ const REC_CLS: Record<string, string> = {
   reject: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
 };
 
+const RATING_LABEL: Record<number, string> = {
+  0: 'Not assessed — no usable evidence',
+  1: 'Well below requirement',
+  2: 'Below — no concrete personal contribution',
+  3: 'Meets — real example, clear action, plausible outcome',
+  4: 'Strong — measurable outcome and sound tradeoffs',
+  5: 'Exceptional — depth and judgement',
+};
+
+/** 1–5 anchored rating. 0 renders as "not assessed" rather than a low score. */
+function RatingPips({ rating }: { rating: number }) {
+  const label = RATING_LABEL[rating] ?? '';
+  if (rating < 1) {
+    return (
+      <span title={label} className="shrink-0 text-[11px] italic text-slate-400">
+        not assessed
+      </span>
+    );
+  }
+  return (
+    <span title={label} aria-label={`${rating} out of 5 — ${label}`} className="flex shrink-0 items-center gap-1">
+      <span className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <span
+            key={n}
+            className={`h-1.5 w-3 rounded-full ${
+              n <= rating
+                ? rating >= 4
+                  ? 'bg-emerald-500'
+                  : rating === 3
+                    ? 'bg-brand-500'
+                    : 'bg-amber-500'
+                : 'bg-slate-200 dark:bg-slate-700'
+            }`}
+          />
+        ))}
+      </span>
+      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{rating}/5</span>
+    </span>
+  );
+}
+
 /** HR review of a finished AI voice interview: summary, recording, transcript. */
 export default function AiInterviewResult({ interviewId }: { interviewId: string }) {
   const [session, setSession] = useState<AiInterviewSession | null>(null);
@@ -63,6 +105,35 @@ export default function AiInterviewResult({ interviewId }: { interviewId: string
             </span>
           </div>
           <p className="text-slate-600 dark:text-slate-300">{sum.overview}</p>
+
+          {sum.competencies && sum.competencies.length > 0 && (
+            <div>
+              <p className="mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Competency ratings
+              </p>
+              <ul className="space-y-1.5">
+                {sum.competencies.map((c, i) => (
+                  <li key={i} className="rounded-md bg-white/60 p-2 dark:bg-slate-900/40">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                        {c.competency}
+                      </span>
+                      <RatingPips rating={c.rating} />
+                    </div>
+                    {c.evidence && (
+                      <p className="mt-0.5 text-[11px] italic text-slate-500 dark:text-slate-400">
+                        “{c.evidence}”
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1 text-[11px] text-slate-400">
+                1 = well below · 3 = meets · 5 = exceptional. The score above is the average of
+                the assessed areas.
+              </p>
+            </div>
+          )}
           {sum.strengths.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Strengths</p>

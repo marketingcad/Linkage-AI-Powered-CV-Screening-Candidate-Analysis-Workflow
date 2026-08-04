@@ -351,8 +351,16 @@ export function startAiInterviewSession(token: string) {
   });
 }
 
+export type AiCompetencyRating = {
+  competency: string;
+  /** 0 = not assessed, else 1–5 on the anchored scale. */
+  rating: number;
+  evidence: string;
+};
 export type AiInterviewSummary = {
   overview: string;
+  /** Absent on interviews summarized before anchored scoring shipped. */
+  competencies?: AiCompetencyRating[];
   strengths: string[];
   concerns: string[];
   recommendation: 'advance' | 'hold' | 'reject';

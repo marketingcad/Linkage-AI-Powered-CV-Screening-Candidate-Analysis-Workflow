@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { env, liveKitEnabled } from '../config/env.js';
 import { db } from '../db/client.js';
-import { candidates, interviews, interviewSessions } from '../db/schema.js';
+import { candidates, interviews, interviewSessions, jobs } from '../db/schema.js';
 import { requireAuth } from '../middleware/auth.js';
 import { idParams, roomParams, validate } from '../middleware/validate.js';
 import { publicReadLimiter, publicSubmitLimiter } from '../middleware/rateLimit.js';
@@ -183,10 +183,14 @@ aiInterviewRouter.post('/internal/:room/complete', express.json({ limit: '512kb'
       id: interviewSessions.id,
       candidateName: candidates.fullName,
       jobTitle: interviews.title,
+      // The role's requirements become the competencies the transcript is rated against.
+      roleTitle: jobs.title,
+      requiredSkills: jobs.requiredSkills,
     })
     .from(interviewSessions)
     .leftJoin(interviews, eq(interviews.id, interviewSessions.interviewId))
     .leftJoin(candidates, eq(candidates.id, interviewSessions.candidateId))
+    .leftJoin(jobs, eq(jobs.id, interviews.jobId))
     .where(eq(interviewSessions.roomName, roomName))
     .limit(1);
   if (!session) return res.status(404).json({ error: { code: 'not_found', message: 'Session not found.' } });
@@ -199,9 +203,10 @@ aiInterviewRouter.post('/internal/:room/complete', express.json({ limit: '512kb'
   // Summarize (best-effort — a failure still leaves the transcript + recording usable).
   try {
     const summary = await summarizeInterviewTranscript({
-      jobTitle: session.jobTitle,
+      jobTitle: session.jobTitle ?? session.roleTitle,
       candidateName: session.candidateName ?? 'Candidate',
       transcript: transcript.map((t) => ({ role: t.role, text: t.text })),
+      competencies: session.requiredSkills ?? undefined,
     });
     await db
       .update(interviewSessions)
