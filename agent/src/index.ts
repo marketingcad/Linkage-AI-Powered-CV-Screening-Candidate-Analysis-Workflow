@@ -126,7 +126,7 @@ export default defineAgent({
 
     session.generateReply({
       instructions:
-        'Greet the candidate warmly by name, confirm they can hear you, briefly explain this is a short spoken interview about the role, then ask your first question.',
+        'Greet the candidate warmly by name and confirm they can hear you. Then follow the OPENING steps in your instructions: state that you are an AI, that the conversation is recorded for the hiring team, and that a human makes the decision — then ask if they are happy to go ahead, and wait for their answer before asking anything else.',
     });
   },
 });
