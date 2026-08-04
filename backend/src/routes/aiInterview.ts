@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
 import { z } from 'zod';
-import { eq } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { env, liveKitEnabled } from '../config/env.js';
 import { db } from '../db/client.js';
 import { candidates, interviews, interviewSessions, jobs } from '../db/schema.js';
@@ -239,6 +239,91 @@ aiInterviewRouter.get('/interviews/:id/session', requireAuth, validate({ params:
   }
   res.json({ session: { ...s, recordingUrl } });
 });
+
+/**
+ * Authed: the interview recording library — every AI voice interview, newest first, with
+ * enough context to browse and filter. Recording URLs are NOT signed here: signing every
+ * row would be slow and would hand out dozens of live links, so the player asks for one
+ * per recording on demand (see /sessions/:id/recording).
+ */
+const sessionsQuery = z.object({
+  jobId: z.string().uuid().optional(),
+  candidateId: z.string().uuid().optional(),
+  status: z.enum(['pending', 'live', 'recording', 'processing', 'ready', 'failed']).optional(),
+  /** Free-text match on candidate name or email. */
+  q: z.string().trim().max(120).optional(),
+});
+
+aiInterviewRouter.get('/sessions', requireAuth, validate({ query: sessionsQuery }), async (req, res) => {
+  const { jobId, candidateId, status, q } = req.query as unknown as z.infer<typeof sessionsQuery>;
+
+  const filters = [];
+  if (jobId) filters.push(eq(interviews.jobId, jobId));
+  if (candidateId) filters.push(eq(interviewSessions.candidateId, candidateId));
+  if (status) filters.push(eq(interviewSessions.status, status));
+  if (q) {
+    const like = `%${q}%`;
+    filters.push(or(ilike(candidates.fullName, like), ilike(candidates.email, like))!);
+  }
+
+  const rows = await db
+    .select({
+      id: interviewSessions.id,
+      interviewId: interviewSessions.interviewId,
+      candidateId: interviewSessions.candidateId,
+      candidateName: candidates.fullName,
+      candidateEmail: candidates.email,
+      candidateStage: candidates.stage,
+      jobId: interviews.jobId,
+      jobTitle: jobs.title,
+      interviewTitle: interviews.title,
+      scheduledAt: interviews.scheduledAt,
+      status: interviewSessions.status,
+      hasRecording: sql<boolean>`${interviewSessions.recordingPath} is not null`,
+      transcriptTurns: sql<number>`coalesce(jsonb_array_length(${interviewSessions.transcript}), 0)`,
+      aiSummary: interviewSessions.aiSummary,
+      durationSeconds: interviewSessions.durationSeconds,
+      startedAt: interviewSessions.startedAt,
+      endedAt: interviewSessions.endedAt,
+      createdAt: interviewSessions.createdAt,
+    })
+    .from(interviewSessions)
+    .leftJoin(interviews, eq(interviews.id, interviewSessions.interviewId))
+    .leftJoin(candidates, eq(candidates.id, interviewSessions.candidateId))
+    .leftJoin(jobs, eq(jobs.id, interviews.jobId))
+    .where(filters.length ? and(...filters) : undefined)
+    .orderBy(desc(interviewSessions.createdAt))
+    .limit(200);
+
+  res.json({ sessions: rows, recordingEnabled: Boolean(env.AI_RECORDING_S3_BUCKET) });
+});
+
+/** Authed: a short-lived signed URL for one recording, minted when the recruiter presses play. */
+aiInterviewRouter.get(
+  '/sessions/:id/recording',
+  requireAuth,
+  validate({ params: idParams }),
+  async (req, res) => {
+    const [s] = await db
+      .select({ recordingPath: interviewSessions.recordingPath })
+      .from(interviewSessions)
+      .where(eq(interviewSessions.id, req.params.id))
+      .limit(1);
+    if (!s) return res.status(404).json({ error: { code: 'not_found', message: 'Session not found.' } });
+    if (!s.recordingPath || !env.AI_RECORDING_S3_BUCKET) {
+      return res
+        .status(404)
+        .json({ error: { code: 'no_recording', message: 'No recording is available for this interview.' } });
+    }
+    const url = await signStorageObject(env.AI_RECORDING_S3_BUCKET, s.recordingPath);
+    if (!url) {
+      return res
+        .status(503)
+        .json({ error: { code: 'sign_failed', message: 'Could not open the recording. Check storage settings.' } });
+    }
+    res.json({ url });
+  },
+);
 
 /**
  * Public: LiveKit webhook. Body arrives as application/webhook+json, which the global

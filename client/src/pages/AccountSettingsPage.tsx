@@ -154,6 +154,7 @@ export default function AccountSettingsPage() {
       });
       return;
     }
+    
     try {
       setAvatar(await resizeImage(file));
       profileFields.clearError('avatar');

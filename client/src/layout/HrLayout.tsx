@@ -8,6 +8,7 @@ import {
   LuMenu,
   LuUsers,
   LuUserCog,
+  LuVideo,
   LuX,
 } from 'react-icons/lu';
 import { useAuth } from '../auth/AuthContext';
@@ -28,6 +29,7 @@ const navItems = [
   { to: '/hr/jobs', label: 'Jobs', end: false, Icon: LuBriefcase },
   { to: '/hr/candidates', label: 'Candidates', end: false, Icon: LuUsers },
   { to: '/hr/scheduler', label: 'Scheduler', end: false, Icon: LuCalendarClock },
+  { to: '/hr/recordings', label: 'Recordings', end: false, Icon: LuVideo },
   // Managing who has access is admin-only; hidden for members.
   { to: '/hr/team', label: 'Team', end: false, Icon: LuUserCog, adminOnly: true },
 ];

@@ -12,7 +12,11 @@ declare global {
   }
 }
 
-export function requireAuth(req: Request, _res: Response, next: NextFunction) {
+// Typed permissively for the same reason as requireRole below: a narrower handler type
+// makes Express fall back to a generic params dictionary, which (with
+// noUncheckedIndexedAccess) turns `req.params.id` into `string | undefined` everywhere.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const requireAuth: RequestHandler<any, any, any, any> = (req, _res, next) => {
   const header = req.headers.authorization;
   const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
 
@@ -26,7 +30,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
   } catch {
     return next(unauthorized('Invalid or expired token'));
   }
-}
+};
 
 /**
  * Restrict a route to the given roles. Always mount after `requireAuth`.

@@ -406,6 +406,45 @@ export type AiInterviewSession = {
   startedAt: string | null;
   endedAt: string | null;
 };
+/** One row in the interview recording library. */
+export type AiInterviewSessionSummary = {
+  id: string;
+  interviewId: string;
+  candidateId: string;
+  candidateName: string | null;
+  candidateEmail: string | null;
+  candidateStage: string | null;
+  jobId: string | null;
+  jobTitle: string | null;
+  interviewTitle: string | null;
+  scheduledAt: string | null;
+  status: AiInterviewSession['status'];
+  hasRecording: boolean;
+  transcriptTurns: number;
+  aiSummary: AiInterviewSummary | null;
+  durationSeconds: number | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  createdAt: string;
+};
+/** Authed: every AI voice interview, newest first. */
+export function fetchAiInterviewSessions(
+  params: { jobId?: string; status?: string; q?: string } = {},
+) {
+  const qs = new URLSearchParams();
+  if (params.jobId) qs.set('jobId', params.jobId);
+  if (params.status) qs.set('status', params.status);
+  if (params.q) qs.set('q', params.q);
+  const s = qs.toString();
+  return apiRequest<{ sessions: AiInterviewSessionSummary[]; recordingEnabled: boolean }>(
+    `/ai-interview/sessions${s ? `?${s}` : ''}`,
+  );
+}
+/** Authed: mint a short-lived signed URL for one recording (called when play is pressed). */
+export function fetchAiRecordingUrl(sessionId: string) {
+  return apiRequest<{ url: string }>(`/ai-interview/sessions/${sessionId}/recording`);
+}
+
 /** Authed: HR review of an AI voice interview (transcript, summary, signed recording URL). */
 export function fetchAiInterviewSession(interviewId: string) {
   return apiRequest<{ session: AiInterviewSession | null }>(

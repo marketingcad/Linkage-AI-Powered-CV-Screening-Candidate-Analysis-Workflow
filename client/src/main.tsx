@@ -19,6 +19,7 @@ import CandidateDataExportPage from './pages/CandidateDataExportPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import AiInterviewPage from './pages/AiInterviewPage';
 import TeamPage from './pages/TeamPage';
+import InterviewRecordingsPage from './pages/InterviewRecordingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 const router = createBrowserRouter([
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
       { path: 'candidates', element: <CandidatesPage /> },
       { path: 'candidates/:id', element: <CandidateDetailPage /> },
       { path: 'scheduler', element: <SchedulerPage /> },
+      { path: 'recordings', element: <InterviewRecordingsPage /> },
       { path: 'settings', element: <AccountSettingsPage /> },
       { path: 'team', element: <TeamPage /> },
     ],
