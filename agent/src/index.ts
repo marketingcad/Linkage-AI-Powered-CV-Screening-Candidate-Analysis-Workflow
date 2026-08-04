@@ -81,10 +81,46 @@ export default defineAgent({
     const finish = async () => {
       if (reported) return;
       reported = true;
+      clearTimeout(hardStop);
+      clearTimeout(wrapUp);
       await reportCompletion(roomName, transcript, startedAt);
     };
     ctx.room.on('participantDisconnected', () => void finish());
     ctx.addShutdownCallback(finish);
+
+    /**
+     * Hard duration cap. `maxMinutes` in the prompt is only a suggestion the model may
+     * ignore, so an abandoned-but-connected session (muted mic, candidate walked away)
+     * would otherwise keep a realtime audio stream open indefinitely — the expensive
+     * failure mode. Nudge a wrap-up first, then force the session closed.
+     */
+    const graceMs = 3 * 60_000;
+    const wrapUp = setTimeout(
+      () => {
+        try {
+          session.generateReply({
+            instructions:
+              'You are out of time. Thank them warmly, tell them the team will review and follow up, and end the conversation now. Do not start a new question.',
+          });
+        } catch (err) {
+          console.error('[agent] wrap-up reply failed:', err);
+        }
+      },
+      interview.maxMinutes * 60_000,
+    );
+    const hardStop = setTimeout(
+      () => {
+        console.warn(`[agent] hard time cap reached for ${roomName} — closing session`);
+        void finish().finally(() => {
+          try {
+            ctx.shutdown('interview time limit reached');
+          } catch {
+            void ctx.room.disconnect();
+          }
+        });
+      },
+      interview.maxMinutes * 60_000 + graceMs,
+    );
 
     await session.start({ agent, room: ctx.room });
 
