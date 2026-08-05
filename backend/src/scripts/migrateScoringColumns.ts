@@ -83,6 +83,67 @@ async function main() {
   await client`CREATE UNIQUE INDEX IF NOT EXISTS interview_sessions_interview_id_key ON interview_sessions (interview_id)`;
   await client`CREATE INDEX IF NOT EXISTS interview_sessions_candidate_id_idx ON interview_sessions (candidate_id)`;
 
+  // --- Offer stage + measurable pipeline ------------------------------------
+  // 'offer' sits before 'hired' so ordering by stage still reads as the funnel order.
+  // ALTER TYPE ... ADD VALUE cannot run inside a transaction, hence its own statement.
+  await client`ALTER TYPE candidate_stage ADD VALUE IF NOT EXISTS 'offer' BEFORE 'hired'`;
+
+  await client`
+    CREATE TABLE IF NOT EXISTS candidate_stage_events (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      candidate_id uuid NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+      from_stage varchar(20),
+      to_stage varchar(20) NOT NULL,
+      reason varchar(200),
+      changed_by uuid REFERENCES hr_users(id) ON DELETE SET NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await client`CREATE INDEX IF NOT EXISTS candidate_stage_events_candidate_idx ON candidate_stage_events (candidate_id, created_at)`;
+  await client`CREATE INDEX IF NOT EXISTS candidate_stage_events_to_stage_idx ON candidate_stage_events (to_stage)`;
+
+  await client`
+    CREATE TABLE IF NOT EXISTS offers (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      candidate_id uuid NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+      job_id uuid REFERENCES jobs(id) ON DELETE SET NULL,
+      status varchar(20) NOT NULL DEFAULT 'draft',
+      salary_amount integer,
+      salary_currency varchar(3),
+      start_date timestamptz,
+      expires_at timestamptz,
+      notes text,
+      decline_reason varchar(200),
+      created_by uuid REFERENCES hr_users(id) ON DELETE SET NULL,
+      extended_at timestamptz,
+      responded_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await client`CREATE INDEX IF NOT EXISTS offers_candidate_idx ON offers (candidate_id)`;
+
+  // Backfill: give every existing candidate an initial 'new' event at their application time,
+  // so they appear in funnel/velocity metrics instead of looking like they never entered the
+  // pipeline. Anyone already past 'new' also gets a synthetic move at their last update, which
+  // is the closest timestamp we have — approximate, but better than excluding them entirely.
+  await client`
+    INSERT INTO candidate_stage_events (candidate_id, from_stage, to_stage, created_at)
+    SELECT c.id, NULL, 'new', c.created_at
+    FROM candidates c
+    WHERE NOT EXISTS (SELECT 1 FROM candidate_stage_events e WHERE e.candidate_id = c.id)
+  `;
+  await client`
+    INSERT INTO candidate_stage_events (candidate_id, from_stage, to_stage, created_at)
+    SELECT c.id, 'new', c.stage::text, GREATEST(c.updated_at, c.created_at)
+    FROM candidates c
+    WHERE c.stage <> 'new'
+      AND NOT EXISTS (
+        SELECT 1 FROM candidate_stage_events e
+        WHERE e.candidate_id = c.id AND e.to_stage = c.stage::text
+      )
+  `;
+
   // Advisory focus-loss counters for AI interviews.
   await client`ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS tab_away_count integer NOT NULL DEFAULT 0`;
   await client`ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS tab_away_seconds integer NOT NULL DEFAULT 0`;

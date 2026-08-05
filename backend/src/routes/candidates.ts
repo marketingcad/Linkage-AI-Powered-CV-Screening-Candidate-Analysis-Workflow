@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import multer from 'multer';
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { candidates, candidateNotes, jobs, emailLogs } from '../db/schema.js';
+import { candidates, candidateNotes, candidateStageEvents, jobs, emailLogs } from '../db/schema.js';
 import { createNoteSchema, rankCandidatesSchema, updateStageSchema } from '../lib/validation.js';
 import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import { env } from '../config/env.js';
@@ -91,6 +91,8 @@ candidatesRouter.post('/import', upload.single('cv'), async (req, res) => {
     .returning();
   if (!candidate) throw new Error('Failed to create candidate');
 
+  await db.insert(candidateStageEvents).values({ candidateId: candidate.id, toStage: 'new' });
+
   await runAnalysis(candidate.id, job, cvText, []);
 
   const [updated] = await db
@@ -137,7 +139,7 @@ candidatesRouter.post('/rank', async (req, res) => {
  */
 const listQuery = z.object({
   jobId: z.string().uuid().optional(),
-  stage: z.enum(['new', 'shortlisted', 'rejected', 'interviewing', 'hired']).optional(),
+  stage: z.enum(['new', 'shortlisted', 'rejected', 'interviewing', 'offer', 'hired']).optional(),
   source: optionalQueryString(100),
 });
 
@@ -237,7 +239,7 @@ candidatesRouter.get('/:id', validate({ params: idParams }), async (req, res) =>
 });
 
 candidatesRouter.patch('/:id/stage', validate({ params: idParams }), async (req, res) => {
-  const { stage } = updateStageSchema.parse(req.body);
+  const { stage, reason } = updateStageSchema.parse(req.body);
 
   const [existing] = await db
     .select({ stage: candidates.stage })
@@ -275,12 +277,23 @@ candidatesRouter.patch('/:id/stage', validate({ params: idParams }), async (req,
   }
 
   if (stage !== existing.stage) {
+    // Structured history — the audit log is for humans, this is what the funnel and
+    // time-to-hire metrics are computed from. Awaited so a failure surfaces rather than
+    // silently leaving a hole in the timeline.
+    await db.insert(candidateStageEvents).values({
+      candidateId: candidate.id,
+      fromStage: existing.stage,
+      toStage: stage,
+      reason: reason || null,
+      changedBy: req.user?.sub ?? null,
+    });
+
     void recordAudit({
       actorEmail: req.user?.email ?? null,
       action: 'candidate.stage_change',
       targetType: 'candidate',
       targetId: candidate.id,
-      detail: `${candidate.fullName}: ${existing.stage} → ${stage}`,
+      detail: `${candidate.fullName}: ${existing.stage} → ${stage}${reason ? ` (${reason})` : ''}`,
       ip: req.ip ?? null,
     });
   }

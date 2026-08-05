@@ -22,6 +22,9 @@ export const candidateStageEnum = pgEnum('candidate_stage', [
   'shortlisted',
   'rejected',
   'interviewing',
+  // Offer extended but not yet answered. Previously missing, which forced 'hired' to stand
+  // in for it — so an unanswered offer looked identical to a signed one.
+  'offer',
   'hired',
 ]);
 
@@ -360,6 +363,92 @@ export const interviewSessions = pgTable('interview_sessions', {
 
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+// ---------------------------------------------------------------------------
+// Stage history — one row per pipeline transition.
+//
+// Stage changes were only ever written to the audit log as free text, so nothing could be
+// computed from them. This makes the funnel measurable: time-to-hire, time in each stage,
+// conversion and drop-off between stages, and why candidates were rejected.
+// ---------------------------------------------------------------------------
+
+export const candidateStageEvents = pgTable(
+  'candidate_stage_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    candidateId: uuid('candidate_id')
+      .references(() => candidates.id, { onDelete: 'cascade' })
+      .notNull(),
+    // Plain varchar rather than the enum: history must survive the enum changing later.
+    fromStage: varchar('from_stage', { length: 20 }), // null for the initial application
+    toStage: varchar('to_stage', { length: 20 }).notNull(),
+    /** Why the move happened — rejection reason, offer decline reason, or a free note. */
+    reason: varchar('reason', { length: 200 }),
+    changedBy: uuid('changed_by').references(() => hrUsers.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+);
+
+export type CandidateStageEvent = typeof candidateStageEvents.$inferSelect;
+
+/** Structured rejection reasons — a fixed list so they can be counted and compared. */
+export const REJECTION_REASONS = [
+  'Missing required skills',
+  'Not enough experience',
+  'Overqualified',
+  'Failed the assessment',
+  'Interview performance',
+  'Salary expectations',
+  'Location or work authorisation',
+  'Withdrew / unresponsive',
+  'Position filled',
+  'Other',
+] as const;
+export type RejectionReason = (typeof REJECTION_REASONS)[number];
+
+// ---------------------------------------------------------------------------
+// Offers — the stage between interviewing and hired.
+// ---------------------------------------------------------------------------
+
+export type OfferStatus =
+  | 'draft' // being prepared, candidate not told
+  | 'extended' // sent, awaiting an answer
+  | 'accepted'
+  | 'declined'
+  | 'expired'
+  | 'withdrawn';
+
+export const offers = pgTable(
+  'offers',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    candidateId: uuid('candidate_id')
+      .references(() => candidates.id, { onDelete: 'cascade' })
+      .notNull(),
+    jobId: uuid('job_id').references(() => jobs.id, { onDelete: 'set null' }),
+
+    status: varchar('status', { length: 20 }).notNull().default('draft'),
+
+    // Whole currency units — no minor-unit maths needed for a figure that is only displayed.
+    salaryAmount: integer('salary_amount'),
+    salaryCurrency: varchar('salary_currency', { length: 3 }),
+    startDate: timestamp('start_date', { withTimezone: true }),
+    /** After this, the offer is treated as expired. */
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+
+    notes: text('notes'),
+    /** Set when status = 'declined' — the counterpart to a rejection reason. */
+    declineReason: varchar('decline_reason', { length: 200 }),
+
+    createdBy: uuid('created_by').references(() => hrUsers.id, { onDelete: 'set null' }),
+    extendedAt: timestamp('extended_at', { withTimezone: true }),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+);
+
+export type Offer = typeof offers.$inferSelect;
 
 // ---------------------------------------------------------------------------
 // Candidate notes & human scorecards — recruiter judgment alongside the AI score

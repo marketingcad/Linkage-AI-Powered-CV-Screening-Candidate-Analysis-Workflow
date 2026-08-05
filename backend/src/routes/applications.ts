@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { candidates, hrUsers, jobs } from '../db/schema.js';
+import { candidateStageEvents, candidates, hrUsers, jobs } from '../db/schema.js';
 import { applicationSchema } from '../lib/validation.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { env, recruiterNotifyEmails } from '../config/env.js';
@@ -124,6 +124,10 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res) => {
       analysisStatus: 'processing',
     })
     .returning();
+
+  // Entering the pipeline is itself a transition — without this the candidate has no start
+  // point and would be excluded from time-to-hire and funnel conversion.
+  await db.insert(candidateStageEvents).values({ candidateId: candidate!.id, toStage: 'new' });
 
   // Run AI analysis (CV + quiz) inline so the applicant gets immediate confirmation.
   await runAnalysis(candidate!.id, job, cvText, quizAnswers);

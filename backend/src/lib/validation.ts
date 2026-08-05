@@ -182,7 +182,12 @@ export const applicationSchema = z.object({
 });
 
 export const updateStageSchema = z.object({
-  stage: z.enum(['new', 'shortlisted', 'rejected', 'interviewing', 'hired']),
+  stage: z.enum(['new', 'shortlisted', 'rejected', 'interviewing', 'offer', 'hired']),
+  /**
+   * Why the candidate was moved — recorded on the stage event. Mainly for rejections, where
+   * it turns "rejected" into something countable and reviewable.
+   */
+  reason: z.string().trim().max(200).optional(),
 });
 
 // --- Candidate notes & scorecards -------------------------------------------
