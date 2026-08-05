@@ -2,12 +2,17 @@ import { Router } from 'express';
 import { desc, eq, sql } from 'drizzle-orm';
 import { client, db } from '../db/client.js';
 import { candidates, jobs, type QuizQuestion } from '../db/schema.js';
-import { createJobSchema, generateQuizSchema, updateJobSchema } from '../lib/validation.js';
+import {
+  createJobSchema,
+  generateQuizSchema,
+  improveDescriptionSchema,
+  updateJobSchema,
+} from '../lib/validation.js';
 import { notFound, serverError } from '../lib/errors.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { idParams, validate } from '../middleware/validate.js';
 import { z } from 'zod';
-import { generateQuiz } from '../services/gemini.js';
+import { generateQuiz, improveJobDescription } from '../services/gemini.js';
 import { recordAudit } from '../services/audit.js';
 import { recomputeJobScores } from '../services/scoring.js';
 import {
@@ -44,6 +49,7 @@ jobsRouter.get('/public', async (_req, res) => {
       title: jobs.title,
       department: jobs.department,
       location: jobs.location,
+      workArrangement: jobs.workArrangement,
       employmentType: jobs.employmentType,
       description: jobs.description,
       requiredSkills: jobs.requiredSkills,
@@ -70,6 +76,7 @@ jobsRouter.get('/public/:id', validate({ params: idParams }), async (req, res) =
         title: job.title,
         department: job.department,
         location: job.location,
+        workArrangement: job.workArrangement,
         employmentType: job.employmentType,
       },
     });
@@ -166,6 +173,26 @@ jobsRouter.post('/generate-quiz', async (req, res) => {
   res.json({ quiz });
 });
 
+/**
+ * Rewrite a draft job description. Returns the suggestion rather than saving it — the
+ * recruiter owns the posting, so nothing changes until they accept it.
+ */
+jobsRouter.post('/improve-description', async (req, res) => {
+  const input = improveDescriptionSchema.parse(req.body);
+  const description = await improveJobDescription({
+    title: input.title,
+    description: input.description,
+    department: input.department ?? null,
+    location: input.location ?? null,
+    workArrangement: input.workArrangement ?? null,
+    employmentType: input.employmentType ?? null,
+    requiredSkills: input.requiredSkills,
+    niceToHaveSkills: input.niceToHaveSkills,
+    minYearsExperience: input.minYearsExperience ?? null,
+  });
+  res.json({ description });
+});
+
 jobsRouter.get('/', async (_req, res) => {
   const rows = await db
     .select({
@@ -173,6 +200,7 @@ jobsRouter.get('/', async (_req, res) => {
       title: jobs.title,
       department: jobs.department,
       location: jobs.location,
+      workArrangement: jobs.workArrangement,
       employmentType: jobs.employmentType,
       status: jobs.status,
       minYearsExperience: jobs.minYearsExperience,

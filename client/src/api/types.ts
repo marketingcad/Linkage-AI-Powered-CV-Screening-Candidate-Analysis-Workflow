@@ -69,6 +69,7 @@ export interface PublicJobListItem {
   title: string;
   department: string | null;
   location: string | null;
+  workArrangement: string | null;
   employmentType: string | null;
   description: string;
   requiredSkills: string[];
@@ -82,6 +83,7 @@ export interface ClosedPublicJob {
   title: string;
   department: string | null;
   location: string | null;
+  workArrangement: string | null;
   employmentType: string | null;
 }
 
@@ -96,6 +98,7 @@ export interface PublicJob {
   title: string;
   department: string | null;
   location: string | null;
+  workArrangement: string | null;
   employmentType: string | null;
   description: string;
   requiredSkills: string[];
@@ -108,6 +111,7 @@ export interface JobSummary {
   title: string;
   department: string | null;
   location: string | null;
+  workArrangement: string | null;
   employmentType: string | null;
   status: JobStatus;
   minYearsExperience: number | null;
@@ -137,6 +141,7 @@ export interface Job {
   title: string;
   department: string | null;
   location: string | null;
+  workArrangement: string | null;
   employmentType: string | null;
   description: string;
   requiredSkills: string[];

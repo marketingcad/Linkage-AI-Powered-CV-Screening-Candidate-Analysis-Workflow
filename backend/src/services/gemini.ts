@@ -1001,3 +1001,80 @@ export async function summarizeInterviewTranscript(input: {
     throw serverError('AI interview summary failed', err instanceof Error ? err.message : String(err));
   }
 }
+
+// ---------------------------------------------------------------------------
+// Job description rewriting
+// ---------------------------------------------------------------------------
+
+export interface DescriptionContext {
+  title: string;
+  description: string;
+  department?: string | null;
+  location?: string | null;
+  workArrangement?: string | null;
+  employmentType?: string | null;
+  requiredSkills?: string[];
+  niceToHaveSkills?: string[];
+  minYearsExperience?: number | null;
+}
+
+/**
+ * Rewrite a job description so it reads better and covers what applicants actually need.
+ *
+ * Deliberately constrained: it may only reorganise and clarify what the recruiter wrote, plus
+ * the structured fields already on the job. It must not invent salary, benefits, headcount or
+ * requirements — an AI-invented "competitive salary and equity" on a live posting is a promise
+ * the employer never made.
+ */
+export async function improveJobDescription(job: DescriptionContext): Promise<string> {
+  const facts = [
+    `Title: ${job.title}`,
+    job.department ? `Department: ${job.department}` : null,
+    job.workArrangement ? `Work arrangement: ${job.workArrangement}` : null,
+    job.location ? `Location: ${job.location}` : null,
+    job.employmentType ? `Employment type: ${job.employmentType}` : null,
+    job.minYearsExperience != null ? `Minimum experience: ${job.minYearsExperience} years` : null,
+    job.requiredSkills?.length ? `Required skills: ${job.requiredSkills.join(', ')}` : null,
+    job.niceToHaveSkills?.length ? `Nice-to-have: ${job.niceToHaveSkills.join(', ')}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const prompt = [
+    'Rewrite the job description below so it is clearer, better organised, and more compelling',
+    'to a qualified candidate.',
+    '',
+    'Rules:',
+    '- Use ONLY the information given. Do not invent salary, benefits, equity, team size,',
+    '  reporting lines, perks, or requirements that are not stated.',
+    '- If something important is missing, leave it out rather than guessing.',
+    '- Keep every concrete requirement and responsibility the original mentions.',
+    '- Structure it as a short intro paragraph, then "What you\'ll do" and "What we\'re looking for"',
+    '  as bullet lists. Add "Nice to have" only if the original or the fields provide such items.',
+    '- Write in plain, direct language. No buzzwords ("rockstar", "ninja", "wear many hats").',
+    '- Use neutral, inclusive wording and avoid phrasing that skews by age, gender, or nationality.',
+    '- Aim for 150-350 words. Return plain text with "-" bullets, no markdown headings.',
+    '- Return ONLY the rewritten description, with no preamble or commentary.',
+    '',
+    '=== ROLE FIELDS ===',
+    facts,
+    '',
+    '=== CURRENT DESCRIPTION ===',
+    job.description,
+  ].join('\n');
+
+  try {
+    const response = await ai.models.generateContent({
+      model: env.GEMINI_MODEL,
+      contents: prompt,
+      config: { temperature: 0.5 },
+    });
+    const text = response.text?.trim();
+    if (!text) throw new Error('Empty response from Gemini');
+    // Models sometimes wrap prose in a code fence despite being asked for plain text.
+    return text.replace(/^```(?:\w+)?\n?/, '').replace(/\n?```$/, '').trim();
+  } catch (err) {
+    logger.error({ err }, 'Job description rewrite failed');
+    throw serverError('AI rewrite failed', err instanceof Error ? err.message : String(err));
+  }
+}

@@ -115,7 +115,7 @@ export default function DistributePanel({ job }: { job: Job }) {
   const postingText = useMemo(() => {
     const lines = [
       job.title,
-      [job.department, job.location, job.employmentType].filter(Boolean).join(' · '),
+      [job.department, job.workArrangement, job.location, job.employmentType].filter(Boolean).join(' · '),
       '',
       job.description,
     ];

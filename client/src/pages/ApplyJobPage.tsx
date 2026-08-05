@@ -320,6 +320,7 @@ export default function ApplyJobPage() {
               <h1 className="text-3xl font-bold text-slate-900">{job.title}</h1>
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-600">
                 {job.department && <span>{job.department}</span>}
+                {job.workArrangement && <span>· {job.workArrangement}</span>}
                 {job.location && <span>· {job.location}</span>}
                 {job.employmentType && <span>· {job.employmentType}</span>}
                 {source !== 'direct' && (
@@ -478,7 +479,7 @@ export default function ApplyJobPage() {
                     {...fieldErrors.fieldProps('linkedinUrl')}
                   />
                 </Field>
-                <Field label="Portfolio / GitHub URL" error={fieldErrors.errors.portfolioUrl} errorId={fieldErrors.errorId('portfolioUrl')}>
+                <Field label="Portfolio / GitHub URL" optional error={fieldErrors.errors.portfolioUrl} errorId={fieldErrors.errorId('portfolioUrl')}>
                   <input
                     type="url"
                     inputMode="url"
@@ -511,7 +512,7 @@ export default function ApplyJobPage() {
                   />
                 </Field>
               </div>
-              <Field label="Anything else you'd like us to know? (optional)" error={fieldErrors.errors.coverNote} errorId={fieldErrors.errorId('coverNote')}>
+              <Field label="Anything else you'd like us to know?" optional error={fieldErrors.errors.coverNote} errorId={fieldErrors.errorId('coverNote')}>
                 <textarea
                   value={coverNote}
                   maxLength={v.LIMITS.coverNote}
@@ -637,12 +638,15 @@ function Field({
   label,
   children,
   required,
+  optional,
   error,
   errorId,
 }: {
   label: string;
   children: React.ReactNode;
   required?: boolean;
+  /** Says so in the label. Read by screen readers too, so it is not colour/weight alone. */
+  optional?: boolean;
   error?: string;
   errorId?: string;
 }) {
@@ -656,6 +660,7 @@ function Field({
           </span>
         )}
         {required && <span className="sr-only"> (required)</span>}
+        {optional && <span className="ml-1.5 font-normal text-slate-600">(optional)</span>}
       </span>
       {children}
       {errorId && <FieldError id={errorId} message={error} />}

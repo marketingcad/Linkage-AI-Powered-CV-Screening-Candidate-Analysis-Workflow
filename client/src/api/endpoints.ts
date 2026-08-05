@@ -158,6 +158,7 @@ export interface JobInput {
   title: string;
   department?: string;
   location?: string;
+  workArrangement?: string;
   employmentType?: string;
   description: string;
   requiredSkills: string[];
@@ -183,6 +184,23 @@ export interface GenerateQuizInput {
   educationRequirement?: string | null;
   count?: number;
   difficulty?: 'easy' | 'medium' | 'hard';
+}
+/** Ask the AI to rewrite a job description. Returns the suggestion; it is not saved. */
+export function improveJobDescription(input: {
+  title: string;
+  description: string;
+  department?: string | null;
+  location?: string | null;
+  workArrangement?: string | null;
+  employmentType?: string | null;
+  requiredSkills?: string[];
+  niceToHaveSkills?: string[];
+  minYearsExperience?: number | null;
+}) {
+  return apiRequest<{ description: string }>('/jobs/improve-description', {
+    method: 'POST',
+    body: input,
+  });
 }
 export function generateQuiz(input: GenerateQuizInput) {
   return apiRequest<{ quiz: QuizQuestion[] }>('/jobs/generate-quiz', {

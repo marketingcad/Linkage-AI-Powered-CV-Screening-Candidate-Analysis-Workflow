@@ -12,6 +12,7 @@ import {
 } from '../api/endpoints';
 import type { CandidateSummary, Interview, InterviewMode, InterviewStatus } from '../api/types';
 import { Alert, Button, ScoreRing, Spinner } from './ui';
+import ConfirmDialog from './ConfirmDialog';
 import FieldError from './FieldError';
 import { useFormErrors } from '../lib/useFormErrors';
 import * as v from '../lib/validators';
@@ -97,6 +98,7 @@ export default function ScheduleInterviewDialog({
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const f = useFormErrors<'candidate' | 'date' | 'time' | 'location' | 'notes'>('interview');
 
   // An interview that already happened legitimately sits in the past (you reopen it to mark
@@ -145,7 +147,6 @@ export default function ScheduleInterviewDialog({
 
   async function handleDelete() {
     if (!existing) return;
-    if (!confirm('Remove this interview from the calendar?')) return;
     setDeleting(true);
     f.reset();
     try {
@@ -203,6 +204,7 @@ export default function ScheduleInterviewDialog({
   }
 
   return (
+    <>
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="shrink-0 space-y-0 border-b border-slate-200 px-6 py-4 text-left">
@@ -466,7 +468,7 @@ export default function ScheduleInterviewDialog({
             {existing ? (
               <button
                 type="button"
-                onClick={handleDelete}
+                onClick={() => setConfirmingDelete(true)}
                 disabled={deleting || saving}
                 className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
               >
@@ -488,6 +490,22 @@ export default function ScheduleInterviewDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* Sibling of the scheduling dialog, not a child of it — a Radix Dialog nested inside
+        another Dialog's root fights it for the focus trap. */}
+    <ConfirmDialog
+      open={confirmingDelete}
+      title="Remove this interview?"
+      body="It will be taken off the calendar and its reminder cancelled. The candidate is not notified automatically."
+      confirmLabel="Remove interview"
+      busy={deleting}
+      onConfirm={() => {
+        setConfirmingDelete(false);
+        void handleDelete();
+      }}
+      onCancel={() => setConfirmingDelete(false)}
+    />
+    </>
   );
 }
 

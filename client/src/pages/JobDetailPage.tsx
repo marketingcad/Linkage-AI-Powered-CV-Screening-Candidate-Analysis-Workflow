@@ -14,6 +14,7 @@ import {
   LuEllipsisVertical,
   LuFileText,
   LuGraduationCap,
+  LuHouse,
   LuMapPin,
   LuPencil,
   LuPlus,
@@ -28,6 +29,7 @@ import { useAuth } from '../auth/AuthContext';
 import { Alert, Button, Card, Skeleton, TableSkeleton } from '../components/ui';
 import CandidateTable from '../components/CandidateTable';
 import JobForm from '../components/JobForm';
+import ConfirmDialog from '../components/ConfirmDialog';
 import ImportCvsDialog from '../components/ImportCvsDialog';
 import TalentPoolDialog from '../components/TalentPoolDialog';
 import DistributePanel from '../components/DistributePanel';
@@ -64,6 +66,9 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [view, setView] = useState<'details' | 'candidates'>('details');
@@ -95,11 +100,19 @@ export default function JobDetailPage() {
       });
   }
 
-  async function handleDelete() {
+  async function confirmDelete() {
     if (!job) return;
-    if (!confirm(`Delete "${job.title}" and all its candidates? This cannot be undone.`)) return;
-    await deleteJob(job.id);
-    navigate('/hr/jobs');
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteJob(job.id);
+      navigate('/hr/jobs');
+    } catch {
+      // Previously this awaited with no catch: a failed delete rejected silently and left the
+      // recruiter on the page with no idea whether the job was gone.
+      setDeleteError('Could not delete the job. Please try again.');
+      setDeleting(false);
+    }
   }
 
   function handleSaved(updated: Job) {
@@ -155,6 +168,9 @@ export default function JobDetailPage() {
                 {job.department && (
                   <MetaChip Icon={LuBuilding2} text={job.department} tint="indigo" />
                 )}
+                {job.workArrangement && (
+                  <MetaChip Icon={LuHouse} text={job.workArrangement} tint="violet" />
+                )}
                 {job.location && <MetaChip Icon={LuMapPin} text={job.location} tint="emerald" />}
                 {job.employmentType && (
                   <MetaChip Icon={LuClock} text={job.employmentType} tint="amber" />
@@ -183,7 +199,7 @@ export default function JobDetailPage() {
                 Edit job
               </DropdownMenuItem>
               {isAdmin && (
-                <DropdownMenuItem variant="destructive" onSelect={() => void handleDelete()}>
+                <DropdownMenuItem variant="destructive" onSelect={() => setConfirmingDelete(true)}>
                   <LuTrash2 />
                   Delete job
                 </DropdownMenuItem>
@@ -340,6 +356,27 @@ export default function JobDetailPage() {
       )}
 
       {editing && <JobForm existing={job} onClose={() => setEditing(false)} onSaved={handleSaved} />}
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Permanently delete this job?"
+        body={
+          <>
+            <strong className="font-semibold text-slate-800">{job.title}</strong> and all{' '}
+            {candidates.length} of its candidates — including their CVs, scores, notes and
+            interview records — will be deleted. This cannot be undone.
+          </>
+        }
+        confirmLabel="Delete job"
+        confirmPhrase={candidates.length > 0 ? 'DELETE' : undefined}
+        busy={deleting}
+        error={deleteError}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setConfirmingDelete(false);
+          setDeleteError(null);
+        }}
+      />
       {importing && (
         <ImportCvsDialog
           jobId={job.id}
@@ -360,6 +397,9 @@ const CHIP_TINTS: Record<string, string> = {
   emerald: 'bg-emerald-50 text-emerald-700',
   amber: 'bg-amber-50 text-amber-700',
   brand: 'bg-brand-50 text-brand-700',
+  // Work arrangement sits next to location; a distinct tint keeps "Hybrid" and "Austin, TX"
+  // from reading as one run-on chip pair.
+  violet: 'bg-violet-50 text-violet-700',
   slate: 'bg-slate-100 text-slate-600',
 };
 

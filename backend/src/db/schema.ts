@@ -122,7 +122,14 @@ export const jobs = pgTable('jobs', {
   id: uuid('id').defaultRandom().primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
   department: varchar('department', { length: 255 }),
+  /** City or region, e.g. "Austin, TX". Where the job is — not how it is worked. */
   location: varchar('location', { length: 255 }),
+  /**
+   * How the role is worked: onsite, remote, hybrid. Kept separate from `location` because they
+   * answer different questions — "Remote" is not an address, and a hybrid role in Austin needs
+   * to say both. Candidates filter on this; recruiters report on it.
+   */
+  workArrangement: varchar('work_arrangement', { length: 40 }),
   employmentType: varchar('employment_type', { length: 100 }),
   description: text('description').notNull(),
   // Structured requirements the AI scores against
@@ -363,6 +370,19 @@ export const interviewSessions = pgTable('interview_sessions', {
 
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+/**
+ * How a role is worked. A short closed list rather than free text so it can be filtered and
+ * counted; the job form still preserves any legacy value already stored on a job.
+ */
+export const WORK_ARRANGEMENTS = [
+  'Onsite',
+  'Hybrid',
+  'Remote',
+  'Remote (region-locked)',
+  'Field / travel-based',
+] as const;
+export type WorkArrangement = (typeof WORK_ARRANGEMENTS)[number];
 
 // ---------------------------------------------------------------------------
 // Stage history — one row per pipeline transition.

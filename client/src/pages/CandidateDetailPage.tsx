@@ -77,6 +77,7 @@ import {
 } from '../components/ui';
 import ScheduleInterviewDialog from '../components/ScheduleInterviewDialog';
 import OfferCard from '../components/OfferCard';
+import ConfirmDialog from '../components/ConfirmDialog';
 import FieldError from '../components/FieldError';
 import { useFormErrors } from '../lib/useFormErrors';
 import * as v from '../lib/validators';
@@ -117,6 +118,7 @@ export default function CandidateDetailPage() {
   const [reasonOptions, setReasonOptions] = useState<RejectionReason[]>([]);
   const [interviewError, setInterviewError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deletingCandidate, setDeletingCandidate] = useState(false);
 
   function loadEmails() {
@@ -331,12 +333,6 @@ export default function CandidateDetailPage() {
   // GDPR: permanently erase this candidate (row + stored CV) on request.
   async function handleDelete() {
     if (!candidate || deletingCandidate) return; // guard: two clicks = two DELETEs
-    if (
-      !confirm(
-        `Permanently delete ${candidate.fullName}? This removes their record and CV and cannot be undone.`,
-      )
-    )
-      return;
     setDeletingCandidate(true);
     setDeleteError(null);
     try {
@@ -428,7 +424,7 @@ export default function CandidateDetailPage() {
                 <DropdownMenuItem
                   variant="destructive"
                   disabled={deletingCandidate}
-                  onSelect={() => void handleDelete()}
+                  onSelect={() => setConfirmingDelete(true)}
                 >
                   <LuTrash2 />
                   {deletingCandidate ? 'Deleting…' : 'Delete candidate'}
@@ -440,7 +436,6 @@ export default function CandidateDetailPage() {
       </div>
 
       {scheduledNote && <Alert kind="success">{scheduledNote}</Alert>}
-      {deleteError && <Alert kind="error">{deleteError}</Alert>}
 
       {c.analysisStatus === 'failed' && (
         <Alert kind="error">
@@ -1247,6 +1242,27 @@ export default function CandidateDetailPage() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Permanently delete this candidate?"
+        body={
+          <>
+            <strong className="font-semibold text-slate-800">{c.fullName}</strong>’s record, CV,
+            AI evaluation, notes, ratings and interview history will be erased. This cannot be
+            undone and is not the same as rejecting them.
+          </>
+        }
+        confirmLabel="Delete candidate"
+        confirmPhrase="DELETE"
+        busy={deletingCandidate}
+        error={deleteError}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setConfirmingDelete(false);
+          setDeleteError(null);
+        }}
+      />
     </div>
   );
 }

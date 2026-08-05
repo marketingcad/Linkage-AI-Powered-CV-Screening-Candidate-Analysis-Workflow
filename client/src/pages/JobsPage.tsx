@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import JobForm from '../components/JobForm';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const STATUS_META: Record<string, { label: string; cls: string; dot: string }> = {
   open: { label: 'Open', cls: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' },
@@ -55,6 +56,10 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<JobSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Held rather than acted on immediately: deleting a job takes its candidates with it.
+  const [pendingDelete, setPendingDelete] = useState<JobSummary | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'' | JobStatus>('');
   const [sort, setSort] = useState<SortKey>('recent');
@@ -92,16 +97,21 @@ export default function JobsPage() {
     }
   }
 
-  async function handleDelete(job: JobSummary) {
-    if (!confirm(`Delete "${job.title}" and all its candidates? This cannot be undone.`)) return;
-    const prev = jobs;
-    setError(null);
-    setJobs((js) => js.filter((j) => j.id !== job.id));
+  async function confirmDelete() {
+    const job = pendingDelete;
+    if (!job) return;
+    setDeleting(true);
+    setDeleteError(null);
     try {
       await deleteJob(job.id);
+      setJobs((js) => js.filter((j) => j.id !== job.id));
+      setPendingDelete(null);
     } catch {
-      setJobs(prev);
-      setError('Could not delete the job. Please try again.');
+      // The row is removed only once the server confirms — an optimistic removal here would
+      // show the job gone while its candidates still existed.
+      setDeleteError('Could not delete the job. Please try again.');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -281,7 +291,7 @@ export default function JobsPage() {
                         {isAdmin && (
                           <DropdownMenuItem
                             variant="destructive"
-                            onSelect={() => void handleDelete(job)}
+                            onSelect={() => setPendingDelete(job)}
                           >
                             <LuTrash2 />
                             Delete job
@@ -347,6 +357,29 @@ export default function JobsPage() {
       )}
 
       {showForm && <JobForm onClose={() => setShowForm(false)} onSaved={handleSaved} />}
+
+      <ConfirmDialog
+        open={pendingDelete != null}
+        title="Permanently delete this job?"
+        body={
+          <>
+            <strong className="font-semibold text-slate-800">{pendingDelete?.title}</strong> and all{' '}
+            {pendingDelete?.candidateCount ?? 0} of its candidates — including their CVs, scores,
+            notes and interview records — will be deleted. This cannot be undone.
+          </>
+        }
+        confirmLabel="Delete job"
+        // Typing the word is only demanded when real candidate data goes with it; an empty
+        // draft role does not need the ceremony.
+        confirmPhrase={pendingDelete?.candidateCount ? 'DELETE' : undefined}
+        busy={deleting}
+        error={deleteError}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setPendingDelete(null);
+          setDeleteError(null);
+        }}
+      />
     </div>
   );
 }

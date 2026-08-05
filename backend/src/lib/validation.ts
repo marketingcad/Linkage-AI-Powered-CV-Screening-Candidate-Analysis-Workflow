@@ -116,6 +116,14 @@ export const createJobSchema = z.object({
   title: z.string().min(2).max(255),
   department: z.string().max(255).optional(),
   location: z.string().max(255).optional(),
+  // Same reasoning as employmentType below: a fixed list in the UI, a free string on the wire
+  // so jobs saved before the list existed stay editable.
+  workArrangement: z
+    .string()
+    .trim()
+    .min(1, 'Work arrangement is required.')
+    .max(40)
+    .optional(),
   // Required, but still a free string rather than an enum: the UI offers a fixed list while
   // jobs created before that list existed keep whatever value they were saved with, and
   // rejecting those would make an old job impossible to edit.
@@ -141,6 +149,19 @@ export const generateQuizSchema = z.object({
   educationRequirement: z.string().max(2000).nullable().optional(),
   count: z.number().int().min(1).max(15).optional(),
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+});
+
+/** Rewrite an existing job description. Everything but the text is context for the rewrite. */
+export const improveDescriptionSchema = z.object({
+  title: z.string().min(2).max(255),
+  description: z.string().trim().min(20, 'Write a few sentences first.').max(20_000),
+  department: z.string().max(255).nullable().optional(),
+  location: z.string().max(255).nullable().optional(),
+  workArrangement: z.string().max(40).nullable().optional(),
+  employmentType: z.string().max(100).nullable().optional(),
+  requiredSkills: z.array(z.string().min(1).max(100)).max(50).optional(),
+  niceToHaveSkills: z.array(z.string().min(1).max(100)).max(50).optional(),
+  minYearsExperience: z.number().int().min(0).max(60).nullable().optional(),
 });
 
 export const applicationSchema = z.object({

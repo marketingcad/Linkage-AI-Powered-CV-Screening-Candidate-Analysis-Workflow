@@ -1,6 +1,12 @@
 import { useState } from 'react';
-import { LuBriefcase, LuRotateCcw, LuScale } from 'react-icons/lu';
-import { createJob, generateQuiz, updateJob, type JobInput } from '../api/endpoints';
+import { LuBriefcase, LuRotateCcw, LuScale, LuSparkles } from 'react-icons/lu';
+import {
+  createJob,
+  generateQuiz,
+  improveJobDescription,
+  updateJob,
+  type JobInput,
+} from '../api/endpoints';
 import { ApiError } from '../api/client';
 import {
   DEFAULT_SCORING_WEIGHTS,
@@ -39,6 +45,19 @@ export const EMPLOYMENT_TYPES = [
 ] as const;
 export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
 
+/**
+ * How the role is worked. Separate from Location, which says *where* — "Remote" is not an
+ * address, and a hybrid role still needs to name its city.
+ */
+export const WORK_ARRANGEMENTS = [
+  'Onsite',
+  'Hybrid',
+  'Remote',
+  'Remote (region-locked)',
+  'Field / travel-based',
+] as const;
+export type WorkArrangement = (typeof WORK_ARRANGEMENTS)[number];
+
 export default function JobForm({
   existing,
   onClose,
@@ -51,6 +70,7 @@ export default function JobForm({
   const [title, setTitle] = useState(existing?.title ?? '');
   const [department, setDepartment] = useState(existing?.department ?? '');
   const [location, setLocation] = useState(existing?.location ?? '');
+  const [workArrangement, setWorkArrangement] = useState(existing?.workArrangement ?? '');
   const [employmentType, setEmploymentType] = useState(existing?.employmentType ?? '');
   const [description, setDescription] = useState(existing?.description ?? '');
   const [requiredSkills, setRequiredSkills] = useState<string[]>(existing?.requiredSkills ?? []);
@@ -74,6 +94,47 @@ export default function JobForm({
   const [genDifficulty, setGenDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
+
+  /**
+   * The AI's proposed rewrite, held here until the recruiter accepts it. It is deliberately
+   * not written straight into the textarea — this is a live job posting, and silently
+   * replacing what someone wrote gives them no way back to their own words.
+   */
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [improving, setImproving] = useState(false);
+  const [improveError, setImproveError] = useState<string | null>(null);
+
+  async function handleImproveDescription() {
+    setImproveError(null);
+    setSuggestion(null);
+    if (title.trim().length < 2) {
+      setImproveError('Add a job title first so the rewrite has something to work from.');
+      return;
+    }
+    if (description.trim().length < 20) {
+      setImproveError('Write a few sentences first — the AI rewrites your description, it does not invent one.');
+      return;
+    }
+    setImproving(true);
+    try {
+      const res = await improveJobDescription({
+        title: title.trim(),
+        description: description.trim(),
+        department: department.trim() || null,
+        location: location.trim() || null,
+        workArrangement: workArrangement.trim() || null,
+        employmentType: employmentType.trim() || null,
+        requiredSkills,
+        niceToHaveSkills,
+        minYearsExperience: minYears ? Number(minYears) : null,
+      });
+      setSuggestion(res.description);
+    } catch (err) {
+      setImproveError(err instanceof ApiError ? err.message : 'Could not rewrite the description.');
+    } finally {
+      setImproving(false);
+    }
+  }
 
   async function handleGenerateQuiz() {
     setGenError(null);
@@ -116,6 +177,7 @@ export default function JobForm({
         v.maxLen(title, v.LIMITS.jobTitle, 'Job title'),
       department: v.maxLen(department, v.LIMITS.jobTitle, 'Department'),
       location: v.maxLen(location, v.LIMITS.location, 'Location'),
+      workArrangement: workArrangement.trim() ? undefined : 'Select a work arrangement.',
       employmentType: employmentType.trim() ? undefined : 'Select an employment type.',
       description:
         v.required(description, 'Description') ??
@@ -132,6 +194,7 @@ export default function JobForm({
       title: title.trim(),
       department: department.trim() || undefined,
       location: location.trim() || undefined,
+      workArrangement: workArrangement.trim() || undefined,
       employmentType: employmentType.trim() || undefined,
       description: description.trim(),
       requiredSkills,
@@ -190,7 +253,10 @@ export default function JobForm({
             />
           </Field>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          {/* Two columns, not three: this row holds four fields since work arrangement was
+              split out of location, and a 3-wide grid left Employment type alone on its own
+              row. Paired 2x2 it reads as "where" then "how". */}
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Department" error={fieldErrors.errors.department} errorId={fieldErrors.errorId('department')}>
               <input
                 maxLength={v.LIMITS.jobTitle}
@@ -200,12 +266,38 @@ export default function JobForm({
                 {...fieldErrors.fieldProps('department')}
               />
             </Field>
+            <Field
+              label="Work arrangement"
+              required
+              error={fieldErrors.errors.workArrangement}
+              errorId={fieldErrors.errorId('workArrangement')}
+            >
+              <select
+                value={workArrangement}
+                onChange={(e) => { setWorkArrangement(e.target.value); fieldErrors.clearError('workArrangement'); }}
+                className={inputCls}
+                {...fieldErrors.fieldProps('workArrangement')}
+              >
+                <option value="">Select an arrangement…</option>
+                {WORK_ARRANGEMENTS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+                {/* Same guard as employment type: a job saved before this list existed keeps
+                    its value as an option so editing it can't silently rewrite it. */}
+                {workArrangement && !WORK_ARRANGEMENTS.includes(workArrangement as WorkArrangement) && (
+                  <option value={workArrangement}>{workArrangement}</option>
+                )}
+              </select>
+            </Field>
             <Field label="Location" error={fieldErrors.errors.location} errorId={fieldErrors.errorId('location')}>
               <input
                 maxLength={v.LIMITS.location}
                 value={location}
                 onChange={(e) => { setLocation(e.target.value); fieldErrors.clearError('location'); }}
                 className={inputCls}
+                placeholder="City or region, e.g. Austin, TX"
                 {...fieldErrors.fieldProps('location')}
               />
             </Field>
@@ -242,6 +334,66 @@ export default function JobForm({
               placeholder="Role responsibilities, team, and what you're looking for…"
               {...fieldErrors.fieldProps('description')}
             />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleImproveDescription}
+                disabled={improving}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                <LuSparkles className="h-3.5 w-3.5 shrink-0 text-brand-500" />
+                {improving ? 'Rewriting…' : 'Improve description using AI'}
+              </button>
+              <span className="text-xs text-slate-600">
+                Rewrites what you wrote — it won’t invent salary, benefits, or requirements.
+              </span>
+            </div>
+            {improveError && (
+              <div className="mt-2">
+                <Alert kind="error">{improveError}</Alert>
+              </div>
+            )}
+            {suggestion && (
+              <div className="mt-3 rounded-xl border border-brand-200 bg-brand-50/50 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-slate-700">Suggested rewrite</p>
+                  <span className="text-xs text-slate-600">
+                    {suggestion.trim().split(/\s+/).length} words
+                  </span>
+                </div>
+                <div className="max-h-64 overflow-y-auto rounded-lg bg-white p-3">
+                  <p className="whitespace-pre-wrap text-sm text-slate-700">{suggestion}</p>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDescription(suggestion);
+                      setSuggestion(null);
+                      fieldErrors.clearError('description');
+                    }}
+                    className="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600"
+                  >
+                    Use this
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleImproveDescription}
+                    disabled={improving}
+                    className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+                  >
+                    Try again
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSuggestion(null)}
+                    className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                  >
+                    Discard
+                  </button>
+                </div>
+              </div>
+            )}
           </Field>
 
           <Field label="Required skills">

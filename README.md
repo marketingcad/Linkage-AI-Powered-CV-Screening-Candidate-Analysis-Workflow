@@ -19,6 +19,10 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## Recent updates
 
+- Work arrangement — jobs now say how the role is worked (Onsite, Hybrid, Remote…) as a required choice, separate from the city. Applicants see both on the posting.
+- Write job descriptions faster — one button rewrites your draft into a clear, structured posting. You review it side by side and choose whether to use it; it never invents salary, benefits, or requirements you didn't write.
+- Safer deletions — deleting a job, candidate, teammate, or interview now opens a proper confirmation that spells out exactly what will be destroyed. Deleting a job with candidates asks you to type DELETE first.
+- Paged candidate list — see 10 at a time (or 20, 50, 100) with next/previous, instead of one endless scroll.
 - Offers — draft the terms privately (salary, start date, respond-by date), extend the offer when you're ready, then record whether the candidate accepted or declined. Candidates now see "Offer extended" rather than being told they were hired before they've answered.
 - Know why you lose people — when you turn a candidate down you pick a reason from a set list, grouped by who ended it. Candidates who withdrew are never counted as your rejections.
 - Pipeline health — median time to hire, offer acceptance rate, how many candidates reach each stage, how long each stage takes, and the top reasons candidates exit.

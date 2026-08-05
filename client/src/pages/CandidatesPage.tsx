@@ -19,6 +19,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import CandidateTable from '../components/CandidateTable';
 import CandidateBoard from '../components/CandidateBoard';
+import Pagination, { clampPage } from '../components/Pagination';
 import CompareDialog from '../components/CompareDialog';
 import * as v from '../lib/validators';
 
@@ -64,6 +65,8 @@ export default function CandidatesPage() {
   const [minScore, setMinScore] = useState('');
   const [aiFilter, setAiFilter] = useState<AiFilter>('');
   const [skill, setSkill] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   /**
    * Kept as a string so the field can be blank, but clamped on the way in — a pasted
@@ -153,6 +156,22 @@ export default function CandidatesPage() {
       return true;
     });
   }, [candidates, stage, source, search, minScore, aiFilter, skill]);
+
+  /*
+   * Paging, list view only — the board is a kanban and each column is already its own scroll.
+   *
+   * The page is clamped rather than stored blind: filtering down from 60 candidates to 3 while
+   * sitting on page 5 would otherwise render an empty table with no obvious way back.
+   */
+  const currentPage = clampPage(page, filtered.length, pageSize);
+  useEffect(() => {
+    if (currentPage !== page) setPage(currentPage);
+  }, [currentPage, page]);
+
+  const paged = useMemo(
+    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize],
+  );
 
   const filtersActive = Boolean(stage || search || source || minScore || aiFilter || skill);
   function clearFilters() {
@@ -373,7 +392,7 @@ export default function CandidatesPage() {
           )}
 
           <CandidateTable
-            candidates={filtered}
+            candidates={paged}
             showJob
             selectable
             selectedIds={selected}
@@ -381,10 +400,23 @@ export default function CandidatesPage() {
             duplicateEmails={duplicateEmails}
           />
 
-              <p className="text-xs text-slate-600">
-                Showing {filtered.length} of {candidates.length} candidate
-                {candidates.length === 1 ? '' : 's'}
-              </p>
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={filtered.length}
+                label="candidates"
+                onPageChange={setPage}
+                onPageSizeChange={(n) => {
+                  setPageSize(n);
+                  setPage(1);
+                }}
+              />
+              {filtered.length !== candidates.length && (
+                <p className="text-xs text-slate-600">
+                  Filtered from {candidates.length} candidate
+                  {candidates.length === 1 ? '' : 's'}.
+                </p>
+              )}
             </>
           )}
         </div>

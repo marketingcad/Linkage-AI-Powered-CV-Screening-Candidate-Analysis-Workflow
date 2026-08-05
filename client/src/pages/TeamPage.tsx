@@ -10,6 +10,7 @@ import {
 } from '../api/endpoints';
 import { useAuth } from '../auth/AuthContext';
 import { Alert, Button, Card, Spinner } from '../components/ui';
+import ConfirmDialog from '../components/ConfirmDialog';
 import FieldError from '../components/FieldError';
 import { useFormErrors } from '../lib/useFormErrors';
 import * as v from '../lib/validators';
@@ -29,6 +30,7 @@ export default function TeamPage() {
   const [listError, setListError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<TeamMember | null>(null);
 
   // Invite form
   const [showInvite, setShowInvite] = useState(false);
@@ -95,13 +97,13 @@ export default function TeamPage() {
   }
 
   async function remove(m: TeamMember) {
-    if (!confirm(`Remove ${m.name} from the team? They will lose access immediately.`)) return;
     setNotice(null);
     setListError(null);
     setBusyId(m.id);
     try {
       await removeTeamMember(m.id);
       setMembers((list) => list.filter((x) => x.id !== m.id));
+      setPendingRemove(null);
     } catch (err) {
       setListError(err instanceof Error ? err.message : 'Could not remove that teammate.');
     } finally {
@@ -256,7 +258,7 @@ export default function TeamPage() {
                     aria-label={`Remove ${m.name}`}
                     title={isSelf ? 'You cannot remove your own account' : `Remove ${m.name}`}
                     disabled={isSelf || busyId === m.id}
-                    onClick={() => void remove(m)}
+                    onClick={() => setPendingRemove(m)}
                     className="rounded-md p-1.5 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-rose-950/30"
                   >
                     <LuTrash2 className="h-4 w-4" />
@@ -273,6 +275,26 @@ export default function TeamPage() {
         <p className="mb-0.5"><strong>Admin</strong> — {ROLE_HELP.admin}</p>
         <p><strong>Member</strong> — {ROLE_HELP.member}</p>
       </Card>
+
+      <ConfirmDialog
+        open={pendingRemove != null}
+        title="Remove this teammate?"
+        body={
+          <>
+            <strong className="font-semibold text-slate-800">{pendingRemove?.name}</strong> (
+            {pendingRemove?.email}) will lose access immediately. Notes and ratings they already
+            left stay on the candidates.
+          </>
+        }
+        confirmLabel="Remove access"
+        busy={busyId === pendingRemove?.id}
+        error={listError}
+        onConfirm={() => pendingRemove && void remove(pendingRemove)}
+        onCancel={() => {
+          setPendingRemove(null);
+          setListError(null);
+        }}
+      />
     </div>
   );
 }

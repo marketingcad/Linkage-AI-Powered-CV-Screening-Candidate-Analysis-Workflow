@@ -148,6 +148,24 @@ async function main() {
   await client`ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS tab_away_count integer NOT NULL DEFAULT 0`;
   await client`ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS tab_away_seconds integer NOT NULL DEFAULT 0`;
 
+  // How a role is worked, kept separate from where it is. Existing jobs whose free-text
+  // location already said "Remote" are seeded from it so they aren't left blank; the city text
+  // is deliberately left alone rather than parsed apart.
+  await client`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS work_arrangement varchar(40)`;
+  await client`
+    UPDATE jobs SET work_arrangement = 'Remote'
+    WHERE work_arrangement IS NULL AND location ILIKE '%remote%'`;
+  await client`
+    UPDATE jobs SET work_arrangement = 'Hybrid'
+    WHERE work_arrangement IS NULL AND location ILIKE '%hybrid%'`;
+  // A location that was *only* the arrangement word carries no place information, and leaving
+  // it would render "Remote · Remote" on the posting. Locations naming an actual place are
+  // untouched, so "Remote — Austin, TX" keeps its city.
+  await client`
+    UPDATE jobs SET location = NULL
+    WHERE work_arrangement IS NOT NULL
+      AND lower(btrim(location)) = lower(work_arrangement)`;
+
   // Team roles: collapse the old free-form role column onto 'admin' | 'member'.
   await client`ALTER TABLE hr_users ALTER COLUMN role SET DEFAULT 'member'`;
   await client`UPDATE hr_users SET role = 'member' WHERE role IS NULL OR role <> 'admin'`;
