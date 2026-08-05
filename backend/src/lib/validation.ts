@@ -190,6 +190,29 @@ export const updateStageSchema = z.object({
   reason: z.string().trim().max(200).optional(),
 });
 
+// --- Offers -----------------------------------------------------------------
+
+/** Create or update the offer terms. Kept as a draft until it is explicitly extended. */
+export const upsertOfferSchema = z.object({
+  salaryAmount: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  salaryCurrency: z.string().trim().length(3).toUpperCase().nullable().optional(),
+  startDate: z.coerce.date().nullable().optional(),
+  expiresAt: z.coerce.date().nullable().optional(),
+  notes: z.string().trim().max(5000).nullable().optional(),
+});
+
+/**
+ * Offer lifecycle. Transitions are validated server-side rather than trusting the client,
+ * because the candidate's pipeline stage is derived from this.
+ */
+export const offerActionSchema = z.object({
+  action: z.enum(['extend', 'accept', 'decline', 'withdraw']),
+  /** Required when declining — the counterpart to a rejection reason. */
+  reason: z.string().trim().max(200).optional(),
+  /** Whether to email the candidate about the offer (default true for 'extend'). */
+  notifyCandidate: z.boolean().optional(),
+});
+
 // --- Candidate notes & scorecards -------------------------------------------
 
 export const createNoteSchema = z

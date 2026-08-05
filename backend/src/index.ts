@@ -14,6 +14,7 @@ import { auditRouter } from './routes/audit.js';
 import { interviewsRouter } from './routes/interviews.js';
 import { aiInterviewRouter } from './routes/aiInterview.js';
 import { teamRouter } from './routes/team.js';
+import { offersRouter } from './routes/offers.js';
 import { startRetentionSweeper } from './services/retention.js';
 import { startInterviewReminderSweeper } from './services/interviewReminder.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
@@ -48,6 +49,8 @@ app.use('/api/audit', auditRouter);
 app.use('/api/interviews', interviewsRouter);
 app.use('/api/ai-interview', aiInterviewRouter);
 app.use('/api/team', teamRouter);
+// Offer routes are mounted at /api so they can sit under /candidates/:id/offer.
+app.use('/api', offersRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

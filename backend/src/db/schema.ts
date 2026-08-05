@@ -391,20 +391,41 @@ export const candidateStageEvents = pgTable(
 
 export type CandidateStageEvent = typeof candidateStageEvents.$inferSelect;
 
-/** Structured rejection reasons — a fixed list so they can be counted and compared. */
-export const REJECTION_REASONS = [
-  'Missing required skills',
-  'Not enough experience',
-  'Overqualified',
-  'Failed the assessment',
-  'Interview performance',
-  'Salary expectations',
-  'Location or work authorisation',
-  'Withdrew / unresponsive',
-  'Position filled',
-  'Other',
-] as const;
-export type RejectionReason = (typeof REJECTION_REASONS)[number];
+/**
+ * Who ended it. Kept separate from the reason itself because the distinction is not
+ * cosmetic: a candidate who withdrew leaves the applicant pool, so counting withdrawals
+ * as employer rejections inflates the rejection rate and can invent a statistical
+ * disparity that never happened. Every major ATS splits these for the same reason.
+ */
+export type DispositionCategory = 'employer_rejected' | 'candidate_withdrew' | 'role_cancelled';
+
+/** Fixed reason list so outcomes can be counted, compared, and reviewed per stage. */
+export const REJECTION_REASONS: ReadonlyArray<{ category: DispositionCategory; label: string }> = [
+  // We decided not to proceed.
+  { category: 'employer_rejected', label: 'Missing required skills' },
+  { category: 'employer_rejected', label: 'Not enough experience' },
+  { category: 'employer_rejected', label: 'Overqualified' },
+  { category: 'employer_rejected', label: 'Failed the assessment' },
+  { category: 'employer_rejected', label: 'Interview performance' },
+  { category: 'employer_rejected', label: 'Preferred another candidate' },
+  { category: 'employer_rejected', label: 'Location or work authorisation' },
+  { category: 'employer_rejected', label: 'Other' },
+  // They decided not to proceed.
+  { category: 'candidate_withdrew', label: 'Withdrew' },
+  { category: 'candidate_withdrew', label: 'Declined our offer' },
+  { category: 'candidate_withdrew', label: 'Accepted another offer' },
+  { category: 'candidate_withdrew', label: 'Salary expectations' },
+  { category: 'candidate_withdrew', label: 'Unresponsive' },
+  // The role went away.
+  { category: 'role_cancelled', label: 'Position filled' },
+  { category: 'role_cancelled', label: 'Role closed or on hold' },
+];
+
+export const REJECTION_REASON_LABELS = REJECTION_REASONS.map((r) => r.label);
+
+export function dispositionCategoryFor(label: string): DispositionCategory | null {
+  return REJECTION_REASONS.find((r) => r.label === label)?.category ?? null;
+}
 
 // ---------------------------------------------------------------------------
 // Offers — the stage between interviewing and hired.
