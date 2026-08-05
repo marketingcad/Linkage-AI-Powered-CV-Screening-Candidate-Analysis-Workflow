@@ -27,6 +27,7 @@ import {
   fetchCandidateEmails,
   fetchCandidateNotes,
   fetchInterviews,
+  fetchRejectionReasons,
   generateInterviewQuestions,
   reanalyzeCandidate,
   resendCandidateEmail,
@@ -54,8 +55,10 @@ import type {
   Job,
   QuizAnswer,
   QuizQuestionResult,
+  RejectionReason,
   ScoreComponentKey,
 } from '../api/types';
+import { DISPOSITION_LABELS, DISPOSITION_ORDER } from '../api/types';
 import {
   AiWrittenBadge,
   aiLevel,
@@ -73,6 +76,7 @@ import {
   STAGES,
 } from '../components/ui';
 import ScheduleInterviewDialog from '../components/ScheduleInterviewDialog';
+import OfferCard from '../components/OfferCard';
 import FieldError from '../components/FieldError';
 import { useFormErrors } from '../lib/useFormErrors';
 import * as v from '../lib/validators';
@@ -107,6 +111,10 @@ export default function CandidateDetailPage() {
   // "the candidate itself failed to load" and replaces the whole page.
   const review = useFormErrors<'body'>('note');
   const [stageError, setStageError] = useState<string | null>(null);
+  // A rejection is held here until a reason is picked — see the note on the picker below.
+  const [pendingReject, setPendingReject] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [reasonOptions, setReasonOptions] = useState<RejectionReason[]>([]);
   const [interviewError, setInterviewError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletingCandidate, setDeletingCandidate] = useState(false);
@@ -223,13 +231,15 @@ export default function CandidateDetailPage() {
     }
   }
 
-  async function changeStage(stage: CandidateStage) {
+  async function changeStage(stage: CandidateStage, reason?: string) {
     if (!candidate) return;
     setBusy(true);
     setStageError(null);
     try {
-      const res = await updateCandidateStage(candidate.id, stage);
+      const res = await updateCandidateStage(candidate.id, stage, reason);
       setCandidate((c) => (c ? { ...c, stage: res.candidate.stage } : c));
+      setPendingReject(false);
+      setRejectReason('');
     } catch {
       // The stage is only applied after the server confirms, so nothing to revert —
       // but the buttons would otherwise just snap back with no explanation.
@@ -237,6 +247,28 @@ export default function CandidateDetailPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  /**
+   * Rejections ask for a reason first. Without one, "rejected" is a dead end in the reporting —
+   * you can see how many you lost but never why, and a candidate who withdrew looks identical
+   * to one you turned down.
+   */
+  function onStageClick(stage: CandidateStage) {
+    if (stage === 'rejected') {
+      setStageError(null);
+      setPendingReject(true);
+      if (reasonOptions.length === 0) {
+        fetchRejectionReasons()
+          .then((res) => setReasonOptions(res.reasons))
+          .catch(() => {
+            /* the picker falls back to letting them proceed without a reason */
+          });
+      }
+      return;
+    }
+    setPendingReject(false);
+    void changeStage(stage);
   }
 
   async function reanalyze() {
@@ -463,18 +495,74 @@ export default function CandidateDetailPage() {
               key={s}
               type="button"
               disabled={busy || active}
-              onClick={() => changeStage(s)}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
+              onClick={() => onStageClick(s)}
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
                 active
                   ? 'bg-brand-500 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50'
               }`}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-3.5 w-3.5 shrink-0" />
               {s}
             </button>
           );
         })}
+
+        {pendingReject && (
+          <div className="mt-1 w-full space-y-2 rounded-xl border border-rose-200 bg-rose-50/60 p-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-slate-700">
+                Why is {c.fullName} not moving forward?
+              </span>
+              <select
+                autoFocus
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="w-full max-w-md rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              >
+                <option value="">Select a reason…</option>
+                {DISPOSITION_ORDER.filter((cat) => reasonOptions.some((r) => r.category === cat)).map(
+                  (cat) => (
+                    <optgroup key={cat} label={DISPOSITION_LABELS[cat]}>
+                      {reasonOptions
+                        .filter((r) => r.category === cat)
+                        .map((r) => (
+                          <option key={r.label} value={r.label}>
+                            {r.label}
+                          </option>
+                        ))}
+                    </optgroup>
+                  ),
+                )}
+              </select>
+            </label>
+            <p className="text-xs text-slate-600">
+              Grouped by who ended it — withdrawals aren’t counted as rejections in the reporting.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={busy || !rejectReason}
+                onClick={() => changeStage('rejected', rejectReason)}
+                className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+              >
+                {busy ? 'Saving…' : 'Confirm'}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setPendingReject(false);
+                  setRejectReason('');
+                }}
+                className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {stageError && (
           <div className="w-full">
             <Alert kind="error">{stageError}</Alert>
@@ -831,8 +919,16 @@ export default function CandidateDetailPage() {
           )}
         </div>
 
-        {/* Right: extracted facts */}
+        {/* Right: offer, interviews, extracted facts */}
         <div className="space-y-6">
+          {/* Sits above the interview card because the offer is the last thing that happens —
+              once a candidate is here, it is what the recruiter came to the page to act on. */}
+          <OfferCard
+            candidateId={c.id}
+            canDraft={['interviewing', 'offer', 'hired'].includes(c.stage)}
+            onStageChange={load}
+          />
+
           <Card className="p-5">
             <div className="mb-3 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">

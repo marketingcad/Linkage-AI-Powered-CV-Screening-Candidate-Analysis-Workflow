@@ -17,8 +17,12 @@ import type {
   Interview,
   InterviewMode,
   InterviewStatus,
+  Offer,
+  OfferAction,
+  PipelineStats,
   QuizQuestion,
   RankedCandidate,
+  RejectionReason,
   ScoringWeights,
   Stats,
   TalentMatch,
@@ -218,11 +222,45 @@ export function fetchCandidate(id: string) {
     duplicates: DuplicateApplication[];
   }>(`/candidates/${id}`);
 }
-export function updateCandidateStage(id: string, stage: CandidateStage) {
+/** Move a candidate. `reason` is recorded on the stage event — the basis of the exit metrics. */
+export function updateCandidateStage(id: string, stage: CandidateStage, reason?: string) {
   return apiRequest<{ candidate: Candidate }>(`/candidates/${id}/stage`, {
     method: 'PATCH',
-    body: { stage },
+    body: reason ? { stage, reason } : { stage },
   });
+}
+export function fetchRejectionReasons() {
+  return apiRequest<{ reasons: RejectionReason[] }>('/candidates/rejection-reasons');
+}
+
+// --- HR: offers -------------------------------------------------------------
+export function fetchOffer(candidateId: string) {
+  return apiRequest<{ offer: Offer | null }>(`/candidates/${candidateId}/offer`);
+}
+/** Save the terms. The offer stays a draft until it is explicitly extended. */
+export function saveOffer(
+  candidateId: string,
+  terms: {
+    salaryAmount?: number | null;
+    salaryCurrency?: string | null;
+    startDate?: string | null;
+    expiresAt?: string | null;
+    notes?: string | null;
+  },
+) {
+  return apiRequest<{ offer: Offer }>(`/candidates/${candidateId}/offer`, {
+    method: 'PUT',
+    body: terms,
+  });
+}
+export function actOnOffer(candidateId: string, action: OfferAction, reason?: string) {
+  return apiRequest<{ offer: Offer }>(`/candidates/${candidateId}/offer/action`, {
+    method: 'POST',
+    body: reason ? { action, reason } : { action },
+  });
+}
+export function fetchPipelineStats() {
+  return apiRequest<PipelineStats>('/stats/pipeline');
 }
 export function deleteCandidate(id: string) {
   return apiRequest<{ ok: true }>(`/candidates/${id}`, { method: 'DELETE' });

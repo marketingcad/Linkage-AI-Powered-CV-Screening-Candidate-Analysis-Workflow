@@ -4,6 +4,7 @@ export type CandidateStage =
   | 'shortlisted'
   | 'rejected'
   | 'interviewing'
+  | 'offer'
   | 'hired';
 export type AnalysisStatus = 'pending' | 'processing' | 'completed' | 'failed';
 export type JobStatus = 'open' | 'closed' | 'draft';
@@ -351,6 +352,66 @@ export interface Interview {
   candidateEmail: string | null;
   candidateStage: CandidateStage | null;
   jobTitle: string | null;
+}
+
+export type OfferStatus = 'draft' | 'extended' | 'accepted' | 'declined' | 'expired' | 'withdrawn';
+export type OfferAction = 'extend' | 'accept' | 'decline' | 'withdraw';
+
+/** An offer of employment. Drafted privately, then extended, then answered. */
+export interface Offer {
+  id: string;
+  candidateId: string;
+  jobId: string | null;
+  status: OfferStatus;
+  salaryAmount: number | null;
+  salaryCurrency: string | null;
+  startDate: string | null;
+  expiresAt: string | null;
+  notes: string | null;
+  declineReason: string | null;
+  extendedAt: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Who ended the process, kept separate from why. Merging the two would count a candidate who
+ * withdrew as somebody we rejected, inflating the rejection rate.
+ */
+export type DispositionCategory = 'employer_rejected' | 'candidate_withdrew' | 'role_cancelled';
+export interface RejectionReason {
+  category: DispositionCategory;
+  label: string;
+}
+
+export const DISPOSITION_LABELS: Record<DispositionCategory, string> = {
+  employer_rejected: 'We passed',
+  candidate_withdrew: 'Candidate withdrew',
+  role_cancelled: 'Role closed',
+};
+
+/** Display order for the groups — most common first, so the usual choice needs no scrolling. */
+export const DISPOSITION_ORDER: DispositionCategory[] = [
+  'employer_rejected',
+  'candidate_withdrew',
+  'role_cancelled',
+];
+
+/** Pipeline health metrics derived from the stage-event log. */
+export interface PipelineStats {
+  timeToHire: { hires: number; medianDays: number | null; avgDays: number | null };
+  timeInStage: { stage: string; median_days: number | null; moves: number }[];
+  funnel: { stage: string; candidates: number }[];
+  /** Why candidates left, with the category attributed server-side from the taxonomy. */
+  exitReasons: { reason: string | null; n: number; category: DispositionCategory | null }[];
+  offers: {
+    extended: number;
+    accepted: number;
+    declined: number;
+    outstanding: number;
+    acceptanceRate: number | null;
+  };
 }
 
 export interface Stats {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { count, eq, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { candidates, jobs } from '../db/schema.js';
+import { candidates, dispositionCategoryFor, jobs } from '../db/schema.js';
 import { requireAuth } from '../middleware/auth.js';
 
 export const statsRouter = Router();
@@ -99,13 +99,21 @@ statsRouter.get('/pipeline', async (_req, res) => {
 
   // Why we lose people, split by who ended it — withdrawals must not be counted as our
   // rejections (see the note on the disposition taxonomy in schema.ts).
-  const exitReasons = await db.execute<{ to_stage: string; reason: string | null; n: number }>(sql`
-    SELECT to_stage, reason, count(*)::int AS n
+  const exitRows = await db.execute<{ reason: string | null; n: number }>(sql`
+    SELECT reason, count(*)::int AS n
     FROM candidate_stage_events
-    WHERE to_stage IN ('rejected','offer')
-    GROUP BY to_stage, reason
+    WHERE to_stage = 'rejected'
+    GROUP BY reason
     ORDER BY n DESC
   `);
+
+  // The category is attached here rather than in the client, because the taxonomy that defines
+  // it lives in this package — a client-side copy that drifted by a word would split a bucket.
+  const exitReasons = exitRows.map((r) => ({
+    reason: r.reason,
+    n: r.n,
+    category: r.reason ? dispositionCategoryFor(r.reason) : null,
+  }));
 
   const [offerStats] = await db.execute<{
     extended: number;

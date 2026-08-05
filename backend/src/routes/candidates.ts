@@ -4,7 +4,14 @@ import { randomUUID } from 'node:crypto';
 import multer from 'multer';
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { candidates, candidateNotes, candidateStageEvents, jobs, emailLogs } from '../db/schema.js';
+import {
+  candidates,
+  candidateNotes,
+  candidateStageEvents,
+  jobs,
+  emailLogs,
+  REJECTION_REASONS,
+} from '../db/schema.js';
 import { createNoteSchema, rankCandidatesSchema, updateStageSchema } from '../lib/validation.js';
 import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import { env } from '../config/env.js';
@@ -202,6 +209,17 @@ candidatesRouter.get('/', validate({ query: listQuery }), async (req, res) => {
     );
 
   res.json({ candidates: rows });
+});
+
+/**
+ * The disposition taxonomy the reason picker is built from. Served rather than duplicated in
+ * the client, because the exit-reason metrics group by these exact labels — a client-side copy
+ * that drifted by one word would silently split a category in the reporting.
+ *
+ * Declared before `/:id` so "rejection-reasons" is not read as a candidate id.
+ */
+candidatesRouter.get('/rejection-reasons', (_req, res) => {
+  res.json({ reasons: REJECTION_REASONS });
 });
 
 candidatesRouter.get('/:id', validate({ params: idParams }), async (req, res) => {

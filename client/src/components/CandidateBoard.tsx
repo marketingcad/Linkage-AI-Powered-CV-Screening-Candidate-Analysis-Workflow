@@ -7,6 +7,7 @@ const COLUMNS: { stage: CandidateStage; label: string; dot: string; ring: string
   { stage: 'new', label: 'New', dot: 'bg-slate-400', ring: 'ring-slate-200' },
   { stage: 'shortlisted', label: 'Shortlisted', dot: 'bg-brand-500', ring: 'ring-brand-200' },
   { stage: 'interviewing', label: 'Interviewing', dot: 'bg-violet-500', ring: 'ring-violet-200' },
+  { stage: 'offer', label: 'Offer', dot: 'bg-amber-500', ring: 'ring-amber-200' },
   { stage: 'hired', label: 'Hired', dot: 'bg-emerald-500', ring: 'ring-emerald-200' },
   { stage: 'rejected', label: 'Rejected', dot: 'bg-rose-500', ring: 'ring-rose-200' },
 ];
@@ -41,10 +42,10 @@ export default function CandidateBoard({
 
   return (
     // Columns keep a readable fixed width and the board scrolls sideways, rather than
-    // squeezing five columns into the viewport — at 5-across a column was ~150px, which
+    // squeezing every stage into the viewport — squeezed in, a column was ~150px, which
     // truncated every candidate name to "Nadi…". They stretch to fill only once there's
-    // genuinely room for all five at full width.
-    <div className="flex gap-4 overflow-x-auto pb-4 2xl:grid 2xl:grid-cols-5 2xl:overflow-x-visible">
+    // genuinely room for all of them at full width.
+    <div className="flex gap-4 overflow-x-auto pb-4">
       {COLUMNS.map((col) => {
         const items = byStage(col.stage);
         const isOver = overStage === col.stage;
@@ -63,7 +64,7 @@ export default function CandidateBoard({
               }
             }}
             onDrop={() => handleDrop(col.stage)}
-            className={`flex w-72 shrink-0 flex-col rounded-2xl border bg-slate-50/60 transition-colors 2xl:w-auto 2xl:min-w-0 ${
+            className={`flex w-72 shrink-0 flex-col rounded-2xl border bg-slate-50/60 transition-colors ${
               isOver ? 'border-brand-400 bg-brand-50/70' : 'border-slate-200/70'
             }`}
           >

@@ -5,7 +5,6 @@ import {
   LuArrowRight,
   LuBriefcase,
   LuChartColumn,
-  LuFilter,
   LuGauge,
   LuStar,
   LuTarget,
@@ -15,12 +14,14 @@ import { fetchCandidates, fetchStats } from '../api/endpoints';
 import type { CandidateStage, CandidateSummary, Stats } from '../api/types';
 import { Alert, Card, Skeleton, SourceBadge, STAGE_ICONS, TableSkeleton } from '../components/ui';
 import CandidateTable from '../components/CandidateTable';
+import PipelineHealth from '../components/PipelineHealth';
 
 // Fixed order + colors for the pipeline visualization.
 const STAGE_ORDER: { stage: CandidateStage; label: string; bar: string; text: string }[] = [
   { stage: 'new', label: 'New', bar: 'bg-slate-300', text: 'text-slate-600' },
   { stage: 'shortlisted', label: 'Shortlisted', bar: 'bg-brand-500', text: 'text-brand-600' },
   { stage: 'interviewing', label: 'Interviewing', bar: 'bg-violet-500', text: 'text-violet-600' },
+  { stage: 'offer', label: 'Offer', bar: 'bg-amber-500', text: 'text-amber-600' },
   { stage: 'hired', label: 'Hired', bar: 'bg-emerald-500', text: 'text-emerald-600' },
   { stage: 'rejected', label: 'Rejected', bar: 'bg-rose-400', text: 'text-rose-500' },
 ];
@@ -58,14 +59,6 @@ export default function DashboardPage() {
       count: scored.filter((s) => s >= min && s <= max).length,
     }));
 
-    const inStages = (st: CandidateStage[]) => all.filter((c) => st.includes(c.stage)).length;
-    const funnel = [
-      { label: 'Applied', value: all.length },
-      { label: 'Shortlisted', value: inStages(['shortlisted', 'interviewing', 'hired']) },
-      { label: 'Interviewing', value: inStages(['interviewing', 'hired']) },
-      { label: 'Hired', value: inStages(['hired']) },
-    ];
-
     const srcMap = new Map<string, { count: number; sum: number; n: number; hired: number }>();
     for (const c of all) {
       const e = srcMap.get(c.source) ?? { count: 0, sum: 0, n: 0, hired: 0 };
@@ -91,7 +84,6 @@ export default function DashboardPage() {
       dist,
       maxDist: Math.max(1, ...dist.map((d) => d.count)),
       totalScored: scored.length,
-      funnel,
       sources,
     };
   }, [all]);
@@ -252,71 +244,39 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Analytics: funnel + score distribution */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="animate-rise p-5" style={{ animationDelay: '420ms' }}>
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <LuFilter className="h-4 w-4 text-brand-500" />
-            Recruitment funnel
-          </h2>
-          {analytics.funnel[0]!.value === 0 ? (
-            <EmptyHint text="No candidates yet." />
-          ) : (
-            <div className="space-y-3">
-              {analytics.funnel.map((f, i) => {
-                const base = analytics.funnel[0]!.value || 1;
-                const pct = Math.round((f.value / base) * 100);
-                return (
-                  <div key={f.label}>
-                    <div className="mb-1 flex items-center justify-between text-sm">
-                      <span className="text-slate-600">{f.label}</span>
-                      <span className="font-semibold text-slate-800">
-                        {f.value}{' '}
-                        <span className="text-xs font-normal text-slate-600">({pct}%)</span>
-                      </span>
-                    </div>
-                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className={`h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none ${FUNNEL_COLORS[i] ?? 'bg-slate-400'}`}
-                        style={{ width: grow ? `${pct}%` : '0%' }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+      {/* Pipeline health from the stage-event log. Replaces a funnel that was inferred from
+          current rows: that one counted a shortlisted candidate who was later rejected as never
+          having been shortlisted, so every step above the bottom read low. */}
+      <PipelineHealth />
 
-        <Card className="animate-rise p-5" style={{ animationDelay: '480ms' }}>
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <LuChartColumn className="h-4 w-4 text-brand-500" />
-            Score distribution
-          </h2>
-          {analytics.totalScored === 0 ? (
-            <EmptyHint text="No scored candidates yet." />
-          ) : (
-            <div className="flex h-40 items-end gap-2">
-              {analytics.dist.map((d) => (
+      <Card className="animate-rise p-5" style={{ animationDelay: '480ms' }}>
+        <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <LuChartColumn className="h-4 w-4 text-brand-500" />
+          Score distribution
+        </h2>
+        {analytics.totalScored === 0 ? (
+          <EmptyHint text="No scored candidates yet." />
+        ) : (
+          <div className="flex h-40 items-end gap-2">
+            {analytics.dist.map((d) => (
+              <div
+                key={d.label}
+                className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+              >
+                <span className="text-xs font-semibold text-slate-700">{d.count}</span>
                 <div
-                  key={d.label}
-                  className="flex h-full flex-1 flex-col items-center justify-end gap-1"
-                >
-                  <span className="text-xs font-semibold text-slate-700">{d.count}</span>
-                  <div
-                    className="w-full rounded-t bg-brand-400 transition-[height] duration-700 ease-out motion-reduce:transition-none"
-                    style={{
-                      height: grow ? `${Math.round((d.count / analytics.maxDist) * 78)}%` : '0%',
-                      minHeight: grow && d.count ? 4 : 0,
-                    }}
-                  />
-                  <span className="text-[10px] text-slate-600">{d.label}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
+                  className="w-full rounded-t bg-brand-400 transition-[height] duration-700 ease-out motion-reduce:transition-none"
+                  style={{
+                    height: grow ? `${Math.round((d.count / analytics.maxDist) * 78)}%` : '0%',
+                    minHeight: grow && d.count ? 4 : 0,
+                  }}
+                />
+                <span className="text-[10px] text-slate-600">{d.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       {/* Source effectiveness */}
       <Card className="animate-rise p-5" style={{ animationDelay: '540ms' }}>
@@ -378,7 +338,6 @@ function EmptyHint({ text }: { text: string }) {
   );
 }
 
-const FUNNEL_COLORS = ['bg-slate-400', 'bg-brand-500', 'bg-violet-500', 'bg-emerald-500'];
 
 const TINTS: Record<string, string> = {
   brand: 'bg-brand-50 text-brand-600',

@@ -11,6 +11,7 @@ import {
   LuCircleHelp,
   LuClock,
   LuGlobe,
+  LuHandshake,
   LuInbox,
   LuLink,
   LuLoaderCircle,
@@ -35,6 +36,7 @@ export const STAGE_ICONS: Record<CandidateStage, IconType> = {
   new: LuInbox,
   shortlisted: LuStar,
   interviewing: LuCalendarCheck,
+  offer: LuHandshake,
   hired: LuTrophy,
   rejected: LuCircleX,
 };
@@ -162,6 +164,7 @@ const STAGE_META: Record<CandidateStage, { label: string; cls: string }> = {
   new: { label: 'New', cls: 'bg-slate-100 text-slate-600' },
   shortlisted: { label: 'Shortlisted', cls: 'bg-brand-100 text-brand-700' },
   interviewing: { label: 'Interviewing', cls: 'bg-violet-100 text-violet-700' },
+  offer: { label: 'Offer', cls: 'bg-amber-100 text-amber-700' },
   hired: { label: 'Hired', cls: 'bg-emerald-100 text-emerald-700' },
   rejected: { label: 'Rejected', cls: 'bg-rose-100 text-rose-700' },
 };
@@ -241,7 +244,7 @@ export function Alert({
   );
 }
 
-export const STAGES: CandidateStage[] = ['new', 'shortlisted', 'interviewing', 'hired', 'rejected'];
+export const STAGES: CandidateStage[] = ['new', 'shortlisted', 'interviewing', 'offer', 'hired', 'rejected'];
 
 const SOURCE_META: Record<string, { label: string; cls: string; Icon: IconType }> = {
   indeed: { label: 'Indeed', cls: 'bg-blue-100 text-blue-700', Icon: SiIndeed },

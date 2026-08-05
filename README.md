@@ -19,7 +19,10 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## Recent updates
 
-- AI voice interviews (work in progress) — schedule an interview that an AI interviewer runs as a recorded video call, then review the recording, transcript, and an AI summary next to your own rating.
+- Offers — draft the terms privately (salary, start date, respond-by date), extend the offer when you're ready, then record whether the candidate accepted or declined. Candidates now see "Offer extended" rather than being told they were hired before they've answered.
+- Know why you lose people — when you turn a candidate down you pick a reason from a set list, grouped by who ended it. Candidates who withdrew are never counted as your rejections.
+- Pipeline health — median time to hire, offer acceptance rate, how many candidates reach each stage, how long each stage takes, and the top reasons candidates exit.
+- AI voice interviews — schedule an interview that an AI interviewer runs as a recorded video call, then review the recording, transcript, and an AI summary next to your own rating.
 - Interview room — candidates get a Meet-style call: a camera and mic check before joining, then the AI interviewer and the candidate side by side, with a recording indicator, a timer, and mute controls.
 - Spoken consent — the AI opens by saying it is an AI, that the call is recorded, and that a person makes the decision, then asks the candidate to confirm before starting.
 - Interview scoring you can defend — each interview is rated against the role's requirements on a 1–5 scale, with a quote showing what earned each rating. Areas the interview never covered are marked "not assessed" instead of counting against the candidate.

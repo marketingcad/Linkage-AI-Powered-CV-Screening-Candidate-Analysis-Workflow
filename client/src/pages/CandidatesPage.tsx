@@ -27,6 +27,7 @@ const STAGE_FILTERS: { value: '' | CandidateStage; label: string }[] = [
   { value: 'new', label: 'New' },
   { value: 'shortlisted', label: 'Shortlisted' },
   { value: 'interviewing', label: 'Interviewing' },
+  { value: 'offer', label: 'Offer' },
   { value: 'hired', label: 'Hired' },
   { value: 'rejected', label: 'Rejected' },
 ];
