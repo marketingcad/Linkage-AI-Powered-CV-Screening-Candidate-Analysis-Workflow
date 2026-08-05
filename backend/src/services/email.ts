@@ -311,12 +311,14 @@ export function newApplicationAlertEmail(info: NewApplicationInfo) {
   const html = layout({
     heading: 'New application received',
     tone: 'neutral',
-    bodyHtml: `A new candidate has applied and been screened by AI.<br/><br/>${rows}`,
+    // Says what the recruiter should do, not how the scoring happened. It cannot claim the
+    // team has reviewed the candidate — this fires before anyone has seen them.
+    bodyHtml: `A new candidate has applied and is ready for your team to review.<br/><br/>${rows}`,
     ctaLabel: 'Review candidate',
     ctaUrl: reviewUrl,
   });
   const text = [
-    'A new candidate has applied and been screened by AI.',
+    'A new candidate has applied and is ready for your team to review.',
     '',
     `Candidate: ${info.candidateName}`,
     `Role: ${info.jobTitle}`,
