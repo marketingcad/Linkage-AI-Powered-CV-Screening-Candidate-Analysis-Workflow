@@ -116,7 +116,10 @@ export const createJobSchema = z.object({
   title: z.string().min(2).max(255),
   department: z.string().max(255).optional(),
   location: z.string().max(255).optional(),
-  employmentType: z.string().max(100).optional(),
+  // Required, but still a free string rather than an enum: the UI offers a fixed list while
+  // jobs created before that list existed keep whatever value they were saved with, and
+  // rejecting those would make an old job impossible to edit.
+  employmentType: z.string().trim().min(1, 'Employment type is required.').max(100),
   description: z.string().min(10).max(20_000),
   requiredSkills: z.array(z.string().min(1).max(100)).max(50).default([]),
   niceToHaveSkills: z.array(z.string().min(1).max(100)).max(50).default([]),

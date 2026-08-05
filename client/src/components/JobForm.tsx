@@ -23,8 +23,21 @@ import { useFormErrors } from '../lib/useFormErrors';
 import * as v from '../lib/validators';
 import QuizBuilder from './QuizBuilder';
 
-/** No shared LIMITS entry — the server caps employment type at 100 characters. */
-const EMPLOYMENT_TYPE_MAX = 100;
+/**
+ * Fixed set of employment types. Free text produced inconsistent values ("Full-time",
+ * "full time", "FT") that candidates then saw on the public listing and that made the
+ * jobs list impossible to filter reliably.
+ */
+export const EMPLOYMENT_TYPES = [
+  'Full-time',
+  'Part-time',
+  'Contract',
+  'Temporary',
+  'Internship',
+  'Apprenticeship',
+  'Freelance',
+] as const;
+export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
 
 export default function JobForm({
   existing,
@@ -103,7 +116,7 @@ export default function JobForm({
         v.maxLen(title, v.LIMITS.jobTitle, 'Job title'),
       department: v.maxLen(department, v.LIMITS.jobTitle, 'Department'),
       location: v.maxLen(location, v.LIMITS.location, 'Location'),
-      employmentType: v.maxLen(employmentType, EMPLOYMENT_TYPE_MAX, 'Employment type'),
+      employmentType: employmentType.trim() ? undefined : 'Select an employment type.',
       description:
         v.required(description, 'Description') ??
         v.minLen(description, 10, 'Description') ??
@@ -196,15 +209,25 @@ export default function JobForm({
                 {...fieldErrors.fieldProps('location')}
               />
             </Field>
-            <Field label="Employment type" error={fieldErrors.errors.employmentType} errorId={fieldErrors.errorId('employmentType')}>
-              <input
-                maxLength={EMPLOYMENT_TYPE_MAX}
+            <Field label="Employment type" required error={fieldErrors.errors.employmentType} errorId={fieldErrors.errorId('employmentType')}>
+              <select
                 value={employmentType}
                 onChange={(e) => { setEmploymentType(e.target.value); fieldErrors.clearError('employmentType'); }}
                 className={inputCls}
-                placeholder="Full-time"
                 {...fieldErrors.fieldProps('employmentType')}
-              />
+              >
+                <option value="">Select an employment type…</option>
+                {EMPLOYMENT_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+                {/* A job saved before this became a fixed list keeps its value as an option,
+                    so editing an old job can't silently rewrite it. */}
+                {employmentType && !EMPLOYMENT_TYPES.includes(employmentType as EmploymentType) && (
+                  <option value={employmentType}>{employmentType}</option>
+                )}
+              </select>
             </Field>
           </div>
 
