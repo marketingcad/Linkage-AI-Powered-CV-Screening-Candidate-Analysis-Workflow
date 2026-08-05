@@ -301,9 +301,9 @@ export function newApplicationAlertEmail(info: NewApplicationInfo) {
     `<b>Candidate:</b> ${escapeHtml(info.candidateName)}`,
     `<b>Role:</b> ${escapeHtml(info.jobTitle)}`,
     `<b>Source:</b> ${escapeHtml(info.source)}`,
-    info.overallScore != null ? `<b>AI score:</b> ${info.overallScore}/100` : null,
+    info.overallScore != null ? `<b>Match score:</b> ${info.overallScore}/100` : null,
     info.recommendation
-      ? `<b>AI recommendation:</b> ${escapeHtml(RECOMMENDATION_LABEL[info.recommendation] ?? info.recommendation)}`
+      ? `<b>Recommendation:</b> ${escapeHtml(RECOMMENDATION_LABEL[info.recommendation] ?? info.recommendation)}`
       : null,
   ]
     .filter(Boolean)
@@ -323,8 +323,8 @@ export function newApplicationAlertEmail(info: NewApplicationInfo) {
     `Candidate: ${info.candidateName}`,
     `Role: ${info.jobTitle}`,
     `Source: ${info.source}`,
-    info.overallScore != null ? `AI score: ${info.overallScore}/100` : '',
-    info.recommendation ? `AI recommendation: ${RECOMMENDATION_LABEL[info.recommendation] ?? info.recommendation}` : '',
+    info.overallScore != null ? `Match score: ${info.overallScore}/100` : '',
+    info.recommendation ? `Recommendation: ${RECOMMENDATION_LABEL[info.recommendation] ?? info.recommendation}` : '',
     '',
     `Review: ${reviewUrl}`,
   ]
