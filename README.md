@@ -15,30 +15,22 @@ Google Gemini, and presents recruiters with ranked, structured insights.
   and a recommendation.
 - **HR dashboard** (JWT-protected) — overview stats, job management, candidates ranked by
   score, full per-candidate analysis, pipeline stages (new → shortlisted → interviewing →
-  hired / rejected), CV download, and one-click re-analysis.
+  offer → hired, or rejected at any point), CV download, and one-click re-analysis.
 
 ## Recent updates
 
-- Work arrangement — jobs now say how the role is worked (Onsite, Hybrid, Remote…) as a required choice, separate from the city. Applicants see both on the posting.
-- Write job descriptions faster — one button rewrites your draft into a clear, structured posting. You review it side by side and choose whether to use it; it never invents salary, benefits, or requirements you didn't write.
-- Safer deletions — deleting a job, candidate, teammate, or interview now opens a proper confirmation that spells out exactly what will be destroyed. Deleting a job with candidates asks you to type DELETE first.
-- Paged candidate list — see 10 at a time (or 20, 50, 100) with next/previous, instead of one endless scroll.
-- Offers — draft the terms privately (salary, start date, respond-by date), extend the offer when you're ready, then record whether the candidate accepted or declined. Candidates now see "Offer extended" rather than being told they were hired before they've answered.
+- Offers — draft the terms privately (salary, start date, respond-by date), extend the offer when you are ready, then record whether the candidate accepted or declined. Candidates now see "Offer extended" instead of being told they were hired before they have answered.
 - Know why you lose people — when you turn a candidate down you pick a reason from a set list, grouped by who ended it. Candidates who withdrew are never counted as your rejections.
-- Pipeline health — median time to hire, offer acceptance rate, how many candidates reach each stage, how long each stage takes, and the top reasons candidates exit.
-- AI voice interviews — schedule an interview that an AI interviewer runs as a recorded video call, then review the recording, transcript, and an AI summary next to your own rating.
-- Interview room — candidates get a Meet-style call: a camera and mic check before joining, then the AI interviewer and the candidate side by side, with a recording indicator, a timer, and mute controls.
-- Spoken consent — the AI opens by saying it is an AI, that the call is recorded, and that a person makes the decision, then asks the candidate to confirm before starting.
-- Interview scoring you can defend — each interview is rated against the role's requirements on a 1–5 scale, with a quote showing what earned each rating. Areas the interview never covered are marked "not assessed" instead of counting against the candidate.
-- Recordings library — every recorded AI interview in one place, searchable by candidate and filterable by role.
-- Team accounts — invite colleagues as Admin or Member. Members can review candidates and leave ratings but cannot delete records, export data, or manage the team.
-- Interview scheduling — book interviews on a calendar, auto-email candidates their invite, and get a reminder before each one. Warns you about double-bookings.
-- Email alerts & notifications — recruiters are emailed when someone applies, plus a header bell that flags new candidates.
-- Interview outcomes — mark interviews Completed or No-show and leave a quick scorecard.
-- Faster screening — upload CVs in bulk, resurface strong past applicants, auto-flag duplicate applications, and filter or search candidates instantly.
-- Easier job management — quick per-job actions (available, unavailable, duplicate, delete) and friendly pages when a role is closed or a link is broken.
-- Candidate availability — applicants can suggest preferred interview times right on the application form, captured in their own timezone and shown to recruiters in both zones (invites, too).
-- Analytics dashboard — see your pipeline, application sources, and score trends at a glance.
+- Pipeline health — median time to hire, offer acceptance rate, how many candidates reach each stage, how long each stage takes, and the top reasons people drop out.
+- Time to fill — record when a role was approved to hire for, then see how long roles take to fill and how long your open roles have been waiting.
+- The whole pipeline on one screen — the candidate board shows all six stages side by side on a desktop, with no sideways scrolling and no cut-off names.
+- Clearer job setup — say how the role is worked (Onsite, Hybrid, Remote) separately from the city, pick an employment type from a list, and add skills one at a time as removable tags.
+- Write job descriptions faster — one button rewrites your draft into a clear posting. You review it side by side and choose whether to use it, and it never invents salary, benefits, or requirements you did not write.
+- Safer deletions — deleting a job, candidate, teammate, or interview now opens a confirmation that spells out exactly what will be destroyed. Deleting a job that still has candidates asks you to type DELETE first.
+- Paged candidate list — see 10 at a time (or 20, 50, 100) with next and previous, instead of one endless scroll.
+- You can see it working — a slim progress bar runs across the top while a page loads, pages fill in with placeholder layouts instead of a bare spinner, and turning a page shows a spinner while it swaps.
+- Check your password before saving — the change-password fields have an eye icon to show or hide what you typed.
+- Optional fields say so — the portfolio and GitHub link on the application form is now clearly marked optional.
 
 ## Tech stack
 
