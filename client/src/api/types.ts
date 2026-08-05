@@ -114,6 +114,8 @@ export interface JobSummary {
   workArrangement: string | null;
   employmentType: string | null;
   status: JobStatus;
+  /** When the role was approved to hire for — starts the time-to-fill clock. */
+  requisitionApprovedAt: string | null;
   minYearsExperience: number | null;
   requiredSkills: string[];
   createdAt: string;
@@ -151,6 +153,8 @@ export interface Job {
   quiz: QuizQuestion[];
   scoringWeights: ScoringWeights;
   status: JobStatus;
+  /** When the role was approved to hire for — starts the time-to-fill clock. */
+  requisitionApprovedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -406,6 +410,10 @@ export const DISPOSITION_ORDER: DispositionCategory[] = [
 /** Pipeline health metrics derived from the stage-event log. */
 export interface PipelineStats {
   timeToHire: { hires: number; medianDays: number | null; avgDays: number | null };
+  /** Requisition approved → first hire for that role. */
+  timeToFill: { filled: number; medianDays: number | null; avgDays: number | null };
+  /** Approved roles still open with nobody hired yet. */
+  openRequisitions: { open: number; medianAgeDays: number | null; oldestDays: number | null };
   timeInStage: { stage: string; median_days: number | null; moves: number }[];
   funnel: { stage: string; candidates: number }[];
   /** Candidates who reached both stages — the numerator for step conversion. */

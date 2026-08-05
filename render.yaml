@@ -1,0 +1,126 @@
+# Render blueprint — the two services this app runs in production.
+#
+# The point of committing this is the `type:` of each service. The API is a web service; the
+# interview agent is NOT. It opens no port and serves no HTTP — it holds a persistent
+# connection to LiveKit and waits for rooms to be dispatched to it. Running it as a web
+# service means Render's port health check can never pass, and you pay web-service rates for
+# what is a queue consumer.
+#
+# Secrets are declared with `sync: false`: Render prompts for them once and stores them on the
+# service. Nothing secret is committed here.
+#
+# Render cannot convert an existing web service into a worker in place — see the migration
+# steps in SETUP_GUIDE.md.
+
+services:
+  # --------------------------------------------------------------------------
+  # API — the only service that accepts inbound traffic.
+  # --------------------------------------------------------------------------
+  - type: web
+    name: linkage-api
+    runtime: node
+    rootDir: backend
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Supabase session pooler, never the direct db.<ref>.supabase.co host — that one is
+      # IPv6-only and fails from IPv4 hosts.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: APP_PUBLIC_URL
+        sync: false
+      - key: GEMINI_API_KEY_CV_SCREENING
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false
+      # LiveKit: the API mints join tokens and starts/stops the recording egress.
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      # Recording storage. These belong HERE and not on the agent: the API is what calls
+      # EgressClient. Setting them on the agent instead is why recordings silently came back
+      # as `recordingEnabled: false` — the agent read them and did nothing with them.
+      - key: AI_RECORDING_S3_BUCKET
+        sync: false
+      - key: AI_RECORDING_S3_REGION
+        sync: false
+      - key: AI_RECORDING_S3_ENDPOINT
+        sync: false
+      - key: AI_RECORDING_S3_ACCESS_KEY
+        sync: false
+      - key: AI_RECORDING_S3_SECRET_KEY
+        sync: false
+      # Shared with the agent — authorizes its completion callback. Must match exactly.
+      - key: AGENT_SHARED_SECRET
+        sync: false
+      # CV storage. Without these, uploads have nowhere to go.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_CV_BUCKET
+        sync: false
+      # SMTP (optional — without it, emails are logged as "skipped" rather than failing).
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: RECRUITER_NOTIFY_EMAIL
+        sync: false
+      # How long candidate data is kept before the retention sweeper erases it.
+      - key: DATA_RETENTION_DAYS
+        sync: false
+
+  # --------------------------------------------------------------------------
+  # AI interview agent — a background worker. No port, no health check, no URL.
+  # --------------------------------------------------------------------------
+  - type: worker
+    name: linkage-interview-agent
+    runtime: node
+    rootDir: agent
+    # Gemini Live audio is memory-hungry; this was OOM-killed on 512MB.
+    plan: standard
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Read implicitly by @livekit/agents when the worker registers. Same LiveKit project as
+      # the API, or the worker will never be offered the rooms the API creates.
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      # Gemini Live — a different key/model from the CV-screening one above.
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GEMINI_LIVE_MODEL
+        sync: false
+      # Where the agent posts the transcript when an interview ends, and the secret that
+      # authorizes it. BACKEND_URL is the API's ROOT url with NO trailing /api — the agent
+      # appends the /api/... path itself.
+      - key: BACKEND_URL
+        sync: false
+      - key: AGENT_SHARED_SECRET
+        sync: false

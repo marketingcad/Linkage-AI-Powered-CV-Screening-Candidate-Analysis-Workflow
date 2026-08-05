@@ -160,6 +160,8 @@ export interface JobInput {
   location?: string;
   workArrangement?: string;
   employmentType?: string;
+  /** ISO date. Omit to let the server stamp it when the role is first opened. */
+  requisitionApprovedAt?: string | null;
   description: string;
   requiredSkills: string[];
   niceToHaveSkills: string[];

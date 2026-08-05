@@ -72,6 +72,61 @@ statsRouter.get('/pipeline', async (_req, res) => {
     FROM hired h JOIN applied a USING (candidate_id)
   `);
 
+  /*
+   * Time to fill: requisition approved → the role's first hire.
+   *
+   * A different clock from time-to-hire above, and the one execs usually mean. Time-to-hire
+   * measures a candidate (applied → hired) and so ignores however long the role sat open
+   * before anyone applied; this measures the role.
+   *
+   * Roles approved but not yet filled are excluded — counting them as 0 would drag the median
+   * down exactly when hiring is slow. They are reported separately as open requisitions.
+   */
+  const [fillTime] = await db.execute<{
+    filled: number;
+    median_days: number | null;
+    avg_days: number | null;
+  }>(sql`
+    WITH first_hire AS (
+      SELECT c.job_id, min(e.created_at) AS hired_at
+      FROM candidate_stage_events e
+      JOIN candidates c ON c.id = e.candidate_id
+      WHERE e.to_stage = 'hired'
+      GROUP BY c.job_id
+    )
+    SELECT
+      count(*)::int AS filled,
+      percentile_cont(0.5) WITHIN GROUP (
+        ORDER BY EXTRACT(EPOCH FROM (h.hired_at - j.requisition_approved_at)) / 86400
+      )::float8 AS median_days,
+      avg(EXTRACT(EPOCH FROM (h.hired_at - j.requisition_approved_at)) / 86400)::float8 AS avg_days
+    FROM first_hire h
+    JOIN jobs j ON j.id = h.job_id
+    WHERE j.requisition_approved_at IS NOT NULL
+      -- Guards against a backdated approval landing after its own hire, which would
+      -- contribute a negative duration and silently pull the median below zero.
+      AND h.hired_at >= j.requisition_approved_at
+  `);
+
+  // Roles approved and still open with nobody hired — the number that makes the approval date
+  // useful from day one, before any hire exists to measure.
+  const [openReqs] = await db.execute<{ open: number; median_age_days: number | null; oldest_days: number | null }>(sql`
+    SELECT
+      count(*)::int AS open,
+      percentile_cont(0.5) WITHIN GROUP (
+        ORDER BY EXTRACT(EPOCH FROM (now() - j.requisition_approved_at)) / 86400
+      )::float8 AS median_age_days,
+      max(EXTRACT(EPOCH FROM (now() - j.requisition_approved_at)) / 86400)::float8 AS oldest_days
+    FROM jobs j
+    WHERE j.status = 'open'
+      AND j.requisition_approved_at IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM candidate_stage_events e
+        JOIN candidates c ON c.id = e.candidate_id
+        WHERE c.job_id = j.id AND e.to_stage = 'hired'
+      )
+  `);
+
   // How long candidates sit in each stage before moving on. Only completed spells count —
   // an open-ended current stage has no duration yet and would skew the average down.
   const timeInStage = await db.execute<{ stage: string; median_days: number | null; moves: number }>(sql`
@@ -160,6 +215,16 @@ statsRouter.get('/pipeline', async (_req, res) => {
       hires: hireTime?.hires ?? 0,
       medianDays: hireTime?.median_days ?? null,
       avgDays: hireTime?.avg_days ?? null,
+    },
+    timeToFill: {
+      filled: fillTime?.filled ?? 0,
+      medianDays: fillTime?.median_days ?? null,
+      avgDays: fillTime?.avg_days ?? null,
+    },
+    openRequisitions: {
+      open: openReqs?.open ?? 0,
+      medianAgeDays: openReqs?.median_age_days ?? null,
+      oldestDays: openReqs?.oldest_days ?? null,
     },
     timeInStage,
     funnel: reached,

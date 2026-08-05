@@ -129,8 +129,12 @@ Recommended topology:
 | Piece                | Host      | Type                    |
 | -------------------- | --------- | ----------------------- |
 | Backend (Express API)| Render    | Web Service (Node)      |
+| AI interview agent   | Render    | **Background Worker** (no inbound port) |
 | Frontend (Vite SPA)  | Vercel    | Static site             |
 | Database             | Supabase  | Already hosted (Postgres) |
+
+Both Render services are declared in [`render.yaml`](render.yaml), which is the authoritative
+record of each one's type and environment variables.
 
 Deploy in this order — the frontend needs the backend URL, and the backend's CORS
 needs the frontend URL:
@@ -303,6 +307,23 @@ AI_RECORDING_S3_SECRET_KEY=...
 
 Run the migration once against the production DB (idempotent — creates `interview_sessions`):
 `cd backend && DATABASE_URL="<prod url>" npx tsx src/scripts/migrateScoringColumns.ts`.
+
+> **Already running the agent as a Web Service?** Render cannot change a service's type in
+> place, so it has to be recreated. Nothing is lost — the agent is stateless; it holds no data
+> and no queue, it just waits to be handed rooms.
+>
+> 1. Render → **New → Background Worker** → same repo, settings from the table below.
+> 2. Copy the seven env vars across (`Environment` tab on the old service). Do **not** copy the
+>    `AI_RECORDING_S3_*` vars — those belong on the API, which is what calls the egress. They
+>    do nothing on the agent.
+> 3. Deploy it and watch the logs for `registered worker` — that means it has connected to
+>    LiveKit and is waiting for rooms.
+> 4. Run one test interview end to end and confirm the transcript comes back.
+> 5. **Only then** suspend the old Web Service. Leave it suspended for a day before deleting,
+>    so there is something to fall back to.
+>
+> Both workers can run at once during the overlap: LiveKit dispatches each room to exactly one
+> available worker, so the worst case is that a test call is answered by the old one.
 
 **Agent worker → Render** (**Background Worker**, not a Web Service — it has no inbound port):
 

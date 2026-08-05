@@ -131,6 +131,15 @@ export const jobs = pgTable('jobs', {
    */
   workArrangement: varchar('work_arrangement', { length: 40 }),
   employmentType: varchar('employment_type', { length: 100 }),
+  /**
+   * When this role was approved to hire for — the start of the clock for time-to-fill.
+   *
+   * Distinct from `createdAt`, which is when the row was typed into this app, and from a
+   * candidate's application date, which starts the separate time-to-hire clock. Set
+   * automatically the first time a job is opened, and editable so a req approved before it was
+   * entered here can be dated accurately.
+   */
+  requisitionApprovedAt: timestamp('requisition_approved_at', { withTimezone: true }),
   description: text('description').notNull(),
   // Structured requirements the AI scores against
   requiredSkills: jsonb('required_skills').$type<string[]>().notNull().default(sql`'[]'::jsonb`),

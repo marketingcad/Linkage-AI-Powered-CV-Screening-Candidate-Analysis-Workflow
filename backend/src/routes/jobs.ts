@@ -203,6 +203,7 @@ jobsRouter.get('/', async (_req, res) => {
       workArrangement: jobs.workArrangement,
       employmentType: jobs.employmentType,
       status: jobs.status,
+      requisitionApprovedAt: jobs.requisitionApprovedAt,
       minYearsExperience: jobs.minYearsExperience,
       requiredSkills: jobs.requiredSkills,
       createdAt: jobs.createdAt,
@@ -225,16 +226,44 @@ jobsRouter.post('/', async (req, res) => {
   const input = createJobSchema.parse(req.body);
   const [job] = await db
     .insert(jobs)
-    .values({ ...input, createdBy: req.user!.sub })
+    .values({
+      ...input,
+      createdBy: req.user!.sub,
+      // A job created straight into 'open' is approved as of now. A draft is not approved
+      // yet — it gets its timestamp when someone opens it.
+      requisitionApprovedAt:
+        input.requisitionApprovedAt ?? (input.status === 'draft' ? null : new Date()),
+    })
     .returning();
   res.status(201).json({ job });
 });
 
 jobsRouter.put('/:id', validate({ params: idParams }), async (req, res) => {
   const input = updateJobSchema.parse(req.body);
+
+  const [existing] = await db
+    .select({ requisitionApprovedAt: jobs.requisitionApprovedAt })
+    .from(jobs)
+    .where(eq(jobs.id, req.params.id))
+    .limit(1);
+  if (!existing) throw notFound('Job not found');
+
+  /*
+   * Stamp the approval date the first time a role is opened, and never again.
+   *
+   * Re-stamping on every save would reset the clock each time someone edited the job, and
+   * closing then reopening a role would erase how long it had already been open — which is
+   * exactly the history time-to-fill exists to measure. An explicit value in the request
+   * always wins, so a req approved before it was entered here can still be dated correctly.
+   */
+  const approvedAt =
+    input.requisitionApprovedAt !== undefined
+      ? input.requisitionApprovedAt
+      : existing.requisitionApprovedAt ?? (input.status && input.status !== 'draft' ? new Date() : null);
+
   const [job] = await db
     .update(jobs)
-    .set({ ...input, updatedAt: new Date() })
+    .set({ ...input, requisitionApprovedAt: approvedAt, updatedAt: new Date() })
     .where(eq(jobs.id, req.params.id))
     .returning();
   if (!job) throw notFound('Job not found');
@@ -259,6 +288,7 @@ jobsRouter.post('/:id/duplicate', validate({ params: idParams }), async (req, re
       title: `${orig.title} (Copy)`,
       department: orig.department,
       location: orig.location,
+      workArrangement: orig.workArrangement,
       employmentType: orig.employmentType,
       description: orig.description,
       requiredSkills: orig.requiredSkills,

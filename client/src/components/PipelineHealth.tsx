@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LuClock, LuHandshake, LuTrendingDown } from 'react-icons/lu';
+import { LuBriefcase, LuClock, LuHandshake, LuHourglass, LuTrendingDown } from 'react-icons/lu';
 import { fetchPipelineStats } from '../api/endpoints';
 import { DISPOSITION_LABELS, DISPOSITION_ORDER } from '../api/types';
 import type { DispositionCategory, PipelineStats } from '../api/types';
@@ -76,8 +76,9 @@ export default function PipelineHealth() {
         </p>
       ) : (
         <div className="space-y-6">
-          {/* Headline numbers */}
-          <div className="grid gap-3 sm:grid-cols-3">
+          {/* Headline numbers — five of them, so they wrap 2/3 on narrow screens rather than
+              leaving a lone tile stranded on its own row. */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             <Kpi
               Icon={LuClock}
               label="Median time to hire"
@@ -103,6 +104,31 @@ export default function PipelineHealth() {
               label="Applied → hired"
               value={applied === 0 ? '—' : `${Math.round(((reached.get('hired') ?? 0) / applied) * 100)}%`}
               caption={`${reached.get('hired') ?? 0} of ${applied} applicants`}
+            />
+            {/* Time to fill measures the role, not the candidate: it starts when the
+                requisition was approved, so it counts the weeks a job sat open before anyone
+                applied — which time-to-hire above cannot see. */}
+            <Kpi
+              Icon={LuBriefcase}
+              label="Median time to fill"
+              value={days(data.timeToFill?.medianDays)}
+              caption={
+                !data.timeToFill?.filled
+                  ? 'no roles filled yet'
+                  : `across ${data.timeToFill.filled} role${data.timeToFill.filled === 1 ? '' : 's'}`
+              }
+            />
+            <Kpi
+              Icon={LuHourglass}
+              label="Open requisitions"
+              value={data.openRequisitions?.open ? String(data.openRequisitions.open) : '—'}
+              caption={
+                !data.openRequisitions?.open
+                  ? 'none open and unfilled'
+                  : `open ${days(data.openRequisitions.medianAgeDays)} median · oldest ${days(
+                      data.openRequisitions.oldestDays,
+                    )}`
+              }
             />
           </div>
 

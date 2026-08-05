@@ -135,6 +135,8 @@ export const createJobSchema = z.object({
   educationRequirement: z.string().max(2000).nullable().optional(),
   quiz: z.array(quizQuestionSchema).max(30).default([]),
   scoringWeights: scoringWeightsSchema.optional(),
+  /** Backdatable, so a req approved before it was entered here can be dated accurately. */
+  requisitionApprovedAt: z.coerce.date().nullable().optional(),
   status: z.enum(['open', 'closed', 'draft']).default('open'),
 });
 

@@ -166,6 +166,16 @@ async function main() {
     WHERE work_arrangement IS NOT NULL
       AND lower(btrim(location)) = lower(work_arrangement)`;
 
+  // When the role was approved to hire for — the start of the time-to-fill clock.
+  await client`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS requisition_approved_at timestamptz`;
+  // Backfill from created_at for roles that are already open or closed. In this app a job row
+  // is created when the role is approved, so created_at is the honest proxy — and without it
+  // time-to-fill would read "no data" for every role that already exists. Draft jobs are left
+  // null: they have not been approved yet, and they get their timestamp when opened.
+  await client`
+    UPDATE jobs SET requisition_approved_at = created_at
+    WHERE requisition_approved_at IS NULL AND status <> 'draft'`;
+
   // Team roles: collapse the old free-form role column onto 'admin' | 'member'.
   await client`ALTER TABLE hr_users ALTER COLUMN role SET DEFAULT 'member'`;
   await client`UPDATE hr_users SET role = 'member' WHERE role IS NULL OR role <> 'admin'`;

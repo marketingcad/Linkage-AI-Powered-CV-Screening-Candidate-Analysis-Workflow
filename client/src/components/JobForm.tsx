@@ -84,6 +84,10 @@ export default function JobForm({
     existing?.scoringWeights ?? DEFAULT_SCORING_WEIGHTS,
   );
   const [status, setStatus] = useState<JobStatus>(existing?.status ?? 'open');
+  // Date-only input; the stored value is a timestamp, so keep just the calendar part.
+  const [approvedAt, setApprovedAt] = useState(existing?.requisitionApprovedAt?.slice(0, 10) ?? '');
+  // A requisition cannot be approved in the future.
+  const today = new Date().toISOString().slice(0, 10);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,6 +199,8 @@ export default function JobForm({
       department: department.trim() || undefined,
       location: location.trim() || undefined,
       workArrangement: workArrangement.trim() || undefined,
+      // undefined lets the server decide (stamp on first open); null would clear it.
+      requisitionApprovedAt: approvedAt || undefined,
       employmentType: employmentType.trim() || undefined,
       description: description.trim(),
       requiredSkills,
@@ -434,6 +440,20 @@ export default function JobForm({
                 <option value="draft">Draft</option>
                 <option value="closed">Closed</option>
               </select>
+            </Field>
+            <Field label="Requisition approved">
+              <input
+                type="date"
+                value={approvedAt}
+                max={today}
+                onChange={(e) => setApprovedAt(e.target.value)}
+                className={inputCls}
+              />
+              <p className="mt-1 text-xs text-slate-600">
+                {approvedAt
+                  ? 'Starts the time-to-fill clock for this role.'
+                  : 'Set automatically when the role is opened — fill this in if it was approved earlier.'}
+              </p>
             </Field>
             <Field label="Education requirement" error={fieldErrors.errors.education} errorId={fieldErrors.errorId('education')}>
               <input
