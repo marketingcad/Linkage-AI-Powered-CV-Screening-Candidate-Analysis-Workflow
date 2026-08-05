@@ -18,19 +18,13 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import FieldError from './FieldError';
+import SkillsInput from './SkillsInput';
 import { useFormErrors } from '../lib/useFormErrors';
 import * as v from '../lib/validators';
 import QuizBuilder from './QuizBuilder';
 
 /** No shared LIMITS entry — the server caps employment type at 100 characters. */
 const EMPLOYMENT_TYPE_MAX = 100;
-
-function parseSkills(raw: string): string[] {
-  return raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
 
 export default function JobForm({
   existing,
@@ -46,12 +40,8 @@ export default function JobForm({
   const [location, setLocation] = useState(existing?.location ?? '');
   const [employmentType, setEmploymentType] = useState(existing?.employmentType ?? '');
   const [description, setDescription] = useState(existing?.description ?? '');
-  const [requiredSkills, setRequiredSkills] = useState(
-    (existing?.requiredSkills ?? []).join(', '),
-  );
-  const [niceToHaveSkills, setNiceToHaveSkills] = useState(
-    (existing?.niceToHaveSkills ?? []).join(', '),
-  );
+  const [requiredSkills, setRequiredSkills] = useState<string[]>(existing?.requiredSkills ?? []);
+  const [niceToHaveSkills, setNiceToHaveSkills] = useState<string[]>(existing?.niceToHaveSkills ?? []);
   const [minYears, setMinYears] = useState(
     existing?.minYearsExperience != null ? String(existing.minYearsExperience) : '',
   );
@@ -83,8 +73,8 @@ export default function JobForm({
       const res = await generateQuiz({
         title: title.trim(),
         description: description.trim(),
-        requiredSkills: parseSkills(requiredSkills),
-        niceToHaveSkills: parseSkills(niceToHaveSkills),
+        requiredSkills,
+        niceToHaveSkills,
         minYearsExperience: minYears ? Number(minYears) : null,
         educationRequirement: education.trim() || null,
         count: genCount,
@@ -131,8 +121,8 @@ export default function JobForm({
       location: location.trim() || undefined,
       employmentType: employmentType.trim() || undefined,
       description: description.trim(),
-      requiredSkills: parseSkills(requiredSkills),
-      niceToHaveSkills: parseSkills(niceToHaveSkills),
+      requiredSkills,
+      niceToHaveSkills,
       minYearsExperience: minYears ? Number(minYears) : null,
       educationRequirement: education.trim() || null,
       quiz,
@@ -231,21 +221,19 @@ export default function JobForm({
             />
           </Field>
 
-          <Field label="Required skills (comma separated)">
-            <input
+          <Field label="Required skills">
+            <SkillsInput
               value={requiredSkills}
-              onChange={(e) => setRequiredSkills(e.target.value)}
-              className={inputCls}
-              placeholder="React, TypeScript, REST APIs"
+              onChange={setRequiredSkills}
+              placeholder="e.g. React — then press Enter"
             />
           </Field>
 
-          <Field label="Nice-to-have skills (comma separated)">
-            <input
+          <Field label="Nice-to-have skills">
+            <SkillsInput
               value={niceToHaveSkills}
-              onChange={(e) => setNiceToHaveSkills(e.target.value)}
-              className={inputCls}
-              placeholder="GraphQL, AWS"
+              onChange={setNiceToHaveSkills}
+              placeholder="e.g. GraphQL — then press Enter"
             />
           </Field>
 
