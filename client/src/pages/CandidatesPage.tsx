@@ -21,6 +21,8 @@ import {
 import CandidateTable from '../components/CandidateTable';
 import CandidateBoard from '../components/CandidateBoard';
 import Pagination, { clampPage } from '../components/Pagination';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { useBriefLoading } from '../lib/useBriefLoading';
 import CompareDialog from '../components/CompareDialog';
 import * as v from '../lib/validators';
 
@@ -71,6 +73,11 @@ export default function CandidatesPage() {
   // Reports pending only when re-rendering the new page actually takes long enough to see —
   // paging is an in-memory slice, so a normal turn shows nothing at all.
   const [pageBusy, startPaging] = useTransition();
+  // Guarantees the spinner is actually seen. `pageBusy` alone covers only genuinely slow
+  // renders, which for an in-memory slice is almost never — so a page turn looked like
+  // nothing had happened. The two are OR'd so a slow render still holds it past the floor.
+  const [pageHold, holdPaging] = useBriefLoading();
+  const paging = pageBusy || pageHold;
 
   /**
    * Kept as a string so the field can be blank, but clamped on the way in — a pasted
@@ -400,28 +407,37 @@ export default function CandidatesPage() {
             </div>
           )}
 
-          <CandidateTable
-            candidates={paged}
-            showJob
-            selectable
-            selectedIds={selected}
-            onToggleSelect={toggleSelect}
-            duplicateEmails={duplicateEmails}
-          />
+          {/* `relative` anchors the overlay to the table alone, so the filters and the pager
+              stay live while the rows are swapping. */}
+          <div className="relative">
+            <CandidateTable
+              candidates={paged}
+              showJob
+              selectable
+              selectedIds={selected}
+              onToggleSelect={toggleSelect}
+              duplicateEmails={duplicateEmails}
+            />
+            <LoadingOverlay show={paging} label="Loading candidates" />
+          </div>
 
               <Pagination
                 page={page}
                 pageSize={pageSize}
                 total={filtered.length}
                 label="candidates"
-                busy={pageBusy}
-                onPageChange={(p) => startPaging(() => setPage(p))}
-                onPageSizeChange={(n) =>
+                busy={paging}
+                onPageChange={(p) => {
+                  holdPaging();
+                  startPaging(() => setPage(p));
+                }}
+                onPageSizeChange={(n) => {
+                  holdPaging();
                   startPaging(() => {
                     setPageSize(n);
                     setPage(1);
-                  })
-                }
+                  });
+                }}
               />
               {filtered.length !== candidates.length && (
                 <p className="text-xs text-slate-600">

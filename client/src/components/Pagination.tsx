@@ -29,12 +29,13 @@ export default function Pagination({
   /** Plural noun for the readout, e.g. "candidates". */
   label?: string;
   /**
-   * Whether the new page is still rendering.
+   * Whether the page turn is still settling. Shows a spinner and locks the controls so a
+   * double-click can't skip a page.
    *
-   * Paging here is a slice of an array already in memory, so there is nothing to wait for on a
-   * normal page turn and no indicator appears. This is driven by React's `useTransition`, which
-   * only reports pending when the render genuinely takes long enough to notice — switching to
-   * 100 rows, say. A spinner on every click would be theatre.
+   * Callers are expected to combine two signals: a short guaranteed window so the spinner is
+   * always seen (paging an in-memory slice is otherwise too fast to register), and React's
+   * `useTransition` pending flag so a genuinely slow render holds it longer. See
+   * `useBriefLoading`.
    */
   busy?: boolean;
   onPageChange: (page: number) => void;
