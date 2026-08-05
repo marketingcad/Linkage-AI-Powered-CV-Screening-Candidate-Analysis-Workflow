@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import type { IconType } from 'react-icons';
 import {
   LuArrowRightLeft,
@@ -10,7 +10,8 @@ import {
 } from 'react-icons/lu';
 import { fetchCandidates, updateCandidateStage } from '../api/endpoints';
 import type { CandidateStage, CandidateSummary } from '../api/types';
-import { Alert, Button, Card, Spinner, STAGES, STAGE_ICONS } from '../components/ui';
+import { Alert, Button, Card, STAGES, STAGE_ICONS, TableSkeleton } from '../components/ui';
+import { BoardSkeleton, FiltersSkeleton } from '../components/Skeletons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +68,9 @@ export default function CandidatesPage() {
   const [skill, setSkill] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  // Reports pending only when re-rendering the new page actually takes long enough to see —
+  // paging is an in-memory slice, so a normal turn shows nothing at all.
+  const [pageBusy, startPaging] = useTransition();
 
   /**
    * Kept as a string so the field can be blank, but clamped on the way in — a pasted
@@ -238,7 +242,12 @@ export default function CandidatesPage() {
       {moveError && <Alert kind="error">{moveError}</Alert>}
 
       {loading ? (
-        <Spinner label="Loading candidates…" />
+        // Mirrors the real layout — filter bar then the current view — so the page fills in
+        // rather than snapping into place from a centred spinner.
+        <div className="space-y-4">
+          <FiltersSkeleton />
+          {view === 'board' ? <BoardSkeleton /> : <TableSkeleton rows={6} />}
+        </div>
       ) : (
         <div className="space-y-4">
           {/* Filters — shared by the board and table views */}
@@ -405,11 +414,14 @@ export default function CandidatesPage() {
                 pageSize={pageSize}
                 total={filtered.length}
                 label="candidates"
-                onPageChange={setPage}
-                onPageSizeChange={(n) => {
-                  setPageSize(n);
-                  setPage(1);
-                }}
+                busy={pageBusy}
+                onPageChange={(p) => startPaging(() => setPage(p))}
+                onPageSizeChange={(n) =>
+                  startPaging(() => {
+                    setPageSize(n);
+                    setPage(1);
+                  })
+                }
               />
               {filtered.length !== candidates.length && (
                 <p className="text-xs text-slate-600">

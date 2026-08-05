@@ -18,6 +18,7 @@ import {
 } from '../api/endpoints';
 import type { JobSummary } from '../api/types';
 import { Alert, Card, Spinner } from '../components/ui';
+import { CardListSkeleton } from '../components/Skeletons';
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   pending: { label: 'Not started', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
@@ -208,7 +209,7 @@ export default function InterviewRecordingsPage() {
       )}
 
       {loading ? (
-        <Spinner label="Loading recordings…" />
+        <CardListSkeleton rows={6} columns={3} />
       ) : sessions.length === 0 ? (
         <Card className="p-10 text-center">
           <LuVideoOff className="mx-auto h-8 w-8 text-slate-300" />

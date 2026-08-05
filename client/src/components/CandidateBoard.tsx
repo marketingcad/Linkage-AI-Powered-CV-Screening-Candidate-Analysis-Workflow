@@ -41,14 +41,6 @@ export default function CandidateBoard({
   }
 
   return (
-    /*
-     * All six stages are visible at once on a desktop — no sideways scrolling.
-     *
-     * The page shell caps content at ~1232px, so six 288px columns could never fit however
-     * wide the monitor was. Above `xl` the columns become equal fractions of whatever room
-     * there is (~190px each) and the card below is built to stay readable at that width;
-     * below `xl` they keep their comfortable fixed width and the board scrolls instead.
-     */
     <div className="flex gap-4 overflow-x-auto pb-4 xl:grid xl:grid-cols-6 xl:gap-3 xl:overflow-x-visible xl:pb-0">
       {COLUMNS.map((col) => {
         const items = byStage(col.stage);

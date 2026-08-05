@@ -9,7 +9,8 @@ import {
   type TeamRole,
 } from '../api/endpoints';
 import { useAuth } from '../auth/AuthContext';
-import { Alert, Button, Card, Spinner } from '../components/ui';
+import { Alert, Button, Card } from '../components/ui';
+import { CardListSkeleton } from '../components/Skeletons';
 import ConfirmDialog from '../components/ConfirmDialog';
 import FieldError from '../components/FieldError';
 import { useFormErrors } from '../lib/useFormErrors';
@@ -216,8 +217,8 @@ export default function TeamPage() {
 
       <Card className="p-0">
         {loading ? (
-          <div className="p-6">
-            <Spinner label="Loading team…" />
+          <div className="p-4">
+            <CardListSkeleton rows={3} />
           </div>
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">

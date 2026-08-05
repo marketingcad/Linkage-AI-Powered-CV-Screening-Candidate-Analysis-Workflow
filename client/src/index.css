@@ -358,12 +358,53 @@ h3,
   will-change: transform;
 }
 
+/* Loading placeholders: a light sweep across the block rather than a pulse. It reads as
+   "content is on its way" instead of "this element is disabled", and the direction gives the
+   eye somewhere to rest while waiting. */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  /* Its own tone rather than the global --muted (oklch 0.97), which is so close to white that
+     the blocks barely registered on a white card and the light sweep was invisible over them.
+     Set here instead of changing --muted, which other components rely on. */
+  background-color: oklch(0.938 0.004 250);
+}
+.dark .skeleton-shimmer {
+  background-color: #223049;
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  animation: shimmer 1.6s infinite;
+}
+.dark .skeleton-shimmer::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-kenburns,
   .animate-float,
   .animate-float-drift {
     animation: none;
+  }
+  /* The sweep is decorative; the grey block alone still communicates "loading". */
+  .skeleton-shimmer::after {
+    animation: none;
+    display: none;
   }
 }
 

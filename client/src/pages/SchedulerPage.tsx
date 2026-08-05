@@ -18,7 +18,8 @@ import {
 import type { IconType } from 'react-icons';
 import { fetchInterviews, updateInterview } from '../api/endpoints';
 import type { Interview, InterviewMode, InterviewStatus } from '../api/types';
-import { Alert, Button, Card, Spinner } from '../components/ui';
+import { Alert, Button, Card } from '../components/ui';
+import { CardListSkeleton } from '../components/Skeletons';
 import ScheduleInterviewDialog from '../components/ScheduleInterviewDialog';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -332,7 +333,7 @@ export default function SchedulerPage() {
         <Card className="p-5">
           <h2 className="mb-3 text-sm font-semibold text-slate-700">Upcoming interviews</h2>
           {loading ? (
-            <Spinner label="Loading…" />
+            <CardListSkeleton rows={3} />
           ) : upcoming.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center">
               <LuCalendarClock className="mx-auto h-6 w-6 text-slate-300" />

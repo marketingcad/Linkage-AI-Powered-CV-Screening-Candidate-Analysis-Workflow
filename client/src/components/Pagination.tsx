@@ -1,4 +1,4 @@
-import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
+import { LuChevronLeft, LuChevronRight, LuLoaderCircle } from 'react-icons/lu';
 
 export const PAGE_SIZES = [10, 20, 50, 100] as const;
 
@@ -19,6 +19,7 @@ export default function Pagination({
   pageSize,
   total,
   label = 'items',
+  busy = false,
   onPageChange,
   onPageSizeChange,
 }: {
@@ -27,6 +28,15 @@ export default function Pagination({
   total: number;
   /** Plural noun for the readout, e.g. "candidates". */
   label?: string;
+  /**
+   * Whether the new page is still rendering.
+   *
+   * Paging here is a slice of an array already in memory, so there is nothing to wait for on a
+   * normal page turn and no indicator appears. This is driven by React's `useTransition`, which
+   * only reports pending when the render genuinely takes long enough to notice — switching to
+   * 100 rows, say. A spinner on every click would be theatre.
+   */
+  busy?: boolean;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
 }) {
@@ -53,8 +63,14 @@ export default function Pagination({
             ))}
           </select>
         </label>
-        <span className="text-xs tabular-nums text-slate-600">
+        <span className="flex items-center gap-1.5 text-xs tabular-nums text-slate-600">
           {total === 0 ? `No ${label}` : `${first}–${last} of ${total} ${label}`}
+          {busy && (
+            <LuLoaderCircle
+              aria-label="Loading"
+              className="h-3.5 w-3.5 shrink-0 animate-spin text-brand-500"
+            />
+          )}
         </span>
       </div>
 
@@ -63,7 +79,7 @@ export default function Pagination({
           <button
             type="button"
             onClick={() => onPageChange(current - 1)}
-            disabled={current <= 1}
+            disabled={busy || current <= 1}
             className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <LuChevronLeft className="h-3.5 w-3.5 shrink-0" />
@@ -75,7 +91,7 @@ export default function Pagination({
           <button
             type="button"
             onClick={() => onPageChange(current + 1)}
-            disabled={current >= pages}
+            disabled={busy || current >= pages}
             className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next

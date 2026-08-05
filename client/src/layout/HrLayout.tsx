@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import RouteProgress from '../components/RouteProgress';
 import {
   LuBriefcase,
   LuCalendarClock,
@@ -142,6 +143,10 @@ export default function HrLayout() {
 
   return (
     <div className="min-h-screen">
+      {/* Spans the whole window, sidebar included, so it reads as "the app is working"
+          rather than as something happening inside one panel. */}
+      <RouteProgress />
+
       {/* Desktop sidebar (fixed) */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-200/70 bg-white lg:block">
         {sidebar}

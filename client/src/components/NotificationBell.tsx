@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LuBell } from 'react-icons/lu';
 import { fetchCandidates } from '../api/endpoints';
+import { silently } from '../lib/loading';
 import type { CandidateSummary } from '../api/types';
 import { ScoreRing, SourceBadge } from './ui';
 
@@ -48,7 +49,8 @@ export default function NotificationBell() {
   const ref = useRef<HTMLDivElement>(null);
 
   function load() {
-    fetchCandidates({ stage: 'new' })
+    // Polls every minute; silenced so it never drives the global progress bar.
+    silently(() => fetchCandidates({ stage: 'new' }))
       .then((res) => setItems(res.candidates))
       .catch(() => {
         /* non-critical */

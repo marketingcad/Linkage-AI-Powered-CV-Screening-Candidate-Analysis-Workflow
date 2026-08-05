@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LuBell, LuX } from 'react-icons/lu';
 import { fetchInterviews } from '../api/endpoints';
+import { silently } from '../lib/loading';
 
 const POLL_MS = 60 * 1000;
 const GRACE_MS = 5 * 60 * 1000; // keep showing up to 5 min after start
@@ -47,7 +48,8 @@ export default function InterviewReminders() {
     async function check() {
       let list;
       try {
-        const res = await fetchInterviews({ status: 'scheduled' });
+        // Polls every minute; silenced so it never drives the global progress bar.
+        const res = await silently(() => fetchInterviews({ status: 'scheduled' }));
         list = res.interviews;
       } catch {
         return;
@@ -100,7 +102,7 @@ export default function InterviewReminders() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-[60] flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2">
+    <div className="fixed bottom-4 right-4 z-60 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2">
       {toasts.map((t) => (
         <div
           key={t.key}

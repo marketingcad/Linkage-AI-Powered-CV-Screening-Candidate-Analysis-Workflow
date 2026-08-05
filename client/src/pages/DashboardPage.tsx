@@ -12,9 +12,10 @@ import {
 } from 'react-icons/lu';
 import { fetchCandidates, fetchStats } from '../api/endpoints';
 import type { CandidateStage, CandidateSummary, Stats } from '../api/types';
-import { Alert, Card, Skeleton, SourceBadge, STAGE_ICONS, TableSkeleton } from '../components/ui';
+import { Alert, Card, SourceBadge, STAGE_ICONS, TableSkeleton } from '../components/ui';
 import CandidateTable from '../components/CandidateTable';
 import PipelineHealth from '../components/PipelineHealth';
+import { Bar, PageHeaderSkeleton, StatCardsSkeleton } from '../components/Skeletons';
 
 // Fixed order + colors for the pipeline visualization.
 const STAGE_ORDER: { stage: CandidateStage; label: string; bar: string; text: string }[] = [
@@ -101,16 +102,13 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="space-y-8">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-2xl" />
-          ))}
-        </div>
+        <PageHeaderSkeleton />
+        <StatCardsSkeleton />
         <div className="grid gap-4 lg:grid-cols-2">
-          <Skeleton className="h-48 rounded-2xl" />
-          <Skeleton className="h-48 rounded-2xl" />
+          <Bar className="h-48 rounded-2xl" />
+          <Bar className="h-48 rounded-2xl" />
         </div>
+        <Bar className="h-136 rounded-2xl" />
         <TableSkeleton rows={5} />
       </div>
     );

@@ -1,3 +1,5 @@
+import { endRequest, shouldCount, startRequest } from '../lib/loading';
+
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ??
   'http://localhost:4000/api';
 
@@ -42,28 +44,38 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
   }
   if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: isForm ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  // Every call is counted so the global progress bar reflects real network activity. The
+  // finally block is what makes it safe: a thrown ApiError must still clear the counter, or
+  // one failed request would leave the bar running for the rest of the session.
+  // Captured per call: a background poll must skip both the increment and the decrement.
+  const counted = shouldCount();
+  if (counted) startRequest();
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: isForm ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
+    });
 
-  if (res.status === 204) return undefined as T;
+    if (res.status === 204) return undefined as T;
 
-  const data = await res.json().catch(() => null);
+    const data = await res.json().catch(() => null);
 
-  if (!res.ok) {
-    const err = data?.error;
-    if (res.status === 401) clearToken();
-    throw new ApiError(
-      res.status,
-      err?.code ?? 'ERROR',
-      err?.message ?? 'Request failed',
-      err?.details,
-    );
+    if (!res.ok) {
+      const err = data?.error;
+      if (res.status === 401) clearToken();
+      throw new ApiError(
+        res.status,
+        err?.code ?? 'ERROR',
+        err?.message ?? 'Request failed',
+        err?.details,
+      );
+    }
+
+    return data as T;
+  } finally {
+    if (counted) endRequest();
   }
-
-  return data as T;
 }
 
 export { API_BASE };
