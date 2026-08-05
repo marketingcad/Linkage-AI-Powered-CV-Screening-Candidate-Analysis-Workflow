@@ -39,9 +39,12 @@ export default function PipelineHealth() {
 
   // Non-critical panel — a metrics failure should not put an error banner on the overview.
   if (failed) return null;
-  if (!data) return <Skeleton className="h-64 rounded-2xl" />;
+  // Sized to the loaded card, not to a round number: an h-64 placeholder made the page jump
+  // ~300px when the metrics arrived and shoved everything below it down.
+  if (!data) return <Skeleton className="h-136 rounded-2xl" />;
 
   const reached = new Map(data.funnel.map((f) => [f.stage, f.candidates]));
+  const advanced = new Map((data.steps ?? []).map((s) => [`${s.from_stage}>${s.to_stage}`, s.n]));
   const dwell = new Map(data.timeInStage.map((t) => [t.stage, t.median_days]));
   const applied = reached.get('new') ?? 0;
   const widest = Math.max(1, ...FUNNEL.map((f) => reached.get(f.stage) ?? 0));
@@ -59,7 +62,9 @@ export default function PipelineHealth() {
   const exits = byCategory.reduce((s, g) => s + g.total, 0) + uncategorized;
 
   return (
-    <Card className="animate-rise p-5" style={{ animationDelay: '420ms' }}>
+    // No staggered animation delay here: the other cards mount with the page, but this one
+    // mounts when its fetch resolves, so a delay would just hold it invisible after it appears.
+    <Card className="animate-rise p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-slate-700">Pipeline health</h2>
         <span className="text-xs text-slate-600">from stage history</span>
@@ -110,10 +115,13 @@ export default function PipelineHealth() {
             <div className="space-y-2">
               {FUNNEL.map((f, i) => {
                 const n = reached.get(f.stage) ?? 0;
-                const prev = i === 0 ? null : (reached.get(FUNNEL[i - 1]!.stage) ?? 0);
-                // Conversion from the previous step, not from the top — that is the number
-                // that tells you which handoff is leaking.
-                const conv = prev == null || prev === 0 ? null : Math.round((n / prev) * 100);
+                const prevStage = i === 0 ? null : FUNNEL[i - 1]!.stage;
+                const prev = prevStage == null ? null : (reached.get(prevStage) ?? 0);
+                // Conversion from the previous step, not from the top — that is the number that
+                // tells you which handoff is leaking. The numerator is the people who reached
+                // both stages, so candidates who skipped a stage cannot push it over 100%.
+                const both = prevStage == null ? 0 : (advanced.get(`${prevStage}>${f.stage}`) ?? 0);
+                const conv = prev == null || prev === 0 ? null : Math.round((both / prev) * 100);
                 const Icon = STAGE_ICONS[f.stage];
                 return (
                   <div key={f.stage} className="flex items-center gap-3">

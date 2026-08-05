@@ -97,6 +97,30 @@ statsRouter.get('/pipeline', async (_req, res) => {
     GROUP BY to_stage
   `);
 
+  /*
+   * Step conversion, counted as "of the people who reached stage A, how many went on to reach
+   * stage B" — the intersection, not a ratio of the two totals.
+   *
+   * The ratio is wrong because candidates skip stages: someone moved straight from
+   * interviewing to offer is counted in 'offer' but never in 'shortlisted', which produced
+   * conversions above 100% (an observed "Offered 2 · 200%"). An intersection cannot exceed
+   * the size of either side, so the number is always a real percentage.
+   */
+  const steps = await db.execute<{ from_stage: string; to_stage: string; n: number }>(sql`
+    WITH reach AS (
+      SELECT DISTINCT candidate_id, to_stage
+      FROM candidate_stage_events
+      WHERE to_stage IN ('new','shortlisted','interviewing','offer','hired')
+    )
+    SELECT a.to_stage AS from_stage, b.to_stage AS to_stage, count(*)::int AS n
+    FROM reach a JOIN reach b USING (candidate_id)
+    WHERE (a.to_stage, b.to_stage) IN (
+      ('new','shortlisted'), ('shortlisted','interviewing'),
+      ('interviewing','offer'), ('offer','hired')
+    )
+    GROUP BY a.to_stage, b.to_stage
+  `);
+
   // Why we lose people, split by who ended it — withdrawals must not be counted as our
   // rejections (see the note on the disposition taxonomy in schema.ts).
   const exitRows = await db.execute<{ reason: string | null; n: number }>(sql`
@@ -139,6 +163,7 @@ statsRouter.get('/pipeline', async (_req, res) => {
     },
     timeInStage,
     funnel: reached,
+    steps,
     exitReasons,
     offers: {
       ...(offerStats ?? { extended: 0, accepted: 0, declined: 0, outstanding: 0 }),

@@ -403,6 +403,8 @@ export interface PipelineStats {
   timeToHire: { hires: number; medianDays: number | null; avgDays: number | null };
   timeInStage: { stage: string; median_days: number | null; moves: number }[];
   funnel: { stage: string; candidates: number }[];
+  /** Candidates who reached both stages — the numerator for step conversion. */
+  steps: { from_stage: string; to_stage: string; n: number }[];
   /** Why candidates left, with the category attributed server-side from the taxonomy. */
   exitReasons: { reason: string | null; n: number; category: DispositionCategory | null }[];
   offers: {
