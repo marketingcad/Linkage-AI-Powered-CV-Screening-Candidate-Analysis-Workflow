@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import FieldError from '../components/FieldError';
+import PasswordInput from '../components/PasswordInput';
 import { useFormErrors } from '../lib/useFormErrors';
 import * as v from '../lib/validators';
 import avatarPlaceholder from '../assets/avatar-placeholder.png';
@@ -134,6 +135,9 @@ export default function AccountSettingsPage() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  // Bumped on a successful change so the fields re-mask — a password should not be left
+  // legible on screen once the form is done with it.
+  const [pwSaved, setPwSaved] = useState(0);
   const [savingPw, setSavingPw] = useState(false);
   const [pwMsg, setPwMsg] = useState<string | null>(null);
   const pwFields = useFormErrors<'oldPassword' | 'newPassword' | 'confirmPassword'>('pw');
@@ -213,6 +217,7 @@ export default function AccountSettingsPage() {
     try {
       await changePassword(oldPassword, newPassword);
       setPwMsg('Password changed successfully.');
+      setPwSaved((n) => n + 1);
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -387,9 +392,8 @@ export default function AccountSettingsPage() {
         <form onSubmit={savePassword} className="mt-4 space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="oldPassword">Old password</Label>
-            <Input
+            <PasswordInput
               id="oldPassword"
-              type="password"
               autoComplete="current-password"
               maxLength={v.LIMITS.password}
               value={oldPassword}
@@ -398,6 +402,7 @@ export default function AccountSettingsPage() {
                 pwFields.clearError('oldPassword');
               }}
               required
+              resetSignal={pwSaved}
               {...pwFields.fieldProps('oldPassword')}
             />
             <FieldError id={pwFields.errorId('oldPassword')} message={pwFields.errors.oldPassword} />
@@ -405,9 +410,8 @@ export default function AccountSettingsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="newPassword">New password</Label>
-              <Input
+              <PasswordInput
                 id="newPassword"
-                type="password"
                 autoComplete="new-password"
                 minLength={PASSWORD_MIN}
                 maxLength={v.LIMITS.password}
@@ -418,6 +422,7 @@ export default function AccountSettingsPage() {
                   pwFields.clearError('confirmPassword');
                 }}
                 required
+                resetSignal={pwSaved}
                 aria-invalid={pwFields.errors.newPassword ? true : undefined}
                 // Keep the strength hint announced alongside any error, not replaced by it.
                 aria-describedby={
@@ -436,9 +441,8 @@ export default function AccountSettingsPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 autoComplete="new-password"
                 minLength={PASSWORD_MIN}
                 maxLength={v.LIMITS.password}
@@ -448,6 +452,7 @@ export default function AccountSettingsPage() {
                   pwFields.clearError('confirmPassword');
                 }}
                 required
+                resetSignal={pwSaved}
                 {...pwFields.fieldProps('confirmPassword')}
               />
               <FieldError
