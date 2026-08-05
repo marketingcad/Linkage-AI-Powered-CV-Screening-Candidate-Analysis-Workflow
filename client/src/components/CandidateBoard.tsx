@@ -41,11 +41,15 @@ export default function CandidateBoard({
   }
 
   return (
-    // Columns keep a readable fixed width and the board scrolls sideways, rather than
-    // squeezing every stage into the viewport — squeezed in, a column was ~150px, which
-    // truncated every candidate name to "Nadi…". They stretch to fill only once there's
-    // genuinely room for all of them at full width.
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    /*
+     * All six stages are visible at once on a desktop — no sideways scrolling.
+     *
+     * The page shell caps content at ~1232px, so six 288px columns could never fit however
+     * wide the monitor was. Above `xl` the columns become equal fractions of whatever room
+     * there is (~190px each) and the card below is built to stay readable at that width;
+     * below `xl` they keep their comfortable fixed width and the board scrolls instead.
+     */
+    <div className="flex gap-4 overflow-x-auto pb-4 xl:grid xl:grid-cols-6 xl:gap-3 xl:overflow-x-visible xl:pb-0">
       {COLUMNS.map((col) => {
         const items = byStage(col.stage);
         const isOver = overStage === col.stage;
@@ -64,23 +68,27 @@ export default function CandidateBoard({
               }
             }}
             onDrop={() => handleDrop(col.stage)}
-            className={`flex w-72 shrink-0 flex-col rounded-2xl border bg-slate-50/60 transition-colors ${
+            className={`flex w-72 shrink-0 flex-col rounded-2xl border bg-slate-50/60 transition-colors xl:w-auto xl:min-w-0 ${
               isOver ? 'border-brand-400 bg-brand-50/70' : 'border-slate-200/70'
             }`}
           >
             {/* Column header */}
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-2">
-                <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
-                <span className="text-sm font-semibold text-slate-700">{col.label}</span>
+            <div className="flex items-center justify-between gap-1.5 px-4 py-3 xl:px-2.5">
+              <div className="flex min-w-0 items-center gap-2 xl:gap-1.5">
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${col.dot}`} />
+                {/* "Interviewing" and "Shortlisted" are the long ones; at six-across they get
+                    a slightly smaller label rather than wrapping under the count. */}
+                <span className="truncate text-sm font-semibold text-slate-700 xl:text-xs">
+                  {col.label}
+                </span>
               </div>
-              <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
+              <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
                 {items.length}
               </span>
             </div>
 
             {/* Cards */}
-            <div className="flex min-h-24 flex-1 flex-col gap-2.5 px-3 pb-3">
+            <div className="flex min-h-24 flex-1 flex-col gap-2.5 px-3 pb-3 xl:gap-2 xl:px-2">
               {items.map((c) => (
                 <article
                   key={c.id}
@@ -105,11 +113,16 @@ export default function CandidateBoard({
                     dragId === c.id ? 'rotate-[1.5deg] opacity-60' : ''
                   }`}
                 >
-                  <div className="flex items-start gap-2.5">
-                    <ScoreRing score={c.overallScore ?? c.qualificationScore} size={40} />
+                  <div className="flex items-start gap-2">
+                    <ScoreRing score={c.overallScore ?? c.qualificationScore} size={36} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-slate-800">{c.fullName}</p>
-                      <p className="truncate text-xs text-slate-600">{c.jobTitle ?? '—'}</p>
+                      {/* Wraps to a second line rather than truncating: in a six-across column
+                          the name has ~90px, and "Nadia Rahman" clipped to "Nadi…" is useless
+                          on a board whose whole job is telling you who is where. */}
+                      <p className="line-clamp-2 text-sm font-semibold leading-tight text-slate-800">
+                        {c.fullName}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-slate-600">{c.jobTitle ?? '—'}</p>
                     </div>
                   </div>
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
@@ -121,8 +134,11 @@ export default function CandidateBoard({
               ))}
 
               {items.length === 0 && (
+                // Sits at the top rather than stretching to the tallest column's height. With
+                // six columns side by side, one busy stage turned every empty one into an
+                // 800px-tall dashed rectangle. The whole column stays a drop target.
                 <div
-                  className={`flex flex-1 items-center justify-center rounded-xl border-2 border-dashed py-8 text-center text-xs ${
+                  className={`flex items-center justify-center rounded-xl border-2 border-dashed py-8 text-center text-xs ${
                     isOver ? 'border-brand-300 text-brand-500' : 'border-slate-200 text-slate-600'
                   }`}
                 >
