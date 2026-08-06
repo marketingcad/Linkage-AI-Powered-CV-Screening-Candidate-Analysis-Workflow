@@ -323,7 +323,12 @@ export interface ApplicationStatus {
 export interface EmailLog {
   id: string;
   candidateId: string;
-  type: 'application_received' | 'status_update';
+  type:
+    | 'application_received'
+    | 'status_update'
+    | 'interview_invite'
+    | 'interview_updated'
+    | 'interview_canceled';
   toEmail: string;
   subject: string;
   status: 'sent' | 'skipped' | 'failed';

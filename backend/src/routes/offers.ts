@@ -8,6 +8,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { idParams, validate } from '../middleware/validate.js';
 import { recordAudit } from '../services/audit.js';
 import { logger } from '../lib/logger.js';
+import { sendStatusUpdate } from '../services/email.js';
 
 export const offersRouter = Router();
 
@@ -97,7 +98,7 @@ offersRouter.put('/candidates/:id/offer', validate({ params: idParams }), async 
 
 /** Move the offer through its lifecycle, keeping the candidate's stage in step. */
 offersRouter.post('/candidates/:id/offer/action', validate({ params: idParams }), async (req, res) => {
-  const { action, reason } = offerActionSchema.parse(req.body);
+  const { action, reason, notifyCandidate } = offerActionSchema.parse(req.body);
   const candidateId = req.params.id;
 
   const offer = await latestOffer(candidateId);
@@ -137,9 +138,17 @@ offersRouter.post('/candidates/:id/offer/action', validate({ params: idParams })
   // decline is a candidate-initiated exit — recorded with its reason so it is not counted
   // as us rejecting them.
   const nextStage = STAGE_FOR[action];
+  let email: Awaited<ReturnType<typeof sendStatusUpdate>> | undefined;
+
   if (nextStage) {
     const [candidate] = await db
-      .select({ stage: candidates.stage, fullName: candidates.fullName })
+      .select({
+        stage: candidates.stage,
+        fullName: candidates.fullName,
+        email: candidates.email,
+        trackingToken: candidates.trackingToken,
+        jobId: candidates.jobId,
+      })
       .from(candidates)
       .where(eq(candidates.id, candidateId))
       .limit(1);
@@ -156,6 +165,33 @@ offersRouter.post('/candidates/:id/offer/action', validate({ params: idParams })
         reason: action === 'decline' ? (reason ?? 'Declined our offer') : null,
         changedBy: req.user?.sub ?? null,
       });
+
+      /*
+       * Tell the candidate their stage moved.
+       *
+       * This route changes the stage directly rather than going through PATCH
+       * /candidates/:id/stage, so it has to send the notification itself — otherwise
+       * extending an offer told the candidate nothing, while the status page they could
+       * reach said "Check your email for the details" about an email that was never sent.
+       *
+       * Awaited rather than fired and forgotten so the caller learns whether it actually
+       * left, the same as scheduling an interview does.
+       */
+      if (notifyCandidate !== false) {
+        const [job] = await db
+          .select({ title: jobs.title })
+          .from(jobs)
+          .where(eq(jobs.id, candidate.jobId))
+          .limit(1);
+        email = await sendStatusUpdate(
+          candidateId,
+          candidate.email,
+          candidate.fullName,
+          job?.title ?? 'the role',
+          nextStage,
+          candidate.trackingToken,
+        );
+      }
     }
 
     void recordAudit({
@@ -168,8 +204,8 @@ offersRouter.post('/candidates/:id/offer/action', validate({ params: idParams })
     });
   }
 
-  logger.info({ candidateId, action, status: nextStatus }, 'offer action');
-  res.json({ offer: updated });
+  logger.info({ candidateId, action, status: nextStatus, emailed: email?.sent ?? false }, 'offer action');
+  res.json({ offer: updated, email });
 });
 
 /** Offer pipeline overview — what is out, and what came back. */

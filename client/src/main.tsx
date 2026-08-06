@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, type RouteObject } from 'react-router-dom';
 import './index.css';
 import { AuthProvider } from './auth/AuthContext';
 import RequireAuth from './auth/RequireAuth';
@@ -17,12 +17,13 @@ import SchedulerPage from './pages/SchedulerPage';
 import CandidateReportPage from './pages/CandidateReportPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import HelpPage from './pages/HelpPage';
+import ErrorBoundary, { RouteErrorBoundary } from './components/ErrorBoundary';
 import AiInterviewPage from './pages/AiInterviewPage';
 import TeamPage from './pages/TeamPage';
 import InterviewRecordingsPage from './pages/InterviewRecordingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
-const router = createBrowserRouter([
+const routes: RouteObject[] = [
   // Login is the main index (HR-first). Applicants reach a role only via the shared
   // per-job links at /apply/:jobId (the app distributes tracked links per platform).
   { path: '/', element: <LoginPage /> },
@@ -60,12 +61,23 @@ const router = createBrowserRouter([
     ],
   },
   { path: '*', element: <NotFoundPage /> },
-]);
+];
+
+// Attached here rather than route by route so a route added later is covered by default.
+// An error bubbles to the nearest ancestor with an errorElement, so putting it on each
+// top-level entry also covers every child of /hr.
+const router = createBrowserRouter(
+  routes.map((route) => ({ ...route, errorElement: <RouteErrorBoundary /> })),
+);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    {/* Outside the router, so a crash while rendering a route still has somewhere to land —
+        inside it, the boundary would go down with the tree it was meant to catch. */}
+    <ErrorBoundary>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );

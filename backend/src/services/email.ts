@@ -17,7 +17,18 @@ function logoAttachment() {
   };
 }
 
-export type EmailType = 'application_received' | 'status_update';
+/**
+ * Recorded in `email_logs.type` (a varchar, so adding a kind needs no migration).
+ *
+ * Every email that reaches a candidate belongs here — when someone says they were never told
+ * about their interview, this log is the only place that can answer.
+ */
+export type EmailType =
+  | 'application_received'
+  | 'status_update'
+  | 'interview_invite'
+  | 'interview_updated'
+  | 'interview_canceled';
 
 let transporter: Transporter | null = null;
 
@@ -406,6 +417,8 @@ export type CandidateInterviewKind = 'invite' | 'updated' | 'canceled';
 
 export type CandidateInterviewInfo = {
   interviewId: string;
+  /** Omitted only by the preview renderer, which has no candidate to log against. */
+  candidateId?: string;
   candidateName: string;
   jobTitle: string | null;
   start: Date;
@@ -585,6 +598,13 @@ export function renderCandidateInterviewEmail(
  * Email a candidate about an interview (invitation, reschedule, or cancellation),
  * including a calendar (.ics) attachment. Never throws.
  */
+/** Maps an interview email to the type recorded against the candidate. */
+const INTERVIEW_EMAIL_TYPE: Record<CandidateInterviewKind, EmailType> = {
+  invite: 'interview_invite',
+  updated: 'interview_updated',
+  canceled: 'interview_canceled',
+};
+
 export async function sendCandidateInterviewEmail(
   to: string,
   kind: CandidateInterviewKind,
@@ -592,8 +612,26 @@ export async function sendCandidateInterviewEmail(
 ): Promise<SendResult> {
   const tx = getTransporter();
   const { subject, html, text } = candidateInterviewEmail(kind, info);
+  const type = INTERVIEW_EMAIL_TYPE[kind];
+
+  /*
+   * Recorded against the candidate like every other email.
+   *
+   * These used to send without logging, so "did they actually get their invite?" could not be
+   * answered from the candidate's page — the one place someone looks when a candidate says
+   * nobody told them. Worst for an AI voice interview, where the invite carries the only link
+   * they can join by.
+   *
+   * candidateId is optional on the info because a preview render has no candidate; without one
+   * there is nothing to attach the log to, so it is skipped rather than faked.
+   */
+  const log = (status: 'sent' | 'skipped' | 'failed', error?: string) => {
+    if (info.candidateId) void recordLog(info.candidateId, type, to, subject, status, error);
+  };
+
   if (!tx) {
     logger.info({ to, subject }, `[email] interview ${kind} skipped (SMTP not configured)`);
+    log('skipped', 'SMTP not configured');
     return { sent: false, skipped: true };
   }
   try {
@@ -614,10 +652,12 @@ export async function sendCandidateInterviewEmail(
       ],
     });
     logger.info({ to, subject }, `[email] interview ${kind} sent`);
+    log('sent');
     return { sent: true };
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
     logger.error({ err, to }, `[email] interview ${kind} failed`);
+    log('failed', error);
     return { sent: false, error };
   }
 }

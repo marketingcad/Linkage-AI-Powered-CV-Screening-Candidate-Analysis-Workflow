@@ -108,6 +108,7 @@ async function emailCandidate(row: JoinedInterview, kind: CandidateInterviewKind
   try {
     return await sendCandidateInterviewEmail(row.candidateEmail, kind, {
       interviewId: row.id,
+      candidateId: row.candidateId,
       candidateName: row.candidateName ?? 'Candidate',
       jobTitle: row.jobTitle,
       start: new Date(row.scheduledAt),

@@ -274,7 +274,10 @@ candidatesRouter.patch('/:id/stage', validate({ params: idParams }), async (req,
   if (!candidate) throw notFound('Candidate not found');
 
   // Notify the applicant when the stage actually changes to a meaningful status.
-  const NOTIFY_STAGES = ['shortlisted', 'interviewing', 'hired', 'rejected'] as const;
+  // 'offer' included because the stage chips on the candidate page can move someone here
+  // directly, without going through the offer card — and the applicant-facing copy for this
+  // stage tells them to check their email.
+  const NOTIFY_STAGES = ['shortlisted', 'interviewing', 'offer', 'hired', 'rejected'] as const;
   if (
     stage !== existing.stage &&
     (NOTIFY_STAGES as readonly string[]).includes(stage)

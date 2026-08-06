@@ -99,6 +99,9 @@ export default function CandidateDetailPage() {
   const [copiedQ, setCopiedQ] = useState(false);
   const [scheduling, setScheduling] = useState(false);
   const [scheduledNote, setScheduledNote] = useState<string | null>(null);
+  // Separate from the success note: a booking can succeed while its invitation fails, and
+  // those two facts need to be visible at the same time.
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
   const { user } = useAuth();
@@ -436,6 +439,7 @@ export default function CandidateDetailPage() {
       </div>
 
       {scheduledNote && <Alert kind="success">{scheduledNote}</Alert>}
+      {scheduleError && <Alert kind="error">{scheduleError}</Alert>}
 
       {c.analysisStatus === 'failed' && (
         <Alert kind="error">
@@ -1219,11 +1223,26 @@ export default function CandidateDetailPage() {
               dateStyle: 'medium',
               timeStyle: 'short',
             });
+            /*
+             * A failed invitation used to fall through to the same reassuring line as a
+             * success, so nobody learned the candidate had not been told. For an AI voice
+             * interview that is the difference between an interview happening and a no-show,
+             * because the invitation carries the only link they can join by.
+             */
+            if (email && !email.sent && !email.skipped) {
+              setScheduledNote(null);
+              setScheduleError(
+                `Interview scheduled for ${when}, but the invitation could not be sent — ` +
+                  `${candidate.fullName} has not been told. Use “Resend” below, or send them the details yourself.`,
+              );
+              return;
+            }
             const emailNote = email?.sent
               ? ' The candidate was emailed an invitation with the details.'
               : email?.skipped
                 ? ' (Candidate invitation was logged — configure SMTP to actually send it.)'
                 : " You'll be reminded before it starts.";
+            setScheduleError(null);
             setScheduledNote(`Interview scheduled for ${when}.${emailNote}`);
           }}
         />
