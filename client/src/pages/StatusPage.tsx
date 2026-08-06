@@ -7,12 +7,20 @@ import { ApiError } from '../api/client';
 import type { ApplicationStatus, CandidateStage } from '../api/types';
 import { Alert, Card, Spinner, STAGE_ICONS } from '../components/ui';
 
+// Every stage the API can put in the timeline needs an entry here — a missing one used to
+// fall through to the raw enum, so applicants saw a step called "offer" next to "Offer".
 const STEP_LABELS: Record<string, string> = {
   new: 'Under review',
   shortlisted: 'Shortlisted',
   interviewing: 'Interview',
-  hired: 'Offer',
+  offer: 'Offer',
+  hired: 'Hired',
 };
+
+/** Title-cases an unmapped stage, so a new one reads as a label rather than a database value. */
+function stepLabel(stage: string): string {
+  return STEP_LABELS[stage] ?? stage.charAt(0).toUpperCase() + stage.slice(1);
+}
 
 function fmtDate(iso: string): string {
   try {
@@ -144,7 +152,7 @@ export default function StatusPage() {
                               current ? 'text-brand-700' : done ? 'text-slate-700' : 'text-slate-600'
                             }`}
                           >
-                            {STEP_LABELS[stage] ?? stage}
+                            {stepLabel(stage)}
                           </p>
                           {current && (
                             <p className="text-xs text-slate-600">You are here</p>

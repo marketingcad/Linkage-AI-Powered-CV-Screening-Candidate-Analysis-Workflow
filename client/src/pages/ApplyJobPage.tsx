@@ -300,7 +300,8 @@ export default function ApplyJobPage() {
             </div>
             <h2 className="text-xl font-semibold text-slate-900">Application received</h2>
             <p className="mx-auto mt-2 max-w-md text-slate-600">
-              Thanks, {fullName || 'candidate'}. Your CV{quiz.length > 0 ? ' and exam' : ''} have
+              {/* The subject is singular without an exam, so the verb has to follow it. */}
+              Thanks, {fullName || 'candidate'}. Your CV{quiz.length > 0 ? ' and exam have' : ' has'}{' '}
               been received and shared with our recruiting team. We've emailed you a confirmation with
               a link to track your status.
             </p>

@@ -153,26 +153,33 @@ offersRouter.post('/candidates/:id/offer/action', validate({ params: idParams })
       .where(eq(candidates.id, candidateId))
       .limit(1);
 
-    if (candidate && candidate.stage !== nextStage) {
-      await db
-        .update(candidates)
-        .set({ stage: nextStage, updatedAt: now })
-        .where(eq(candidates.id, candidateId));
-      await db.insert(candidateStageEvents).values({
-        candidateId,
-        fromStage: candidate.stage,
-        toStage: nextStage,
-        reason: action === 'decline' ? (reason ?? 'Declined our offer') : null,
-        changedBy: req.user?.sub ?? null,
-      });
+    if (candidate) {
+      if (candidate.stage !== nextStage) {
+        await db
+          .update(candidates)
+          .set({ stage: nextStage, updatedAt: now })
+          .where(eq(candidates.id, candidateId));
+        await db.insert(candidateStageEvents).values({
+          candidateId,
+          fromStage: candidate.stage,
+          toStage: nextStage,
+          reason: action === 'decline' ? (reason ?? 'Declined our offer') : null,
+          changedBy: req.user?.sub ?? null,
+        });
+      }
 
       /*
-       * Tell the candidate their stage moved.
+       * Tell the candidate, whether or not the stage moved.
        *
        * This route changes the stage directly rather than going through PATCH
        * /candidates/:id/stage, so it has to send the notification itself — otherwise
        * extending an offer told the candidate nothing, while the status page they could
        * reach said "Check your email for the details" about an email that was never sent.
+       *
+       * The send is deliberately NOT conditional on the stage changing. A recruiter who
+       * drags someone to Offer first and drafts the terms afterwards leaves the stage
+       * already correct, and gating on the move meant the one email that carried the
+       * actual offer was the one that never went out.
        *
        * Awaited rather than fired and forgotten so the caller learns whether it actually
        * left, the same as scheduling an interview does.

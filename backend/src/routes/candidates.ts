@@ -278,6 +278,10 @@ candidatesRouter.patch('/:id/stage', validate({ params: idParams }), async (req,
   // directly, without going through the offer card — and the applicant-facing copy for this
   // stage tells them to check their email.
   const NOTIFY_STAGES = ['shortlisted', 'interviewing', 'offer', 'hired', 'rejected'] as const;
+  // Awaited, and the result returned, rather than fired and forgotten. A rejection or an
+  // offer that never reaches the candidate is exactly the kind of failure a recruiter has to
+  // know about, and the old `void` meant the response said success either way.
+  let email: Awaited<ReturnType<typeof sendStatusUpdate>> | undefined;
   if (
     stage !== existing.stage &&
     (NOTIFY_STAGES as readonly string[]).includes(stage)
@@ -287,14 +291,17 @@ candidatesRouter.patch('/:id/stage', validate({ params: idParams }), async (req,
       .from(jobs)
       .where(eq(jobs.id, candidate.jobId))
       .limit(1);
-    void sendStatusUpdate(
+    email = await sendStatusUpdate(
       candidate.id,
       candidate.email,
       candidate.fullName,
       job?.title ?? 'the role',
       stage,
       candidate.trackingToken,
-    ).catch((err) => logger.error({ err }, 'status email failed'));
+    ).catch((err) => {
+      logger.error({ err }, 'status email failed');
+      return { sent: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    });
   }
 
   if (stage !== existing.stage) {
@@ -319,7 +326,7 @@ candidatesRouter.patch('/:id/stage', validate({ params: idParams }), async (req,
     });
   }
 
-  res.json({ candidate });
+  res.json({ candidate, email });
 });
 
 // --- Candidate notes & human scorecards ------------------------------------

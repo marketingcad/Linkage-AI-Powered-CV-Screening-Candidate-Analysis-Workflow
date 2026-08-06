@@ -245,6 +245,14 @@ export default function CandidateDetailPage() {
       setCandidate((c) => (c ? { ...c, stage: res.candidate.stage } : c));
       setPendingReject(false);
       setRejectReason('');
+      // The move can succeed while the notification behind it does not. Saying nothing here
+      // leaves a recruiter believing the candidate has been told when they have not.
+      if (res.email && !res.email.sent && !res.email.skipped) {
+        setStageError(
+          `Moved to “${stage}”, but the notification email could not be sent — ` +
+            `${candidate.fullName} has not been told. Use “Send status update” below to retry.`,
+        );
+      }
     } catch {
       // The stage is only applied after the server confirms, so nothing to revert —
       // but the buttons would otherwise just snap back with no explanation.

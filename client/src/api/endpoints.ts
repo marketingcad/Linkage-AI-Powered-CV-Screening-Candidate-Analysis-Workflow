@@ -263,7 +263,7 @@ export function fetchCandidate(id: string) {
 }
 /** Move a candidate. `reason` is recorded on the stage event — the basis of the exit metrics. */
 export function updateCandidateStage(id: string, stage: CandidateStage, reason?: string) {
-  return apiRequest<{ candidate: Candidate }>(`/candidates/${id}/stage`, {
+  return apiRequest<{ candidate: Candidate; email?: EmailResult }>(`/candidates/${id}/stage`, {
     method: 'PATCH',
     body: reason ? { stage, reason } : { stage },
   });
