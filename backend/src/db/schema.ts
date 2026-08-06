@@ -140,6 +140,16 @@ export const jobs = pgTable('jobs', {
    * entered here can be dated accurately.
    */
   requisitionApprovedAt: timestamp('requisition_approved_at', { withTimezone: true }),
+  /**
+   * Retired without destroying anything.
+   *
+   * A finished role still owns the candidates who applied to it, their scores, their
+   * interviews, and every stage event the pipeline metrics are computed from. Archiving hides
+   * it from the working lists and stops the public link accepting applications; deleting it
+   * would take all of that with it, which is why deletion is now refused while candidates
+   * exist.
+   */
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
   description: text('description').notNull(),
   // Structured requirements the AI scores against
   requiredSkills: jsonb('required_skills').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
@@ -204,8 +214,11 @@ export type InterviewQuestion = {
 
 export const candidates = pgTable('candidates', {
   id: uuid('id').defaultRandom().primaryKey(),
+  // 'restrict', not 'cascade': deleting a job must never silently take its applicants — and
+  // with them the stage history every pipeline metric is derived from. Archive the job
+  // instead; hard delete is only allowed once no candidate references it.
   jobId: uuid('job_id')
-    .references(() => jobs.id, { onDelete: 'cascade' })
+    .references(() => jobs.id, { onDelete: 'restrict' })
     .notNull(),
 
   // Applicant-provided contact info

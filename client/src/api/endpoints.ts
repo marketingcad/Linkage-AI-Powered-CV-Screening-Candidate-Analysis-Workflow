@@ -171,8 +171,17 @@ export interface JobInput {
   scoringWeights?: ScoringWeights;
   status: JobStatus;
 }
-export function fetchJobs() {
-  return apiRequest<{ jobs: JobSummary[] }>('/jobs');
+/** Working list by default; pass `archived` to see retired roles instead. */
+export function fetchJobs(params: { archived?: boolean } = {}) {
+  return apiRequest<{ jobs: JobSummary[] }>(`/jobs${params.archived ? '?archived=true' : ''}`);
+}
+/** Retire a role without touching its candidates, scores, or history. */
+export function archiveJob(id: string) {
+  return apiRequest<{ job: Job }>(`/jobs/${id}/archive`, { method: 'POST' });
+}
+/** Put an archived role back into the working list. */
+export function restoreJob(id: string) {
+  return apiRequest<{ job: Job }>(`/jobs/${id}/restore`, { method: 'POST' });
 }
 export function fetchJob(id: string) {
   return apiRequest<{ job: Job }>(`/jobs/${id}`);

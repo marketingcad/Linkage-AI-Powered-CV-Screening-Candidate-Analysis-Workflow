@@ -166,6 +166,27 @@ async function main() {
     WHERE work_arrangement IS NOT NULL
       AND lower(btrim(location)) = lower(work_arrangement)`;
 
+  // Retiring a role without destroying its applicants.
+  await client`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS archived_at timestamptz`;
+
+  /*
+   * candidates.job_id was ON DELETE CASCADE, so deleting a job erased every applicant to it —
+   * their CVs, scores, interviews, and the stage events every pipeline metric is computed
+   * from. RESTRICT makes the database itself refuse, rather than relying on a UI confirmation
+   * that a script or a future endpoint could bypass. Archive the job instead; hard delete
+   * stays available once no candidate references it.
+   *
+   * interviews and offers already used SET NULL and are unaffected.
+   */
+  await client`ALTER TABLE candidates DROP CONSTRAINT IF EXISTS candidates_job_id_jobs_id_fk`;
+  await client`
+    ALTER TABLE candidates
+    ADD CONSTRAINT candidates_job_id_jobs_id_fk
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE RESTRICT`;
+
+  // Archived jobs are filtered out of the working lists on every page load.
+  await client`CREATE INDEX IF NOT EXISTS jobs_archived_at_idx ON jobs (archived_at)`;
+
   // When the role was approved to hire for — the start of the time-to-fill clock.
   await client`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS requisition_approved_at timestamptz`;
   // Backfill from created_at for roles that are already open or closed. In this app a job row

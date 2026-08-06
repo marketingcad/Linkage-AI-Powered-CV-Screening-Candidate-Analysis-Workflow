@@ -116,6 +116,8 @@ export interface JobSummary {
   status: JobStatus;
   /** When the role was approved to hire for — starts the time-to-fill clock. */
   requisitionApprovedAt: string | null;
+  /** Set when the role is retired. Archived jobs keep every candidate and metric. */
+  archivedAt: string | null;
   minYearsExperience: number | null;
   requiredSkills: string[];
   createdAt: string;
@@ -155,6 +157,8 @@ export interface Job {
   status: JobStatus;
   /** When the role was approved to hire for — starts the time-to-fill clock. */
   requisitionApprovedAt: string | null;
+  /** Set when the role is retired. Archived jobs keep every candidate and metric. */
+  archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

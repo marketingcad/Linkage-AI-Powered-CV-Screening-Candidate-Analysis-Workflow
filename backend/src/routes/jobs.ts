@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { client, db } from '../db/client.js';
 import { candidates, jobs, type QuizQuestion } from '../db/schema.js';
 import {
@@ -8,7 +8,7 @@ import {
   improveDescriptionSchema,
   updateJobSchema,
 } from '../lib/validation.js';
-import { notFound, serverError } from '../lib/errors.js';
+import { badRequest, notFound, serverError } from '../lib/errors.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { idParams, validate } from '../middleware/validate.js';
 import { z } from 'zod';
@@ -57,7 +57,8 @@ jobsRouter.get('/public', async (_req, res) => {
       quizCount: sql<number>`coalesce(jsonb_array_length(${jobs.quiz}), 0)`,
     })
     .from(jobs)
-    .where(eq(jobs.status, 'open'))
+    // Archived roles are retired: never advertised, even if their status was left open.
+    .where(and(eq(jobs.status, 'open'), isNull(jobs.archivedAt)))
     .orderBy(desc(jobs.createdAt));
   res.json({ jobs: rows });
 });
@@ -68,7 +69,8 @@ jobsRouter.get('/public/:id', validate({ params: idParams }), async (req, res) =
 
   // A real position that isn't open → tell the applicant it's closed (with context)
   // rather than a bare 404. Only minimal, non-sensitive fields are exposed.
-  if (job.status !== 'open') {
+  // Archived counts as closed to an applicant, whatever the stored status says.
+  if (job.status !== 'open' || job.archivedAt) {
     res.json({
       accepting: false,
       job: {
@@ -193,7 +195,15 @@ jobsRouter.post('/improve-description', async (req, res) => {
   res.json({ description });
 });
 
-jobsRouter.get('/', async (_req, res) => {
+const listJobsQuery = z.object({
+  /** 'true' shows the archive instead of the working list. */
+  archived: z.enum(['true', 'false']).optional(),
+});
+
+jobsRouter.get('/', validate({ query: listJobsQuery }), async (req, res) => {
+  const { archived } = req.query as unknown as z.infer<typeof listJobsQuery>;
+  const wantArchived = archived === 'true';
+
   const rows = await db
     .select({
       id: jobs.id,
@@ -204,6 +214,7 @@ jobsRouter.get('/', async (_req, res) => {
       employmentType: jobs.employmentType,
       status: jobs.status,
       requisitionApprovedAt: jobs.requisitionApprovedAt,
+      archivedAt: jobs.archivedAt,
       minYearsExperience: jobs.minYearsExperience,
       requiredSkills: jobs.requiredSkills,
       createdAt: jobs.createdAt,
@@ -211,9 +222,57 @@ jobsRouter.get('/', async (_req, res) => {
     })
     .from(jobs)
     .leftJoin(candidates, eq(candidates.jobId, jobs.id))
+    // Archived roles are out of the way by default but never gone — one query flag away.
+    .where(wantArchived ? isNotNull(jobs.archivedAt) : isNull(jobs.archivedAt))
     .groupBy(jobs.id)
     .orderBy(desc(jobs.createdAt));
   res.json({ jobs: rows });
+});
+
+/**
+ * Retire a role without destroying it.
+ *
+ * The alternative — deleting — would take every applicant with it, along with the stage events
+ * the pipeline metrics are computed from. Archiving keeps all of that and simply moves the job
+ * out of the way; it can be restored at any time.
+ */
+jobsRouter.post('/:id/archive', validate({ params: idParams }), async (req, res) => {
+  const [job] = await db
+    .update(jobs)
+    .set({ archivedAt: new Date(), updatedAt: new Date() })
+    .where(eq(jobs.id, req.params.id))
+    .returning();
+  if (!job) throw notFound('Job not found');
+
+  void recordAudit({
+    actorEmail: req.user?.email ?? null,
+    action: 'job.archive',
+    targetType: 'job',
+    targetId: job.id,
+    detail: `Archived "${job.title}"`,
+    ip: req.ip ?? null,
+  });
+  res.json({ job });
+});
+
+/** Put an archived role back into the working list. Its status is left as it was. */
+jobsRouter.post('/:id/restore', validate({ params: idParams }), async (req, res) => {
+  const [job] = await db
+    .update(jobs)
+    .set({ archivedAt: null, updatedAt: new Date() })
+    .where(eq(jobs.id, req.params.id))
+    .returning();
+  if (!job) throw notFound('Job not found');
+
+  void recordAudit({
+    actorEmail: req.user?.email ?? null,
+    action: 'job.restore',
+    targetType: 'job',
+    targetId: job.id,
+    detail: `Restored "${job.title}"`,
+    ip: req.ip ?? null,
+  });
+  res.json({ job });
 });
 
 jobsRouter.get('/:id', validate({ params: idParams }), async (req, res) => {
@@ -316,6 +375,25 @@ jobsRouter.post('/:id/duplicate', validate({ params: idParams }), async (req, re
 });
 
 jobsRouter.delete('/:id', requireRole('admin'), validate({ params: idParams }), async (req, res) => {
+  /*
+   * Deletion is for a posting created in error, not for retiring a filled role.
+   *
+   * The database now refuses (candidates.job_id is ON DELETE RESTRICT) rather than quietly
+   * erasing every applicant, so this check exists to turn that constraint violation into an
+   * answer someone can act on.
+   */
+  const [{ count: applicants } = { count: 0 }] = await db
+    .select({ count: sql<number>`cast(count(*) as int)` })
+    .from(candidates)
+    .where(eq(candidates.jobId, req.params.id));
+
+  if (applicants > 0) {
+    throw badRequest(
+      `This role has ${applicants} candidate${applicants === 1 ? '' : 's'}. Archive it instead — ` +
+        'deleting would erase their applications, scores, and interview history.',
+    );
+  }
+
   const [job] = await db.delete(jobs).where(eq(jobs.id, req.params.id)).returning();
   if (!job) throw notFound('Job not found');
   void recordAudit({

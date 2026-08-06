@@ -13,10 +13,12 @@ import {
   LuMapPin,
   LuPencilLine,
   LuPlus,
+  LuArchive,
+  LuArchiveRestore,
   LuTrash2,
   LuUsers,
 } from 'react-icons/lu';
-import { deleteJob, duplicateJob, fetchJobs, updateJob } from '../api/endpoints';
+import { archiveJob, deleteJob, duplicateJob, fetchJobs, restoreJob, updateJob } from '../api/endpoints';
 import type { Job, JobStatus, JobSummary } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { Alert, Button, Card, Skeleton } from '../components/ui';
@@ -63,6 +65,8 @@ export default function JobsPage() {
   const [showForm, setShowForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'' | JobStatus>('');
   const [sort, setSort] = useState<SortKey>('recent');
+  // Archive is a separate view, not another status tab — it is fetched from the server.
+  const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   // Deleting a job is admin-only server-side (403 for members).
@@ -70,13 +74,34 @@ export default function JobsPage() {
 
   function load() {
     setLoading(true);
-    fetchJobs()
+    fetchJobs({ archived: showArchived })
       .then((res) => setJobs(res.jobs))
       .catch(() => setError('Failed to load jobs.'))
       .finally(() => setLoading(false));
   }
 
-  useEffect(load, []);
+  useEffect(load, [showArchived]);
+
+  /** Retire a role. Everything it owns — candidates, scores, history — is kept. */
+  async function handleArchive(job: JobSummary) {
+    setError(null);
+    try {
+      await archiveJob(job.id);
+      setJobs((js) => js.filter((j) => j.id !== job.id));
+    } catch {
+      setError(`Could not archive ${job.title}. Please try again.`);
+    }
+  }
+
+  async function handleRestore(job: JobSummary) {
+    setError(null);
+    try {
+      await restoreJob(job.id);
+      setJobs((js) => js.filter((j) => j.id !== job.id));
+    } catch {
+      setError(`Could not restore ${job.title}. Please try again.`);
+    }
+  }
 
   function handleSaved(_job: Job) {
     setShowForm(false);
@@ -202,15 +227,32 @@ export default function JobsPage() {
                 </button>
               ))}
             </div>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-brand-400 focus:outline-none"
-            >
-              <option value="recent">Newest</option>
-              <option value="candidates">Most candidates</option>
-              <option value="title">A–Z</option>
-            </select>
+            <div className="flex items-center gap-2">
+              {/* Retired roles live behind a toggle rather than a status tab — they are not a
+                  fourth kind of open role, they are out of the working set entirely. */}
+              <button
+                type="button"
+                onClick={() => setShowArchived((v) => !v)}
+                aria-pressed={showArchived}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                  showArchived
+                    ? 'border-brand-400 bg-brand-50 text-brand-700'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <LuArchive className="h-3.5 w-3.5 shrink-0" />
+                {showArchived ? 'Viewing archive' : 'Archive'}
+              </button>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortKey)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-brand-400 focus:outline-none"
+              >
+                <option value="recent">Newest</option>
+                <option value="candidates">Most candidates</option>
+                <option value="title">A–Z</option>
+              </select>
+            </div>
           </div>
 
           {visibleJobs.length === 0 ? (
@@ -288,7 +330,20 @@ export default function JobsPage() {
                           <LuCopy className="text-slate-600" />
                           Duplicate
                         </DropdownMenuItem>
-                        {isAdmin && (
+                        {showArchived ? (
+                          <DropdownMenuItem onSelect={() => void handleRestore(job)}>
+                            <LuArchiveRestore />
+                            Restore to active
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onSelect={() => void handleArchive(job)}>
+                            <LuArchive />
+                            Archive job
+                          </DropdownMenuItem>
+                        )}
+                        {/* Deletion is refused server-side once anyone has applied, so it is
+                            only offered for a role that would lose nothing. */}
+                        {isAdmin && job.candidateCount === 0 && (
                           <DropdownMenuItem
                             variant="destructive"
                             onSelect={() => setPendingDelete(job)}
@@ -363,15 +418,12 @@ export default function JobsPage() {
         title="Permanently delete this job?"
         body={
           <>
-            <strong className="font-semibold text-slate-800">{pendingDelete?.title}</strong> and all{' '}
-            {pendingDelete?.candidateCount ?? 0} of its candidates — including their CVs, scores,
-            notes and interview records — will be deleted. This cannot be undone.
+            <strong className="font-semibold text-slate-800">{pendingDelete?.title}</strong> will be
+            deleted. Nobody has applied to it, so no candidate data goes with it. This cannot be
+            undone — to retire a role that has applicants, archive it instead.
           </>
         }
         confirmLabel="Delete job"
-        // Typing the word is only demanded when real candidate data goes with it; an empty
-        // draft role does not need the ceremony.
-        confirmPhrase={pendingDelete?.candidateCount ? 'DELETE' : undefined}
         busy={deleting}
         error={deleteError}
         onConfirm={confirmDelete}
