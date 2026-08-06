@@ -19,6 +19,12 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## Recent updates
 
+- Extending an offer now tells the candidate — before, they were moved into Offer and heard nothing until someone remembered to write to them.
+- Every message is on the record — interview invitations, reschedules and cancellations now appear in the candidate's email history alongside everything else you have sent them.
+- A failed invitation says so — booking an interview and sending the invitation are two separate things, and if the email does not go out you are told plainly, told who has not heard from you, and pointed at Resend.
+- A page that breaks offers a way back — instead of a blank white screen, you get a short explanation and a button to reload or return to the dashboard. Nothing in progress is lost.
+- Clearer wording for applicants — the status tracker names each step properly rather than showing an internal label, and the confirmation page reads correctly whether or not the role includes an exam.
+- Steadier database connections — the app now keeps well inside its connection limit, so a busy moment can no longer lock the site out of its own database.
 - Archive a role instead of deleting it — retiring a job keeps everyone who applied to it, along with their scores, notes and interview history. A job with applicants can no longer be deleted at all, and anything archived can be restored at any time.
 - Help — a plain-language guide in the sidebar covering how hiring flows through the app, what each page is for, what the scores do and do not tell you, and what candidates see at every stage.
 - Interview links are good for one sitting — a candidate's AI interview link opens shortly before the start time, works once, and stops working once the interview is finished or the booking is cancelled.
