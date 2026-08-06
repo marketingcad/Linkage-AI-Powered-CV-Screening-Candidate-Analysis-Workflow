@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import RouteProgress from '../components/RouteProgress';
 import {
@@ -8,6 +8,8 @@ import {
   LuLayoutDashboard,
   LuLogOut,
   LuMenu,
+  LuPanelLeftClose,
+  LuPanelLeftOpen,
   LuUsers,
   LuUserCog,
   LuVideo,
@@ -25,6 +27,8 @@ import {
   TooltipTrigger,
 } from '../components/ui/tooltip';
 import avatarPlaceholder from '../assets/avatar-placeholder.png';
+
+const SIDEBAR_KEY = 'hr_sidebar';
 
 const navItems = [
   { to: '/hr', label: 'Overview', end: true, Icon: LuLayoutDashboard },
@@ -51,6 +55,28 @@ export default function HrLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+
+  /*
+   * Desktop sidebar collapse, remembered across sessions.
+   *
+   * Read lazily from localStorage rather than in an effect, so the layout renders in its
+   * chosen state on first paint instead of showing the sidebar and then snapping it away.
+   */
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_KEY) === 'collapsed';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_KEY, collapsed ? 'collapsed' : 'expanded');
+    } catch {
+      /* private mode — the preference just will not persist */
+    }
+  }, [collapsed]);
 
   function signOut() {
     logout();
@@ -151,7 +177,15 @@ export default function HrLayout() {
       <RouteProgress />
 
       {/* Desktop sidebar (fixed) */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-200/70 bg-white lg:block">
+      {/* Slides out rather than unmounting, so collapsing animates instead of snapping and the
+          nav keeps its scroll position when it comes back. */}
+      <aside
+        id="hr-sidebar"
+        aria-hidden={collapsed}
+        className={`fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-200/70 bg-white transition-transform duration-200 ease-out motion-reduce:transition-none lg:block ${
+          collapsed ? 'lg:-translate-x-full' : 'lg:translate-x-0'
+        }`}
+      >
         {sidebar}
       </aside>
 
@@ -172,7 +206,11 @@ export default function HrLayout() {
       </aside>
 
       {/* Content */}
-      <div className="lg:pl-64">
+      <div
+        className={`transition-[padding] duration-200 ease-out motion-reduce:transition-none ${
+          collapsed ? 'lg:pl-0' : 'lg:pl-64'
+        }`}
+      >
         {/* Top header — mobile shows the menu button + brand; the bell shows on all sizes */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200/70 bg-white/85 px-4 backdrop-blur-md lg:px-6 dark:bg-[#0a0f1c]/85">
           <button
@@ -183,6 +221,39 @@ export default function HrLayout() {
           >
             <LuMenu className="h-5 w-5" />
           </button>
+
+          {/* Lives in the header, not the sidebar: a button inside the panel would collapse
+              along with it, leaving no way back. */}
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-expanded={!collapsed}
+            aria-controls="hr-sidebar"
+            aria-label={collapsed ? 'Show sidebar' : 'Hide sidebar'}
+            title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
+            className="hidden rounded-md p-1.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 lg:inline-flex"
+          >
+            {collapsed ? (
+              <LuPanelLeftOpen className="h-5 w-5" />
+            ) : (
+              <LuPanelLeftClose className="h-5 w-5" />
+            )}
+          </button>
+
+          {/* The brand is in the sidebar normally; when that is hidden it moves here so the
+              app is still identifiable and there is a way home. */}
+          {collapsed && (
+            <NavLink to="/hr" end className="hidden items-center gap-2 lg:flex">
+              <img
+                src="/Favicon_Linkage.png"
+                alt=""
+                className="h-7 w-7 rounded-lg object-contain"
+              />
+              <span className="font-display text-base font-semibold text-slate-800">
+                Linkage ScreenAI
+              </span>
+            </NavLink>
+          )}
           <div className="flex items-center gap-2 lg:hidden">
             <img
               src="/Favicon_Linkage.png"
