@@ -36,6 +36,48 @@ function getTransporter(): Transporter | null {
 
 export type SendResult = { sent: boolean; skipped?: boolean; error?: string };
 
+/**
+ * Transient connection faults, as opposed to a rejected message.
+ *
+ * Nodemailer resolves the SMTP host itself with `dns.resolve4`/`resolve6`, concatenates the
+ * two lists and caches the result — so `dns.setDefaultResultOrder` does not reach it. When a
+ * `resolve4` call fails (which flaky DNS does regularly) it caches an IPv6-only list, and on a
+ * host without an IPv6 route every send then fails with ENETUNREACH until that cache expires.
+ * Observed live: four interview invitations sent seconds apart, two delivered and two lost.
+ *
+ * Retrying past the cache window turns a silent data-loss bug into a short delay.
+ */
+function isTransientSendError(err: unknown): boolean {
+  const e = err as { code?: string; errno?: string } | undefined;
+  return ['ESOCKET', 'ECONNECTION', 'ETIMEDOUT', 'ECONNRESET', 'ENETUNREACH', 'EAI_AGAIN'].includes(
+    String(e?.code ?? e?.errno ?? ''),
+  );
+}
+
+/** Send with a couple of retries for transient faults. Permanent rejections fail immediately. */
+async function sendWithRetry(
+  tx: Transporter,
+  message: Parameters<Transporter['sendMail']>[0],
+  attempts = 3,
+): Promise<void> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await tx.sendMail(message);
+      if (attempt > 1) logger.info({ attempt }, '[email] sent after retry');
+      return;
+    } catch (err) {
+      // A bad address or a refused message will fail identically every time — don't queue.
+      if (attempt >= attempts || !isTransientSendError(err)) throw err;
+      logger.warn(
+        { attempt, err: (err as Error).message },
+        '[email] transient send failure, retrying',
+      );
+      // Long enough to outlast nodemailer's internal DNS cache entry.
+      await new Promise((r) => setTimeout(r, attempt * 4000));
+    }
+  }
+}
+
 async function recordLog(
   candidateId: string,
   type: EmailType,
@@ -69,7 +111,7 @@ async function sendEmail(opts: {
     return { sent: false, skipped: true };
   }
   try {
-    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text, attachments: [logoAttachment()] });
+    await sendWithRetry(tx, { from: env.EMAIL_FROM, to, subject, html, text, attachments: [logoAttachment()] });
     logger.info({ to, subject }, '[email] sent');
     await recordLog(candidateId, type, to, subject, 'sent');
     return { sent: true };
@@ -265,7 +307,7 @@ export async function sendInterviewReminder(
     return { sent: false, skipped: true };
   }
   try {
-    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text, attachments: [logoAttachment()] });
+    await sendWithRetry(tx, { from: env.EMAIL_FROM, to, subject, html, text, attachments: [logoAttachment()] });
     logger.info({ to, subject }, '[email] interview reminder sent');
     return { sent: true };
   } catch (err) {
@@ -345,7 +387,7 @@ export async function sendNewApplicationAlert(
     return { sent: false, skipped: true };
   }
   try {
-    await tx.sendMail({ from: env.EMAIL_FROM, to, subject, html, text, attachments: [logoAttachment()] });
+    await sendWithRetry(tx, { from: env.EMAIL_FROM, to, subject, html, text, attachments: [logoAttachment()] });
     logger.info({ to, subject }, '[email] new-application alert sent');
     return { sent: true };
   } catch (err) {
@@ -555,7 +597,7 @@ export async function sendCandidateInterviewEmail(
   }
   try {
     const ics = buildInterviewIcs(info, kind === 'canceled');
-    await tx.sendMail({
+    await sendWithRetry(tx, {
       from: env.EMAIL_FROM,
       to,
       subject,

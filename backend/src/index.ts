@@ -1,3 +1,4 @@
+import { setDefaultResultOrder } from 'node:dns';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -18,6 +19,18 @@ import { offersRouter } from './routes/offers.js';
 import { startRetentionSweeper } from './services/retention.js';
 import { startInterviewReminderSweeper } from './services/interviewReminder.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
+
+/*
+ * Prefer IPv4 when a hostname resolves to both.
+ *
+ * Node 17+ returns addresses in whatever order DNS gave them rather than preferring IPv4, so on
+ * a host with no IPv6 route an outbound connection can pick the AAAA record and die with
+ * ENETUNREACH.
+ *
+ * Note this covers `dns.lookup` only — anything using `dns.resolve4/6` directly does its own
+ * ordering and is unaffected. Nodemailer is one of those; see the retry in services/email.ts.
+ */
+setDefaultResultOrder('ipv4first');
 
 const app = express();
 
