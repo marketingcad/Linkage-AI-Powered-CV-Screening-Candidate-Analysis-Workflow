@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { IconType } from 'react-icons';
 import {
@@ -121,11 +121,43 @@ const WEIGHTS: { key: keyof typeof DEFAULT_SCORING_WEIGHTS; label: string; body:
 
 export default function HelpPage() {
   const [active, setActive] = useState(SECTIONS[0]!.id);
+  // Scrollspy is muted until this time, while a click-driven scroll is still travelling.
+  const suppressSpyUntil = useRef(0);
+
+  /**
+   * Glide to a section instead of teleporting.
+   *
+   * Handled here rather than with a global `scroll-behavior: smooth` so it only applies to
+   * this page's contents links — a site-wide setting would also animate route changes and
+   * any programmatic scroll, which is not what anyone asked for.
+   *
+   * The href stays on the anchor so middle-click, copy-link and keyboard still behave; this
+   * only intercepts a plain left-click.
+   */
+  function goToSection(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    e.preventDefault();
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Long enough for a full-page glide to settle; instant when motion is reduced.
+    suppressSpyUntil.current = Date.now() + (reduced ? 0 : 900);
+    el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    setActive(id);
+    // Keep the URL shareable without letting the hash change trigger a second, instant jump.
+    history.replaceState(null, '', `#${id}`);
+  }
 
   // Highlight the section currently in view so the contents list tracks the reader.
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
+        // A smooth scroll sweeps past every section in between, which would strobe the
+        // highlight down the list and — for a short final section that cannot reach the top
+        // of the viewport — leave it settled on the wrong entry. The click already set the
+        // destination, so ignore the journey.
+        if (Date.now() < suppressSpyUntil.current) return;
         const visible = entries.filter((e) => e.isIntersecting);
         if (visible[0]) setActive(visible[0].target.id);
       },
@@ -154,7 +186,7 @@ export default function HelpPage() {
 
       <div className="grid gap-6 lg:grid-cols-[210px_minmax(0,1fr)] lg:items-start">
         {/* Contents */}
-        <nav className="hidden lg:sticky lg:top-6 lg:block" aria-label="On this page">
+        <nav className="hidden lg:sticky lg:top-20 lg:block" aria-label="On this page">
           <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
             On this page
           </p>
@@ -163,7 +195,9 @@ export default function HelpPage() {
               <li key={s.id}>
                 <a
                   href={`#${s.id}`}
-                  className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition ${
+                  onClick={(e) => goToSection(e, s.id)}
+                  aria-current={active === s.id ? 'true' : undefined}
+                  className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors duration-200 ${
                     active === s.id
                       ? 'bg-brand-50 font-medium text-brand-700'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
@@ -179,7 +213,7 @@ export default function HelpPage() {
 
         <div className="min-w-0 space-y-6">
           {/* --- How hiring works ------------------------------------------------ */}
-          <Card className="scroll-mt-6 p-5" id="flow">
+          <Card className="scroll-mt-20 p-5" id="flow">
             <h2 className="text-base font-semibold text-slate-800">How hiring works here</h2>
             <p className="mt-1 text-sm text-slate-600">
               Five steps, from an application landing to someone accepting a job.
@@ -201,7 +235,7 @@ export default function HelpPage() {
           </Card>
 
           {/* --- Pages ----------------------------------------------------------- */}
-          <Card className="scroll-mt-6 p-5" id="sections">
+          <Card className="scroll-mt-20 p-5" id="sections">
             <h2 className="text-base font-semibold text-slate-800">What each page is for</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {PAGES.map((p) => (
@@ -221,7 +255,7 @@ export default function HelpPage() {
           </Card>
 
           {/* --- Scores ---------------------------------------------------------- */}
-          <Card className="scroll-mt-6 p-5" id="scores">
+          <Card className="scroll-mt-20 p-5" id="scores">
             <h2 className="text-base font-semibold text-slate-800">Making sense of the scores</h2>
             <p className="mt-1 text-sm text-slate-600">
               Every candidate gets a score out of 100. It is a reading of their CV against the role
@@ -285,7 +319,7 @@ export default function HelpPage() {
           </Card>
 
           {/* --- Stages ---------------------------------------------------------- */}
-          <Card className="scroll-mt-6 p-5" id="stages">
+          <Card className="scroll-mt-20 p-5" id="stages">
             <h2 className="text-base font-semibold text-slate-800">Stages, and what candidates see</h2>
             <p className="mt-1 text-sm text-slate-600">
               Moving someone along updates the page they can check themselves. The wording they see
@@ -323,7 +357,7 @@ export default function HelpPage() {
           </Card>
 
           {/* --- Reasons --------------------------------------------------------- */}
-          <Card className="scroll-mt-6 p-5" id="reasons">
+          <Card className="scroll-mt-20 p-5" id="reasons">
             <h2 className="text-base font-semibold text-slate-800">Why you record a reason</h2>
             <p className="mt-1 text-sm text-slate-600">
               When you turn someone down you pick a reason from a list. It takes a second, and it
@@ -349,7 +383,7 @@ export default function HelpPage() {
           </Card>
 
           {/* --- AI interviews --------------------------------------------------- */}
-          <Card className="scroll-mt-6 p-5" id="ai-interview">
+          <Card className="scroll-mt-20 p-5" id="ai-interview">
             <h2 className="text-base font-semibold text-slate-800">AI voice interviews</h2>
             <p className="mt-1 text-sm text-slate-600">
               An optional first-round call run by an AI interviewer. Book it like any other
@@ -378,7 +412,7 @@ export default function HelpPage() {
           </Card>
 
           {/* --- Offers ---------------------------------------------------------- */}
-          <Card className="scroll-mt-6 p-5" id="offers">
+          <Card className="scroll-mt-20 p-5" id="offers">
             <h2 className="text-base font-semibold text-slate-800">Making an offer</h2>
             <p className="mt-1 text-sm text-slate-600">
               The offer card appears on a candidate once they reach the interview stage.
@@ -407,7 +441,7 @@ export default function HelpPage() {
           </Card>
 
           {/* --- Emails ---------------------------------------------------------- */}
-          <Card className="scroll-mt-6 p-5" id="emails">
+          <Card className="scroll-mt-20 p-5" id="emails">
             <h2 className="text-base font-semibold text-slate-800">What candidates receive</h2>
             <p className="mt-1 text-sm text-slate-600">
               Sent automatically. Every one carries a link where they can check their own progress.
@@ -428,7 +462,7 @@ export default function HelpPage() {
           </Card>
 
           {/* --- Access ---------------------------------------------------------- */}
-          <Card className="scroll-mt-6 p-5" id="access">
+          <Card className="scroll-mt-20 p-5" id="access">
             <h2 className="text-base font-semibold text-slate-800">Who can do what</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-slate-200 p-3.5">
