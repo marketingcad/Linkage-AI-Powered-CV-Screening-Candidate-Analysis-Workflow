@@ -200,13 +200,17 @@ export function Card({
   children,
   className = '',
   style,
+  id,
 }: {
   children: ReactNode;
   className?: string;
   style?: CSSProperties;
+  /** Anchor target, so a card can be linked to from an on-page contents list. */
+  id?: string;
 }) {
   return (
     <div
+      id={id}
       className={`rounded-2xl border border-slate-200/80 bg-white shadow-(--shadow-card) ${className}`}
       style={style}
     >

@@ -4,6 +4,7 @@ import RouteProgress from '../components/RouteProgress';
 import {
   LuBriefcase,
   LuCalendarClock,
+  LuCircleHelp,
   LuLayoutDashboard,
   LuLogOut,
   LuMenu,
@@ -33,6 +34,8 @@ const navItems = [
   { to: '/hr/recordings', label: 'Recordings', end: false, Icon: LuVideo },
   // Managing who has access is admin-only; hidden for members.
   { to: '/hr/team', label: 'Team', end: false, Icon: LuUserCog, adminOnly: true },
+  // Last, and visible to everyone — a reference you reach for occasionally, not a daily stop.
+  { to: '/hr/help', label: 'Help', end: false, Icon: LuCircleHelp },
 ];
 
 function initials(name?: string): string {

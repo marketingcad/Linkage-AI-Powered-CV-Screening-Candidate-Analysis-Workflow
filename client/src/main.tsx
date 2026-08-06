@@ -16,6 +16,7 @@ import CandidateDetailPage from './pages/CandidateDetailPage';
 import SchedulerPage from './pages/SchedulerPage';
 import CandidateReportPage from './pages/CandidateReportPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
+import HelpPage from './pages/HelpPage';
 import AiInterviewPage from './pages/AiInterviewPage';
 import TeamPage from './pages/TeamPage';
 import InterviewRecordingsPage from './pages/InterviewRecordingsPage';
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
       { path: 'scheduler', element: <SchedulerPage /> },
       { path: 'recordings', element: <InterviewRecordingsPage /> },
       { path: 'settings', element: <AccountSettingsPage /> },
+      { path: 'help', element: <HelpPage /> },
       { path: 'team', element: <TeamPage /> },
     ],
   },
