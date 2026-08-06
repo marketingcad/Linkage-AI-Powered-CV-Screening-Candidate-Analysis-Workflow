@@ -19,14 +19,19 @@ Google Gemini, and presents recruiters with ranked, structured insights.
 
 ## Recent updates
 
+- Archive a role instead of deleting it — retiring a job keeps everyone who applied to it, along with their scores, notes and interview history. A job with applicants can no longer be deleted at all, and anything archived can be restored at any time.
+- Help — a plain-language guide in the sidebar covering how hiring flows through the app, what each page is for, what the scores do and do not tell you, and what candidates see at every stage.
+- Interview links are good for one sitting — a candidate's AI interview link opens shortly before the start time, works once, and stops working once the interview is finished or the booking is cancelled.
+- Invitations that fail are retried — an interview invitation that cannot be sent first time is retried automatically rather than quietly never arriving.
 - Offers — draft the terms privately (salary, start date, respond-by date), extend the offer when you are ready, then record whether the candidate accepted or declined. Candidates now see "Offer extended" instead of being told they were hired before they have answered.
 - Know why you lose people — when you turn a candidate down you pick a reason from a set list, grouped by who ended it. Candidates who withdrew are never counted as your rejections.
 - Pipeline health — median time to hire, offer acceptance rate, how many candidates reach each stage, how long each stage takes, and the top reasons people drop out.
 - Time to fill — record when a role was approved to hire for, then see how long roles take to fill and how long your open roles have been waiting.
 - The whole pipeline on one screen — the candidate board shows all six stages side by side on a desktop, with no sideways scrolling and no cut-off names.
+- A score chart you can read — the bands on the Overview run light to dark, and hovering one shows how many candidates are in it and what share of the total that is.
 - Clearer job setup — say how the role is worked (Onsite, Hybrid, Remote) separately from the city, pick an employment type from a list, and add skills one at a time as removable tags.
 - Write job descriptions faster — one button rewrites your draft into a clear posting. You review it side by side and choose whether to use it, and it never invents salary, benefits, or requirements you did not write.
-- Safer deletions — deleting a job, candidate, teammate, or interview now opens a confirmation that spells out exactly what will be destroyed. Deleting a job that still has candidates asks you to type DELETE first.
+- Deletions spell out what they destroy — removing a candidate, teammate or interview opens a confirmation naming exactly what will go.
 - Paged candidate list — see 10 at a time (or 20, 50, 100) with next and previous, instead of one endless scroll.
 - You can see it working — a slim progress bar runs across the top while a page loads, pages fill in with placeholder layouts instead of a bare spinner, and turning a page shows a spinner while it swaps.
 - Check your password before saving — the change-password fields have an eye icon to show or hide what you typed.
@@ -354,10 +359,12 @@ backend: `https://<your-backend>.onrender.com/api/ai-interview/webhook`.
 | GET    | `/api/auth/me`                 | ✔    | Current user                             |
 | GET    | `/api/jobs/public`             | –    | Open jobs (for the application form)     |
 | POST   | `/api/applications`           | –    | Submit a CV → parse + AI analyze + store |
-| GET    | `/api/jobs`                    | ✔    | List jobs (with candidate counts)        |
+| GET    | `/api/jobs?archived`           | ✔    | List jobs (with candidate counts)        |
 | POST   | `/api/jobs`                    | ✔    | Create a job                             |
 | PUT    | `/api/jobs/:id`                | ✔    | Update a job                             |
-| DELETE | `/api/jobs/:id`                | ✔    | Delete a job                             |
+| POST   | `/api/jobs/:id/archive`        | ✔    | Retire a job, keeping its candidates     |
+| POST   | `/api/jobs/:id/restore`        | ✔    | Return an archived job to the list       |
+| DELETE | `/api/jobs/:id`                | ✔    | Delete a job — refused if it has any candidates |
 | GET    | `/api/candidates?jobId&stage`  | ✔    | Ranked candidates                        |
 | GET    | `/api/candidates/:id`          | ✔    | Full candidate analysis                  |
 | PATCH  | `/api/candidates/:id/stage`    | ✔    | Move pipeline stage                      |

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { IconType } from 'react-icons';
 import {
+  LuArchive,
   LuBriefcase,
   LuCalendarClock,
   LuCircleHelp,
@@ -34,6 +35,7 @@ const SECTIONS: Section[] = [
   { id: 'scores', title: 'Making sense of the scores', Icon: LuGauge },
   { id: 'stages', title: 'Stages, and what candidates see', Icon: LuUsers },
   { id: 'reasons', title: 'Why you record a reason', Icon: LuMessageSquareQuote },
+  { id: 'retiring', title: 'Retiring a role', Icon: LuArchive },
   { id: 'ai-interview', title: 'AI voice interviews', Icon: LuVideo },
   { id: 'offers', title: 'Making an offer', Icon: LuHandshake },
   { id: 'emails', title: 'What candidates receive', Icon: LuMail },
@@ -74,7 +76,7 @@ const PAGES: { to: string; label: string; Icon: IconType; body: string }[] = [
     to: '/hr/jobs',
     label: 'Jobs',
     Icon: LuBriefcase,
-    body: 'Create and edit roles. Each job has its own application link to share, and can include a short screening quiz that is marked automatically.',
+    body: 'Create and edit roles. Each job has its own application link to share, and can include a short screening quiz that is marked automatically. Finished with a role? Archive it — see below.',
   },
   {
     to: '/hr/candidates',
@@ -380,6 +382,42 @@ export default function HelpPage() {
               The split matters. Someone who withdrew is never counted as a candidate you rejected,
               so your reporting reflects the decisions you actually made.
             </p>
+          </Card>
+
+          {/* --- Retiring a role ------------------------------------------------- */}
+          <Card className="scroll-mt-20 p-5" id="retiring">
+            <h2 className="text-base font-semibold text-slate-800">Retiring a role</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Three ways to take a job off the market, depending on what you want to keep.
+            </p>
+            <div className="mt-4 space-y-3">
+              {[
+                {
+                  t: 'Unavailable',
+                  b: 'Stops accepting applications but leaves the role in your list. Anyone opening the link is told applications are closed. Use it for a role that is paused or nearly filled.',
+                },
+                {
+                  t: 'Archive',
+                  b: 'Retires the role and moves it out of your working list, keeping every candidate, score, note and interview. The link shows the closed page. Restore it whenever you like — nothing is lost.',
+                },
+                {
+                  t: 'Delete',
+                  b: 'Only possible for a role nobody has applied to — a posting created by mistake. Once someone has applied, deleting is refused and archiving is offered instead.',
+                },
+              ].map((r) => (
+                <div key={r.t} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5">
+                  <p className="text-sm font-semibold text-slate-800">{r.t}</p>
+                  <p className="mt-1 text-sm text-slate-600">{r.b}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 rounded-xl border-l-3 border-brand-400 bg-brand-50/60 p-3.5">
+              <p className="text-sm text-slate-700">
+                <b>Archive is the one you want for a finished role.</b> Your reporting is built from
+                the history of everyone who applied — deleting that history would change past
+                figures like time to hire, so a role with applicants cannot be deleted at all.
+              </p>
+            </div>
           </Card>
 
           {/* --- AI interviews --------------------------------------------------- */}
