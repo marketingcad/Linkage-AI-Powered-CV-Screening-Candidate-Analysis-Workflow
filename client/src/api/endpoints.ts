@@ -233,6 +233,16 @@ export function duplicateJob(id: string) {
   return apiRequest<{ job: Job }>(`/jobs/${id}/duplicate`, { method: 'POST' });
 }
 
+export interface Holiday {
+  /** yyyy-MM-dd */
+  date: string;
+  name: string;
+}
+/** Public holidays for the calendar year. Returns an empty list if the source is unreachable. */
+export function fetchHolidays(year: number) {
+  return apiRequest<{ country: string; holidays: Holiday[] }>(`/interviews/holidays?year=${year}`);
+}
+
 // --- HR: candidates ---------------------------------------------------------
 export function fetchCandidates(
   params: { jobId?: string; stage?: string; source?: string } = {},

@@ -45,6 +45,8 @@ const envSchema = z.object({
   MAX_UPLOAD_MB: z.coerce.number().default(10),
 
   // GDPR retention: auto-anonymize candidate PII older than N days. 0 = disabled.
+  /** ISO country code for calendar holidays (Nager.Date). Blank disables the feature. */
+  HOLIDAY_COUNTRY: z.string().default('PH'),
   DATA_RETENTION_DAYS: z.coerce.number().int().min(0).default(0),
 
   // Supabase Storage for CVs (survives redeploys). SUPABASE_URL is auto-derived from

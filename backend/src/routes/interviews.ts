@@ -12,10 +12,24 @@ import { sendCandidateInterviewEmail, type CandidateInterviewKind } from '../ser
 import { liveKitEnabled } from '../config/env.js';
 import { buildJoinLink, signJoinToken } from '../services/aiInterview.js';
 import { logger } from '../lib/logger.js';
+import { getHolidays, holidayCountry } from '../services/holidays.js';
 
 export const interviewsRouter = Router();
 
 interviewsRouter.use(requireAuth);
+
+const holidaysQuery = z.object({
+  year: z.coerce.number().int().min(1970).max(2100),
+});
+
+/**
+ * Public holidays for the calendar year. Answers with an empty list rather than an error if
+ * the upstream dataset is unreachable — the calendar works fine without them.
+ */
+interviewsRouter.get('/holidays', validate({ query: holidaysQuery }), async (req, res) => {
+  const { year } = req.query as unknown as z.infer<typeof holidaysQuery>;
+  res.json({ country: holidayCountry(), holidays: await getHolidays(year) });
+});
 
 /** Interview row enriched with candidate + job info for the calendar UI. */
 const selection = {

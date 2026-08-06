@@ -16,7 +16,7 @@ import {
   LuVideo,
 } from 'react-icons/lu';
 import type { IconType } from 'react-icons';
-import { fetchInterviews, updateInterview } from '../api/endpoints';
+import { fetchHolidays, fetchInterviews, updateInterview } from '../api/endpoints';
 import type { Interview, InterviewMode, InterviewStatus } from '../api/types';
 import { Alert, Button, Card } from '../components/ui';
 import { CardListSkeleton } from '../components/Skeletons';
@@ -68,6 +68,10 @@ type DialogState =
   | null;
 
 export default function SchedulerPage() {
+  // Keyed yyyy-MM-dd → holiday name. Empty when the source is unreachable, which simply
+  // means the calendar renders without them.
+  const [holidays, setHolidays] = useState<Map<string, string>>(new Map());
+
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -85,6 +89,31 @@ export default function SchedulerPage() {
       .finally(() => setLoading(false));
   }
   useEffect(load, []);
+
+  /*
+   * Holidays for whichever year is on screen.
+   *
+   * Keyed on the year, not the month, so paging through a year costs one request. The grid
+   * always shows a few days either side of the month, so the neighbouring years are fetched
+   * too when sitting on January or December — otherwise those trailing days would be the only
+   * ones silently missing their holidays.
+   */
+  useEffect(() => {
+    const years = new Set(calendarDays(viewMonth).map((d) => d.getFullYear()));
+    let live = true;
+    Promise.all([...years].map((y) => fetchHolidays(y).catch(() => ({ holidays: [] }))))
+      .then((results) => {
+        if (!live) return;
+        const map = new Map<string, string>();
+        for (const r of results) for (const h of r.holidays) map.set(h.date, h.name);
+        setHolidays(map);
+      })
+      // Decoration on a scheduling view — never worth an error banner.
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [viewMonth]);
 
   const byDay = useMemo(() => {
     const map = new Map<string, Interview[]>();
@@ -258,65 +287,108 @@ export default function SchedulerPage() {
           </div>
 
           <div className="grid grid-cols-7 border-b border-slate-100 pb-2">
-            {WEEKDAYS.map((w) => (
-              <div key={w} className="text-center text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            {WEEKDAYS.map((w, i) => (
+              <div
+                key={w}
+                className={`text-center text-[11px] font-semibold uppercase tracking-wide ${
+                  i === 0 || i === 6 ? 'text-slate-500' : 'text-slate-600'
+                }`}
+              >
                 {w}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7">
+          <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-slate-100">
             {days.map((day) => {
               const key = ymd(day);
               const inMonth = day.getMonth() === viewMonth.getMonth();
               const isToday = isSameDay(day, today);
+              const weekend = day.getDay() === 0 || day.getDay() === 6;
+              const holiday = holidays.get(key);
               const dayItems = byDay.get(key) ?? [];
+
+              // Days off get a wash so a week's shape reads before any text does. Outside the
+              // current month everything recedes — those cells are context, not content.
+              const cellTone = !inMonth
+                ? 'bg-slate-50/50'
+                : holiday
+                  ? 'bg-rose-50/50'
+                  : weekend
+                    ? 'bg-slate-50/60'
+                    : 'bg-white';
+
               return (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setDialog({ kind: 'new', defaultDate: key })}
-                  className={`min-h-24 border-b border-r border-slate-100 p-1.5 text-left align-top transition hover:bg-slate-50/70 [&:nth-child(7n)]:border-r-0 ${
-                    inMonth ? 'bg-white' : 'bg-slate-50/40'
-                  }`}
+                  aria-label={
+                    holiday
+                      ? `${day.toDateString()} — ${holiday}, ${dayItems.length} interviews`
+                      : `${day.toDateString()} — ${dayItems.length} interviews`
+                  }
+                  className={`min-h-26 border-b border-r border-slate-100 p-1.5 text-left align-top transition hover:bg-brand-50/40 [&:nth-child(7n)]:border-r-0 ${cellTone}`}
                 >
                   <div className="mb-1 flex justify-end">
                     <span
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ${
                         isToday
-                          ? 'bg-brand-500 text-white'
-                          : inMonth
-                            ? 'text-slate-600'
-                            : 'text-slate-300'
+                          ? 'bg-brand-500 text-white shadow-[0_2px_8px_-2px_rgba(51,88,240,0.7)]'
+                          : !inMonth
+                            ? 'text-slate-300'
+                            : holiday
+                              ? 'text-rose-600'
+                              : 'text-slate-600'
                       }`}
                     >
                       {day.getDate()}
                     </span>
                   </div>
                   <div className="space-y-1">
-                    {dayItems.slice(0, 3).map((iv) => (
+                    {/* Full width on its own row, the way an all-day event behaves — sharing a
+                        line with the date left barely 60px, which cut "Araw ng Kagitingan"
+                        down to "Araw ng K…". Still truncates for the longest names, so the
+                        full text stays on the title. */}
+                    {holiday && (
                       <span
-                        key={iv.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDialog({ kind: 'edit', interview: iv });
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
+                        className="block truncate rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700"
+                        title={holiday}
+                      >
+                        {holiday}
+                      </span>
+                    )}
+                    {dayItems.slice(0, 3).map((iv) => {
+                      const tone = eventTone(iv);
+                      return (
+                        <span
+                          key={iv.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
                             e.stopPropagation();
                             setDialog({ kind: 'edit', interview: iv });
-                          }
-                        }}
-                        className={`block truncate rounded px-1.5 py-0.5 text-[11px] font-medium ${pillCls(
-                          iv,
-                        )}`}
-                        title={`${fmtTime(iv.scheduledAt)} · ${iv.candidateName ?? 'Candidate'}`}
-                      >
-                        {fmtTime(iv.scheduledAt)} {iv.candidateName ?? 'Candidate'}
-                      </span>
-                    ))}
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.stopPropagation();
+                              setDialog({ kind: 'edit', interview: iv });
+                            }
+                          }}
+                          className={`flex items-center gap-1 truncate rounded border-l-2 py-0.5 pl-1 pr-1.5 text-[11px] font-medium transition ${tone.cls}`}
+                          title={`${fmtTime(iv.scheduledAt)} · ${iv.candidateName ?? 'Candidate'} · ${MODE_LABEL[iv.mode]}${
+                            iv.status !== 'scheduled' ? ` · ${iv.status.replace('_', ' ')}` : ''
+                          }`}
+                        >
+                          {/* The dot carries the format, the chip colour carries the state —
+                              two things a recruiter scans for at once. */}
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
+                          <span className="truncate">
+                            {fmtTime(iv.scheduledAt)} {iv.candidateName ?? 'Candidate'}
+                          </span>
+                        </span>
+                      );
+                    })}
                     {dayItems.length > 3 && (
                       <span className="block px-1.5 text-[11px] font-medium text-slate-600">
                         +{dayItems.length - 3} more
@@ -326,6 +398,28 @@ export default function SchedulerPage() {
                 </button>
               );
             })}
+          </div>
+
+          {/* Legend — the colours only help if they are decodable. */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-slate-600">
+            {STATUS_LEGEND.map((s) => (
+              <span key={s.label} className="inline-flex items-center gap-1.5">
+                <span className={`h-2.5 w-4 rounded-sm ${s.swatch}`} />
+                {s.label}
+              </span>
+            ))}
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2.5 w-4 rounded-sm bg-rose-100 ring-1 ring-rose-200" />
+              Holiday
+            </span>
+            <span className="ml-auto inline-flex items-center gap-2">
+              {MODE_LEGEND.map((m) => (
+                <span key={m.label} className="inline-flex items-center gap-1">
+                  <span className={`h-1.5 w-1.5 rounded-full ${m.dot}`} />
+                  {m.label}
+                </span>
+              ))}
+            </span>
           </div>
         </Card>
 
@@ -415,13 +509,50 @@ export default function SchedulerPage() {
   );
 }
 
-function pillCls(iv: Interview): string {
-  if (iv.status === 'canceled') return 'bg-slate-100 text-slate-600 line-through';
-  if (iv.status === 'completed') return 'bg-emerald-100 text-emerald-700';
-  if (iv.status === 'no_show') return 'bg-rose-100 text-rose-700';
-  // Still scheduled but the time has passed → needs an outcome.
+/** A dot per interview format, so the kind of call is readable without opening it. */
+const MODE_DOT: Record<InterviewMode, string> = {
+  video: 'bg-violet-500',
+  onsite: 'bg-emerald-500',
+  phone: 'bg-sky-500',
+  ai_voice: 'bg-fuchsia-500',
+};
+
+const MODE_LABEL: Record<InterviewMode, string> = {
+  video: 'Video call',
+  onsite: 'On-site',
+  phone: 'Phone',
+  ai_voice: 'AI voice',
+};
+
+const MODE_LEGEND = (Object.keys(MODE_DOT) as InterviewMode[]).map((m) => ({
+  label: MODE_LABEL[m],
+  dot: MODE_DOT[m],
+}));
+
+const STATUS_LEGEND = [
+  { label: 'Scheduled', swatch: 'bg-brand-100 ring-1 ring-brand-300' },
+  { label: 'Needs an outcome', swatch: 'bg-amber-100 ring-1 ring-amber-400' },
+  { label: 'Completed', swatch: 'bg-emerald-100 ring-1 ring-emerald-400' },
+  { label: 'No-show', swatch: 'bg-rose-100 ring-1 ring-rose-400' },
+  { label: 'Cancelled', swatch: 'bg-slate-100 ring-1 ring-slate-300' },
+];
+
+/**
+ * Two signals on one chip: the fill says what state the interview is in, the left border
+ * reinforces it, and the dot says what kind of call it is. Colouring purely by format would
+ * lose the one thing that needs acting on — an interview whose time has passed with no outcome
+ * recorded.
+ */
+function eventTone(iv: Interview): { cls: string; dot: string } {
+  const dot = MODE_DOT[iv.mode] ?? 'bg-slate-400';
+  if (iv.status === 'canceled')
+    return { cls: 'border-slate-300 bg-slate-100 text-slate-500 line-through', dot: 'bg-slate-300' };
+  if (iv.status === 'completed')
+    return { cls: 'border-emerald-400 bg-emerald-50 text-emerald-800 hover:bg-emerald-100', dot };
+  if (iv.status === 'no_show')
+    return { cls: 'border-rose-400 bg-rose-50 text-rose-800 hover:bg-rose-100', dot };
   if (new Date(iv.scheduledAt).getTime() + iv.durationMinutes * 60000 < Date.now()) {
-    return 'bg-amber-100 text-amber-700 hover:bg-amber-200';
+    return { cls: 'border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100', dot };
   }
-  return 'bg-brand-100 text-brand-700 hover:bg-brand-200';
+  return { cls: 'border-brand-400 bg-brand-50 text-brand-800 hover:bg-brand-100', dot };
 }
