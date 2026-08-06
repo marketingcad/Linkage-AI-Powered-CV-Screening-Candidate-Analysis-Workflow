@@ -1,5 +1,27 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:lever-old.zendesk.com)",
+      "WebFetch(domain:developers.ashbyhq.com)",
+      "WebFetch(domain:www.ashbyhq.com)",
+      "WebFetch(domain:gwern.net)",
+      "WebFetch(domain:www.greenhouse.com)",
+      "WebFetch(domain:www.gibsondunn.com)",
+      "WebFetch(domain:www.refapp.com)",
+      "WebFetch(domain:www.mcdermottlaw.com)",
+      "WebFetch(domain:harver.com)",
+      "WebFetch(domain:support.greenhouse.io)",
+      "WebFetch(domain:help.workable.com)",
+      "WebFetch(domain:www.pin.com)",
+      "WebFetch(domain:www.gem.com)",
+      "WebFetch(domain:www.ou.edu)",
+      "WebFetch(domain:www.metaview.ai)",
+      "WebFetch(domain:www.bi.team)",
+      "WebFetch(domain:d-nb.info)"
+    ]
+  },
   "hooks": {
     "Stop": [
       {

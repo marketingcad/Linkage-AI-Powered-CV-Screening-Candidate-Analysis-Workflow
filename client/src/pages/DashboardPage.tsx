@@ -17,6 +17,27 @@ import CandidateTable from '../components/CandidateTable';
 import PipelineHealth from '../components/PipelineHealth';
 import { Bar, PageHeaderSkeleton, StatCardsSkeleton } from '../components/Skeletons';
 
+/*
+ * Score bands are ordinal, not categorical — reordering them would change what the chart
+ * means — so they take one hue in monotone lightness steps rather than a set of unrelated
+ * colours. The reader sees the ordering in the colour as well as in the axis.
+ *
+ * Steps 250→650 of the blue ramp on light, and 600→200 on dark so the higher bands stay the
+ * prominent ones against a dark surface. Both directions were checked against the real card
+ * colours (#ffffff / #131a29): monotone lightness, visible step gaps, and the end nearest the
+ * surface still clears 2:1 (2.11:1 light, 2.15:1 dark).
+ *
+ * Written as whole class strings because Tailwind scans source text — a colour interpolated
+ * into a template literal never gets generated.
+ */
+const BAND_FILL = [
+  'bg-[#86b6ef] dark:bg-[#184f95]',
+  'bg-[#5598e7] dark:bg-[#256abf]',
+  'bg-[#2a78d6] dark:bg-[#3987e5]',
+  'bg-[#1c5cab] dark:bg-[#6da7ec]',
+  'bg-[#104281] dark:bg-[#9ec5f4]',
+];
+
 // Fixed order + colors for the pipeline visualization.
 const STAGE_ORDER: { stage: CandidateStage; label: string; bar: string; text: string }[] = [
   { stage: 'new', label: 'New', bar: 'bg-slate-300', text: 'text-slate-600' },
@@ -32,6 +53,8 @@ export default function DashboardPage() {
   const [all, setAll] = useState<CandidateSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Which score band the pointer (or keyboard focus) is on; null when nothing is targeted.
+  const [hoveredBand, setHoveredBand] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([fetchStats(), fetchCandidates()])
@@ -255,23 +278,64 @@ export default function DashboardPage() {
         {analytics.totalScored === 0 ? (
           <EmptyHint text="No scored candidates yet." />
         ) : (
-          <div className="flex h-40 items-end gap-2">
-            {analytics.dist.map((d) => (
+          <div className="relative">
+            <div className="flex h-40 items-end gap-2">
+              {analytics.dist.map((d, i) => {
+                const dimmed = hoveredBand !== null && hoveredBand !== i;
+                return (
+                  // A button, so the whole column — including the empty space above a short
+                  // bar — is the hit target, and so the same readout is reachable by keyboard.
+                  <button
+                    key={d.label}
+                    type="button"
+                    onMouseEnter={() => setHoveredBand(i)}
+                    onMouseLeave={() => setHoveredBand(null)}
+                    onFocus={() => setHoveredBand(i)}
+                    onBlur={() => setHoveredBand(null)}
+                    aria-label={`${d.count} of ${analytics.totalScored} scored candidates in the ${d.label} band`}
+                    className="flex h-full flex-1 cursor-default flex-col items-center justify-end gap-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+                  >
+                    <span className="text-xs font-semibold tabular-nums text-slate-700">
+                      {d.count}
+                    </span>
+                    <div
+                      className={`w-full rounded-t transition-[height,opacity] duration-700 ease-out motion-reduce:transition-none ${BAND_FILL[i]}`}
+                      style={{
+                        height: grow ? `${Math.round((d.count / analytics.maxDist) * 78)}%` : '0%',
+                        minHeight: grow && d.count ? 4 : 0,
+                        // Everything else recedes so the hovered band reads as the subject.
+                        opacity: dimmed ? 0.3 : 1,
+                      }}
+                    />
+                    <span className="text-[10px] text-slate-600">{d.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {hoveredBand !== null && (
               <div
-                key={d.label}
-                className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+                role="status"
+                aria-live="polite"
+                // Centred over its column; the columns are equal flex-1 widths, so the centre
+                // is a plain fraction of the track.
+                style={{ left: `${((hoveredBand + 0.5) / analytics.dist.length) * 100}%` }}
+                className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-slate-900 px-3 py-2 text-left shadow-(--shadow-raised) dark:bg-slate-100"
               >
-                <span className="text-xs font-semibold text-slate-700">{d.count}</span>
-                <div
-                  className="w-full rounded-t bg-brand-400 transition-[height] duration-700 ease-out motion-reduce:transition-none"
-                  style={{
-                    height: grow ? `${Math.round((d.count / analytics.maxDist) * 78)}%` : '0%',
-                    minHeight: grow && d.count ? 4 : 0,
-                  }}
-                />
-                <span className="text-[10px] text-slate-600">{d.label}</span>
+                {/* Value leads, label follows — the reader already knows which band they
+                    are pointing at and wants the number. */}
+                <p className="text-sm font-semibold tabular-nums text-white dark:text-slate-900">
+                  {analytics.dist[hoveredBand]!.count}
+                  <span className="font-normal"> candidate{analytics.dist[hoveredBand]!.count === 1 ? '' : 's'}</span>
+                </p>
+                <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-300 dark:text-slate-600">
+                  <span className={`h-0.5 w-3 shrink-0 rounded-full ${BAND_FILL[hoveredBand]}`} />
+                  Score {analytics.dist[hoveredBand]!.label} ·{' '}
+                  {Math.round((analytics.dist[hoveredBand]!.count / analytics.totalScored) * 100)}%
+                  of scored
+                </p>
               </div>
-            ))}
+            )}
           </div>
         )}
       </Card>
