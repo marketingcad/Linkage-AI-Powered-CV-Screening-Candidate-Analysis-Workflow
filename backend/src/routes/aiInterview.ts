@@ -138,6 +138,7 @@ aiInterviewRouter.post('/session', publicSubmitLimiter, validate({ body: joinSes
       candidateName: candidates.fullName,
       cvSummary: candidates.summary,
       jobTitle: interviews.title,
+      status: interviews.status,
       questions: candidates.interviewQuestions,
     })
     .from(interviews)
@@ -146,6 +147,40 @@ aiInterviewRouter.post('/session', publicSubmitLimiter, validate({ body: joinSes
     .limit(1);
 
   if (!row) return res.status(404).json({ error: { code: 'not_found', message: 'Interview not found.' } });
+
+  if (row.status === 'canceled') {
+    return res
+      .status(403)
+      .json({ error: { code: 'canceled', message: 'This interview was canceled.' } });
+  }
+
+  /*
+   * One interview, one sitting.
+   *
+   * The time window alone is not enough: it keeps the link live for the rest of the slot
+   * after the candidate has finished, so anyone still holding it can rejoin and record a
+   * second, better-rehearsed attempt over the top of the first — and burn another full
+   * Gemini Live session doing it.
+   *
+   * Keyed on `endedAt`, not on the session merely existing: a candidate whose connection
+   * drops mid-interview has a session row with no end time, and must be able to get back in.
+   */
+  const [finished] = await db
+    .select({ id: interviewSessions.id, endedAt: interviewSessions.endedAt })
+    .from(interviewSessions)
+    .where(
+      and(eq(interviewSessions.interviewId, p.interviewId), isNotNull(interviewSessions.endedAt)),
+    )
+    .limit(1);
+
+  if (finished) {
+    return res.status(403).json({
+      error: {
+        code: 'already_completed',
+        message: 'This interview has already been completed. The link can only be used once.',
+      },
+    });
+  }
 
   try {
     const session = await createRoomAndSession({

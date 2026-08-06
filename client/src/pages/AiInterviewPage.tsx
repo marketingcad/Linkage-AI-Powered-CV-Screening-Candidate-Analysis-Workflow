@@ -14,7 +14,7 @@ import {
   LuVideo,
   LuVideoOff,
 } from 'react-icons/lu';
-import { API_BASE } from '../api/client';
+import { API_BASE, ApiError } from '../api/client';
 import {
   fetchAiInterviewContext,
   startAiInterviewSession,
@@ -208,10 +208,19 @@ export default function AiInterviewPage() {
       pollLevels();
     } catch (err) {
       setPhase('lobby');
+      /*
+       * The server refuses a join for reasons that have nothing to do with the candidate's
+       * hardware — the link is used up, cancelled, or outside its window. Telling someone to
+       * check their microphone in those cases sends them to fix something that isn't broken,
+       * so a recognised code shows the server's own explanation instead.
+       */
+      const code = err instanceof ApiError ? err.code : '';
       setStatus(
-        err instanceof Error && /too_early|expired/.test(err.message)
-          ? 'This interview link is not active right now.'
-          : 'Could not start the interview. Please check your camera and microphone permissions.',
+        ['already_completed', 'canceled', 'invalid_link'].includes(code)
+          ? (err as ApiError).message
+          : ['too_early', 'expired'].includes(code)
+            ? 'This interview link is not active right now.'
+            : 'Could not start the interview. Please check your camera and microphone permissions.',
       );
     }
   }
