@@ -47,6 +47,7 @@ export type SendResult = { sent: boolean; skipped?: boolean; error?: string };
  *
  * Retrying past the cache window turns a silent data-loss bug into a short delay.
  */
+
 function isTransientSendError(err: unknown): boolean {
   const e = err as { code?: string; errno?: string } | undefined;
   return ['ESOCKET', 'ECONNECTION', 'ETIMEDOUT', 'ECONNRESET', 'ENETUNREACH', 'EAI_AGAIN'].includes(
