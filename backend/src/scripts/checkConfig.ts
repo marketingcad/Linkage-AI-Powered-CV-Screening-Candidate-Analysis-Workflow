@@ -77,7 +77,19 @@ async function main() {
   const allOk = results.every((r) => r.ok);
   console.log(`\n${allOk ? '✅ All configuration checks passed.' : '❌ Some checks failed (see above).'}`);
   if (!dbOk) {
-    console.log('   The database connection failed — double-check DATABASE_URL in backend/.env.');
+    // A pooler at capacity is not a misconfiguration, and sending someone to inspect a
+    // DATABASE_URL that is perfectly correct is the wrong place to spend the next hour.
+    const exhausted = results.some((r) => !r.ok && /EMAXCONNSESSION|max clients/i.test(r.detail));
+    if (exhausted) {
+      console.log(
+        '   The pooler is at its client limit — DATABASE_URL is fine. Something is still\n' +
+          '   holding connections: usually an old dev server or a script that exited without\n' +
+          '   closing its pool. Close them and re-run. On Windows:\n' +
+          '     Get-NetTCPConnection -RemotePort 5432 | Select-Object OwningProcess -Unique',
+      );
+    } else {
+      console.log('   The database connection failed — double-check DATABASE_URL in backend/.env.');
+    }
   }
   process.exitCode = allOk ? 0 : 1;
 }
